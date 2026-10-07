@@ -1,0 +1,1280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Degree Map</title>
+<style>
+:root{
+  --bg:#f5f7fa; --surface:#ffffff; --surface2:#eef2f6; --text:#0f172a; --muted:#526070; --border:#d5dce5;
+  --complete:#15803d; --progress:#b45309; --needed:#1e293b; --eligible:#0284c7; --accent:#7c3aed;
+  --complete-bg:#e3f6ea; --progress-bg:#fff3d6; --needed-bg:#eef2f6;
+  --shadow:0 1px 2px rgba(15,23,42,.06),0 6px 20px rgba(15,23,42,.08);
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#0b0f14; --surface:#121820; --surface2:#1a222c; --text:#e8eef5; --muted:#9aa7b6; --border:#2a3441;
+  --complete:#3ccf7a; --progress:#f5b938; --needed:#dbe3ec; --eligible:#38bdf8; --accent:#a78bfa;
+  --complete-bg:#0f2d1d; --progress-bg:#33260a; --needed-bg:#1a222c;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+button,input{font:inherit;color:inherit}
+header.top{display:flex;gap:24px;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap}
+.brand h1{margin:0;font-size:22px;letter-spacing:-.01em}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.stats{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.credit{min-width:280px}
+.credit .row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:5px}
+.credit .row b{color:var(--text);font-size:17px}
+.bar{height:10px;border-radius:6px;background:var(--surface2);overflow:hidden;display:flex;border:1px solid var(--border)}
+.bar span{display:block;height:100%}
+.tiles{display:flex;gap:8px;flex-wrap:wrap}
+.tile{padding:6px 12px;border:1px solid var(--border);border-radius:10px;background:var(--bg);min-width:84px}
+.tile b{display:block;font-size:19px;line-height:1.15}
+.tile small{color:var(--muted);font-size:12px;white-space:nowrap}
+.toolbar{display:flex;gap:10px;align-items:center;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg)}
+.seg button{border:0;background:transparent;padding:7px 12px;cursor:pointer;font-size:14px;white-space:nowrap}
+.seg button+button{border-left:1px solid var(--border)}
+.seg button[aria-pressed="true"]{background:var(--text);color:var(--bg);font-weight:600}
+.btn{border:1px solid var(--border);background:var(--bg);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:14px;white-space:nowrap}
+.btn:hover,.seg button:hover:not([aria-pressed="true"]){background:var(--surface2)}
+.btn[aria-pressed="true"]{background:var(--text);color:var(--bg)}
+.search{position:relative}
+.search input{border:1px solid var(--border);background:var(--bg);border-radius:10px;padding:7px 12px;width:230px}
+.search input:focus{outline:2px solid var(--eligible);outline-offset:1px}
+.spacer{flex:1}
+main{flex:1;display:flex;min-height:0}
+#stage{position:relative;flex:1;min-width:0;overflow:hidden}
+#svg{width:100%;height:100%;display:block;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+#svg.panning{cursor:grabbing}
+#svg .node{cursor:pointer}
+#svg .node,#svg .edge{transition:opacity .2s}
+#tooltip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 11px;box-shadow:var(--shadow);font-size:13px;max-width:300px;opacity:0;transition:opacity .12s;z-index:5}
+#tooltip b{font-size:14px}
+#tooltip .t{color:var(--muted)}
+.legend{position:absolute;left:14px;bottom:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 14px;box-shadow:var(--shadow);font-size:13px;max-width:calc(100% - 28px)}
+.legend summary{cursor:pointer;font-weight:600;list-style:none}
+.legend summary::-webkit-details-marker{display:none}
+.legend summary::after{content:" ▾";color:var(--muted)}
+.legend:not([open]) summary::after{content:" ▸"}
+.legend .grid{display:grid;grid-template-columns:auto auto;gap:6px 18px;margin-top:8px}
+.legend .it{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.zoom{position:absolute;right:14px;bottom:14px;display:flex;flex-direction:column;gap:6px}
+.zoom .btn{width:38px;height:38px;padding:0;font-size:18px;box-shadow:var(--shadow);background:var(--surface)}
+.viewnote{position:absolute;left:14px;top:12px;font-size:13px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px 10px;max-width:calc(100% - 28px)}
+aside#panel{width:380px;flex:none;border-left:1px solid var(--border);background:var(--surface);overflow-y:auto;padding:18px 20px 40px}
+#panel h2{margin:4px 0 2px;font-size:24px;letter-spacing:-.01em}
+#panel h3{margin:20px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+#panel .title{margin:0;color:var(--muted);font-size:15px}
+#panel p{margin:6px 0}
+#panel ul{margin:0;padding:0;list-style:none}
+#panel li{padding:6px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+#panel li:last-child{border-bottom:0}
+#panel .req{color:var(--muted);font-size:13px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid}
+.pill.complete{color:var(--complete);background:var(--complete-bg);border-color:var(--complete)}
+.pill.in_progress{color:var(--progress);background:var(--progress-bg);border-color:var(--progress)}
+.pill.needed{color:var(--needed);background:var(--needed-bg);border-color:var(--needed)}
+.pill.elig{color:var(--eligible);border-color:var(--eligible);background:transparent}
+.pill.muted{color:var(--muted);border-color:var(--border);background:transparent;font-weight:500}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 0}
+.facts div{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:7px 10px}
+.facts dt{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.facts dd{margin:2px 0 0;font-weight:600;font-size:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:8px;padding:3px 8px;font-size:13px;background:var(--bg);cursor:pointer;font-weight:600}
+.chip:hover{border-color:var(--text)}
+.chip.ext{cursor:default;color:var(--muted);font-weight:500;border-style:dashed}
+.chip .dot{width:9px;height:9px;border-radius:50%;flex:none}
+.dot.complete{background:var(--complete)} .dot.in_progress{background:var(--progress)} .dot.needed{background:transparent;border:2px solid var(--needed)} .dot.ext{background:transparent;border:2px dashed var(--muted)}
+.group{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px}
+.group .ok{margin-left:auto;font-size:12px;font-weight:600}
+.and{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:4px 0 6px 4px}
+.or{font-size:12px;color:var(--muted)}
+.src{font-size:12.5px;color:var(--muted);border-left:3px solid var(--border);padding-left:10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+a.ext{color:var(--eligible);font-weight:600;text-decoration:none;font-size:14px}
+a.ext:hover{text-decoration:underline}
+.note{font-size:13px;color:var(--muted)}
+.linkbtn{border:0;background:none;padding:0;color:var(--text);font-weight:600;cursor:pointer;text-decoration:underline;text-decoration-color:var(--border);text-underline-offset:3px}
+.hint{font-size:13px;color:var(--muted);margin-top:22px;border-top:1px solid var(--border);padding-top:12px}
+kbd{font:12px ui-monospace,Menlo,monospace;border:1px solid var(--border);border-bottom-width:2px;border-radius:5px;padding:0 5px;background:var(--bg)}
+@media (max-width:900px){
+  body{overflow:auto}
+  main{flex-direction:column}
+  #stage{min-height:70vh}
+  aside#panel{width:auto;border-left:0;border-top:1px solid var(--border)}
+  header.top,.toolbar{padding-left:16px;padding-right:16px}
+  .search input{width:100%}
+  .search{flex:1;min-width:180px}
+  .credit{min-width:0;width:100%}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <h1>B.S. Computer Science: Degree Map</h1>
+    <p>University of Georgia · Franklin College of Arts &amp; Sciences · Fall 2026 Bulletin · from DegreeWorks audit dated 10/03/2026</p>
+  </div>
+  <div class="stats">
+    <div class="credit">
+      <div class="row"><span>Credits applied to degree</span><span><b id="credApplied">–</b> / <span id="credReq">121</span></span></div>
+      <div class="bar" id="credBar"></div>
+    </div>
+    <div class="tiles" id="tiles"></div>
+  </div>
+</header>
+<div class="toolbar">
+  <div class="seg" role="group" aria-label="View">
+    <button data-view="flow" aria-pressed="true">Prerequisite flow</button>
+    <button data-view="req" aria-pressed="false">Requirement map</button>
+  </div>
+  <div class="seg" role="group" aria-label="Filter">
+    <button data-filter="all" aria-pressed="true">All</button>
+    <button data-filter="needed" aria-pressed="false">Needed</button>
+    <button data-filter="in_progress" aria-pressed="false">In progress</button>
+    <button data-filter="complete" aria-pressed="false">Complete</button>
+    <button data-filter="eligible" aria-pressed="false">Eligible now</button>
+  </div>
+  <div class="search">
+    <input id="search" type="search" list="courseList" placeholder="Jump to course, e.g. CSCI 2720" autocomplete="off" aria-label="Search courses">
+    <datalist id="courseList"></datalist>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn" id="redact" aria-pressed="false" title="Show course codes only">Redact titles</button>
+  <button class="btn" id="theme">Dark theme</button>
+  <button class="btn" id="export">Export PNG</button>
+</div>
+<main>
+  <div id="stage">
+    <svg id="svg" xmlns="http://www.w3.org/2000/svg" aria-label="Degree graph"></svg>
+    <div class="viewnote" id="viewnote"></div>
+    <div id="tooltip"></div>
+    <details class="legend" open>
+      <summary>Legend</summary>
+      <div class="grid" id="legend"></div>
+    </details>
+    <div class="zoom">
+      <button class="btn" id="zin" title="Zoom in" aria-label="Zoom in">+</button>
+      <button class="btn" id="zout" title="Zoom out" aria-label="Zoom out">−</button>
+      <button class="btn" id="zfit" title="Fit to screen (F)" aria-label="Fit to screen">⤢</button>
+    </div>
+  </div>
+  <aside id="panel" aria-live="polite"></aside>
+</main>
+
+<script>
+(() => {
+'use strict';
+
+/* =====================================================================
+   DATA
+   Requirement layer: hand-transcribed from the DegreeWorks audit (PDF).
+   Only course codes, titles, credits, status and requirement names are
+   kept. No name, ID, GPA, grades, terms or transfer sources.
+   Prerequisite layer: UGA Bulletin (bulletin.uga.edu), retrieved 2026-10-07.
+   ===================================================================== */
+
+// code: [title, credits, status, Bulletin course-detail id | null]
+// Titles are the full Bulletin titles where the course exists in the Bulletin;
+// transfer/test placeholders keep the title shown on the audit.
+const COURSES = {
+  "CSCI 1301":  ["Introduction to Computing and Programming", 4, "complete", 4695],
+  "CSCI 1302":  ["Software Development", 4, "in_progress", 4726],
+  "CSCI 1730":  ["Systems Programming", 4, "needed", 12406],
+  "CSCI 2610":  ["Discrete Mathematics for Computer Science", 3, "complete", 4732],
+  "CSCI 2670":  ["Introduction to Theory of Computing", 4, "in_progress", 4924],
+  "CSCI 2720":  ["Data Structures", 4, "needed", 4304],
+  "CSCI 3030":  ["Computing, Ethics, and Society", 3, "needed", 20694],
+  "CSCI 4470":  ["Algorithms", 4, "needed", 4360],
+  "CSCI 4720":  ["Computer Architecture and Organization", 4, "needed", 4922],
+  "CSCI 4050":  ["Software Engineering", 4, "needed", 4181],
+  "CSCI 4370":  ["Database Management", 4, "needed", 4302],
+  "CSCI 4570":  ["Compilers", 4, "needed", 4202],
+  "CSCI 4730":  ["Operating Systems", 4, "needed", 4253],
+  "CSCI 4760":  ["Computer Networks", 4, "needed", 4759],
+  "CSCI 1TTS":  ["Test Score Credit", 4, "complete", null],
+  "MATH 1113":  ["Precalculus", 0, "complete", 859],
+  "MATH 1101":  ["Introduction to Mathematical Modeling", 0, "complete", 818],
+  "MATH 2250":  ["Calculus I for Science and Engineering", 4, "complete", 17372],
+  "MATH 2260":  ["Calculus II for Science and Engineering", 4, "complete", 17373],
+  "MATH 2270":  ["Calculus III for Science and Mathematics", 4, "complete", 26520],
+  "MATH 3300":  ["Applied Linear Algebra", 3, "complete", 28109],
+  "MATH 3200":  ["Introduction to Higher Mathematics", 3, "in_progress", 974],
+  "MATH 2003":  ["Arithmetic for Elementary Sch", 3, "complete", null],
+  "MATH 3TXX":  ["Transfer Elective", 1, "complete", null],
+  "STAT 2000":  ["Introductory Statistics", 4, "complete", 2514],
+  "ENGL 1101":  ["English Composition I", 3, "complete", 4619],
+  "ENGL 1102":  ["English Composition II", 3, "complete", 4631],
+  "CHEM 1211":  ["General Chemistry I", 3, "complete", 5241],
+  "CHEM 1211L": ["General Chemistry Laboratory I", 1, "complete", 5242],
+  "CHEM 1212":  ["General Chemistry II", 3, "complete", 5243],
+  "CHEM 1212L": ["General Chemistry Laboratory II", 1, "complete", 5244],
+  "PHYS 1111":  ["Introductory Physics-Mechanics, Waves, Thermodynamics", 4, "complete", 3899],
+  "PHYS 1211":  ["Principles of Physics for Scientists and Engineers-Mechanics, Waves, Thermodynamics", 4, "complete", 3908],
+  "PHYS 1212":  ["Principles of Physics for Scientists and Engineers-Electricity and Magnetism, Optics, Modern Physics", 4, "complete", 3911],
+  "ECON 2105":  ["Principles of Macroeconomics", 3, "complete", 2611],
+  "ECON 2106":  ["Principles of Microeconomics", 3, "complete", 2601],
+  "ECOL 1000":  ["Ecological Basis of Environmental Issues", 3, "complete", 2201],
+  "ECOL 1000L": ["Ecological Basis of Environmental Issues Laboratory", 1, "complete", 23782],
+  "GEOG 1101":  ["Human Geography: People, Places, and Cultures", 3, "complete", 544],
+  "GEOG 3620":  ["Globalization and the Making of the Modern World", 3, "complete", 567],
+  "HIST 2702":  ["World Civilizations II", 3, "complete", 4002],
+  "HIST 1GHX":  ["Comprehensive U.S. History", 3, "complete", null],
+  "POLS 1101":  ["American Government", 3, "complete", 5651],
+  "SPAN 1002":  ["Elementary Spanish II", 4, "complete", 3211],
+  "MUSI 2040":  ["History of Popular Music", 3, "in_progress", 2150],
+  "FYOS 1001":  ["First-Year Odyssey Seminar", 1, "in_progress", 25165],
+};
+
+// Open requirements on the audit that are not tied to one specific course.
+const REQS = {
+  "REQ:EXP":   { label: "Experiential Learning", sub: "University requirement", credits: null,
+                 desc: "Still needed. See the Experiential Learning section of the Bulletin for approved activities." },
+  "REQ:PE":    { label: "Physical Education", sub: "1 credit · PEDB", credits: 1,
+                 desc: "Still needed: 1 credit in PEDB. Only one credit of PE is needed for the University Requirement." },
+  "REQ:FL":    { label: "Foreign Language", sub: "3rd semester · 3 cr", credits: 3,
+                 desc: "Still needed: 3 credits. Proficiency/completion of the third-semester (3 credit) course in a foreign language (a course with attribute FL3, FL4 or FLAS, or AMSL 2010 / RUSS 2010)." },
+  "REQ:LIT":   { label: "Literature", sub: "Franklin College · 3 cr", credits: 3,
+                 desc: "Still needed: 3 credits from the Franklin College literature list (attribute LAS, or one of the listed CLAS, CMLT, ENGL, FREN, GRMN, SPAN and other courses)." },
+  "REQ:FA2":   { label: "Fine Arts/Phil/Religion", sub: "2nd course · 3 cr", credits: 3,
+                 desc: "Still needed: 1 more class (3 credits) with attribute FAS, except PHIL 2500, 2500H, 4510 or 4530. Two courses (6 credits) are required; MUSI 2040 (in progress) is the first." },
+  "REQ:MAJEL": { label: "Major Electives", sub: "12 cr · CSCI 4000/6000", credits: 12,
+                 desc: "Still needed: 12 credits in CSCI 4000- or 6000-level courses, except CSCI 4150 or 6150." },
+  "REQ:ADMIT": { label: "Admission to CS Major", sub: "Entrance milestone", credits: null, milestone: true,
+                 from: ["CSCI 1301", "CSCI 1302", "CSCI 2610", "CSCI 2720", "MATH 2250"],
+                 desc: "To be admitted to the major you must complete CSCI 1301-1301L, CSCI 1302, CSCI 2610, CSCI 2720 and MATH 2250 with a C (2.0) or higher. For CSCI 1302, 2610 and 2720: a C or higher within your first two attempts, and a 2.7 GPA or higher across the best of those attempts in all three. Acceptance is not guaranteed." },
+};
+
+// "Pick one" groups on the audit.
+const CHOICES = {
+  "CHOICE:APP": { label: "Application Design Group", options: ["CSCI 4050", "CSCI 4370"] },
+  "CHOICE:SYS": { label: "Systems Design Group", options: ["CSCI 4570", "CSCI 4730", "CSCI 4760"] },
+};
+
+// Requirement blocks, in audit order. items: [id, requirement line on the audit]
+const BLOCKS = [
+  { id: "BLK:UNIV", short: "University", label: "University Requirements", audit: "INCOMPLETE",
+    items: [["HIST 2702","Cultural Diversity"],["GEOG 1101","Environmental Awareness"],
+            ["POLS 1101","Federal Constitution; Georgia Constitution"],["HIST 1GHX","U.S. & GA History"],
+            ["FYOS 1001","First Year Odyssey Seminar"],["REQ:EXP","Experiential Learning"],["REQ:PE","Physical Education"]] },
+  { id: "BLK:FRANK", short: "Franklin College", label: "College: Franklin College of Arts & Sciences", audit: "INCOMPLETE",
+    items: [["REQ:FL","Foreign Language"],["REQ:LIT","Literature"],
+            ["MUSI 2040","Fine Arts/Philosophy/Religion; Multicultural"],["REQ:FA2","Fine Arts/Philosophy/Religion"],
+            ["HIST 1GHX","History"],["ECON 2105","Social Sciences other than History"],["GEOG 3620","Social Sciences other than History"],
+            ["ECOL 1000","Biological Sciences"],["ECOL 1000L","Biological Sciences"],["CHEM 1211","Physical Sciences"]] },
+  { id: "BLK:A1", short: "Area I · Foundation", label: "Area I: Foundation Courses", audit: "COMPLETE", req: 6, applied: 6,
+    notes: ["A grade of C (2.0) or better is required for ENGL 1101, and a 2.0 average across ENGL 1101 and 1102."],
+    items: [["ENGL 1101","English Composition I"],["ENGL 1102","English Composition II"]] },
+  { id: "BLK:A2", short: "Area II · Sciences", label: "Area II: Sciences", audit: "COMPLETE", req: 7, applied: 8,
+    notes: ["You must complete a lab in either physical or life sciences."],
+    items: [["CHEM 1212","Physical Science"],["CHEM 1212L","Physical Science"],["ECOL 1000","Life Science"],["ECOL 1000L","Life Science"]] },
+  { id: "BLK:A3", short: "Area III · Quant. Reasoning", label: "Area III: Quantitative Reasoning", audit: "COMPLETE", req: "0 to 4", applied: 0,
+    items: [["MATH 1113","Quantitative Reasoning"]] },
+  { id: "BLK:A4", short: "Area IV · Lang, Hum & Arts", label: "Area IV: World Lang & Culture, Humanities & Art", audit: "IN-PROGRESS", req: 12, applied: 13,
+    items: [["GEOG 1101","World Languages and Culture"],["HIST 2702","World Languages and Culture"],["SPAN 1002","World Languages and Culture"],["MUSI 2040","Humanities and the Arts"]] },
+  { id: "BLK:A5", short: "Area V · Social Sciences", label: "Area V: Social Sciences", audit: "COMPLETE", req: 9, applied: 9,
+    items: [["ECON 2105","Social Sciences"],["ECON 2106","Social Sciences"],["HIST 1GHX","Social Sciences"]] },
+  { id: "BLK:A6", short: "Area VI · Computer Science", label: "Area F/VI: Computer Science", audit: "INCOMPLETE", req: 19, applied: 12,
+    items: [["CSCI 1302","Software Development"],["CSCI 1730","Systems Programming"],["CSCI 2670","Intro to Theory of Computing"],
+            ["CSCI 2720","Data Structures"],["MATH 2250","Calculus I for Sci and Eng"]] },
+  { id: "BLK:ENTR", short: "Entrance · BS Degree", label: "Entrance Requirements: BS Degree", audit: "INCOMPLETE",
+    items: [["CSCI 1301","Intro Computing and Program"],["CSCI 1302","Software Development"],["CSCI 2610","Discrete Mathematics for CSCI"],
+            ["CSCI 2720","Data Structures"],["MATH 2250","Calculus I for Sci and Eng"],["REQ:ADMIT","Admission to Computer Science Major Required"]] },
+  { id: "BLK:MAJOR", short: "Major · Computer Science", label: "Major: Intended Computer Science", audit: "INCOMPLETE", req: 42, applied: 11,
+    notes: ["A minimum of 15 major credits must be taken in residence (0 so far).",
+            "A grade of C (2.0) or better is required in every course counted toward the major.",
+            "Teamwork: one team-based course is required (CSCI 4050, 4300, 4370, 4530 or 4800). Students in the AI Area of Emphasis should not use CSCI 4050 for this.",
+            "If MATH 2260 or STAT 2000 was taken to satisfy core curriculum requirements, another course must be chosen for the major-related requirements."],
+    items: [["CSCI 3030","Computing Ethics and Society"],["CSCI 4470","Algorithms"],["CSCI 4720","Computer Architecture Organiza"],
+            ["CHOICE:APP","Application Design Group"],["CHOICE:SYS","Systems Design Group"],["REQ:MAJEL","Major Electives"],
+            ["MATH 2270","Major Related Electives"],["MATH 3300","Major Related Electives"],["STAT 2000","Major Related Electives"]] },
+  { id: "BLK:GENEL", short: "General Electives", label: "General Electives", audit: null, req: 7, applied: 7,
+    items: [["CSCI 1TTS","General Electives"],["MATH 2003","General Electives"]] },
+  { id: "BLK:EXCESS", short: "Excess Credits", label: "Excess Credits", audit: null, applied: 21, counts: false,
+    notes: ["Courses here do not count toward the 121 credits required for the degree."],
+    items: [["CHEM 1211L","Excess Credits"],["MATH 1101","Excess Credits"],["MATH 2260","Excess Credits"],["MATH 3200","Excess Credits"],
+            ["MATH 3TXX","Excess Credits"],["PHYS 1111","Excess Credits"],["PHYS 1211","Excess Credits"],["PHYS 1212","Excess Credits"]] },
+];
+
+const DEGREE = {
+  id: "DEGREE", label: "B.S. Computer Science", audit: "INCOMPLETE", req: 121, applied: 83,
+  checks: [
+    ["Minimum credits", "121 required; 83 applied (includes in-progress)."],
+    ["Upper-division credits", "39 required; 10 so far (includes in-progress), 29 more needed."],
+    ["Residency", "45 of your last 60 credits must be UGA credit; 15 so far (includes in-progress), 30 more needed."],
+    ["General electives", "7 elective credits required; 7 applied."],
+  ],
+};
+
+// Prerequisites, transcribed from the UGA Bulletin. Each `pre` / `preco` is an
+// AND-list of OR-groups. `text` is the Bulletin wording, verbatim.
+const PRE = {
+  "CSCI 1301": { pre: [["MATH 1113","MATH 1113E","MATH 2250","MATH 2250E","MATH 2200"]], text: "MATH 1113 or MATH 1113E or MATH 2250 or MATH 2250E or MATH 2200" },
+  "CSCI 1302": { pre: [["CSCI 1301","CSCI 1301E"]], text: "CSCI 1301-1301L or CSCI 1301E" },
+  "CSCI 1730": { pre: [["CSCI 1302"]], text: "CSCI 1302" },
+  "CSCI 2610": { pre: [["MATH 1113"]], text: "MATH 1113" },
+  "CSCI 2670": { pre: [["CSCI 2610","CSCI 2611"]], text: "CSCI 2610 or CSCI 2611" },
+  "CSCI 2720": { pre: [["CSCI 1302","CSCI 1302H"],["CSCI 2610","CSCI 2610E","CSCI 2611"]], text: "(CSCI 1302 or CSCI 1302H) and (CSCI 2610 or CSCI 2610E or CSCI 2611)" },
+  "CSCI 3030": { pre: [["ENGL 1050H","ENGL 1102","ENGL 1102E"]], text: "ENGL 1050H or ENGL 1102 or ENGL 1102E" },
+  "CSCI 4470": { pre: [["CSCI 2720","CSCI 2725"],["CSCI 2670","CSCI 2670E"]], text: "(CSCI 2720 or CSCI 2725) and (CSCI 2670 or CSCI 2670E)" },
+  "CSCI 4720": { pre: [["CSCI 2670","CSCI 2670E","CSEE 2220","CSEE 2220E"],["CSCI 1730"]], text: "(CSCI 2670 or CSCI 2670E or CSEE 2220 or CSEE 2220E) and CSCI 1730" },
+  "CSCI 4050": { pre: [["CSCI 2720","CSCI 2725"]], text: "CSCI 2720 or CSCI 2725" },
+  "CSCI 4370": { pre: [["CSCI 2720","CSCI 2725"]], text: "CSCI 2720 or CSCI 2725" },
+  "CSCI 4570": { pre: [["CSCI 4720"]], text: "CSCI 4720", undergrad: true },
+  "CSCI 4730": { pre: [["CSCI 4720","CSCI 4720E","CSEE 4280"],["CSCI 2720"]], text: "(CSCI 4720 or CSCI 4720E or CSEE 4280) and CSCI 2720" },
+  "CSCI 4760": { pre: [["CSCI 1730","CSCI 1730E"],["CSCI 2720","CSCI 2720E"],["CSCI 2670","CSCI 2670E","CSEE 2220","CSEE 2220E","CSEE 2220H"]], text: "(CSCI 1730 or CSCI 1730E) and (CSCI 2720 or CSCI 2720E) and (CSCI 2670 or CSCI 2670E or CSEE 2220 or CSEE 2220E or CSEE 2220H))" },
+  "MATH 2250": { pre: [["MATH 1113"]], text: "MATH 1113 or permission of department" },
+  "MATH 2260": { pre: [["MATH 2250","MATH 2300H"]], text: "MATH 2250 or MATH 2300H" },
+  "MATH 2270": { pre: [["MATH 2260","MATH 2310H","MATH 2410","MATH 2410H"]], text: "MATH 2260 or MATH 2310H or MATH 2410 or MATH 2410H" },
+  "MATH 3300": { pre: [["MATH 2260","MATH 2260E","MATH 2260H","MATH 2310H","MATH 2410","MATH 2410H"]], text: "MATH 2260 or MATH 2260E or MATH 2260H or MATH 2310H or MATH 2410 or MATH 2410H" },
+  "MATH 3200": { pre: [["MATH 2260","MATH 2260E","MATH 2260H","MATH 2310H"]], text: "MATH 2260 or MATH 2260E or MATH 2260H or MATH 2310H" },
+  "ENGL 1102": { pre: [["ENGL 1101","ENGL 1101E","ENGL 1101S"]], text: "ENGL 1101 or ENGL 1101E or ENGL 1101S" },
+  "CHEM 1211": { preco: [["MATH 1113","MATH 1113E"]], precoText: "MATH 1113 or MATH 1113E", coText: "CHEM 1211L" },
+  "CHEM 1211L":{ preco: [["MATH 1113"]], precoText: "MATH 1113", coText: "CHEM 1211" },
+  "CHEM 1212": { pre: [["CHEM 1211","CHEM 1311H","CHEM 1411"]], text: "CHEM 1211 or CHEM 1311H or CHEM 1411", coText: "CHEM 1212L" },
+  "CHEM 1212L":{ pre: [["CHEM 1211L","CHEM 1311L","CHEM 1411L"]], text: "CHEM 1211L or CHEM 1311L or CHEM 1411L", coText: "CHEM 1212" },
+  "PHYS 1111": { pre: [["MATH 1113","MATH 1113E"]], text: "MATH 1113 or MATH 1113E" },
+  "PHYS 1211": { preco: [["MATH 2250","MATH 2250E","MATH 2400","MATH 2400H"]], precoText: "MATH 2250 or MATH 2250E or MATH 2400 or MATH 2400H" },
+  "PHYS 1212": { pre: [["PHYS 1111","PHYS 1211","PHYS 1311","PHYS 1251"]], text: "PHYS 1111-1111L or PHYS 1211-1211L or PHYS 1311-1311L or PHYS 1251",
+                 preco: [["MATH 2260","MATH 2310H","MATH 2410","MATH 2410H"]], precoText: "MATH 2260 or MATH 2310H or MATH 2410 or MATH 2410H" },
+  "ECOL 1000L":{ preco: [["ECOL 1000","ECOL 1000E","ECOL 1000H"]], precoText: "ECOL 1000 or ECOL 1000E or ECOL 1000H" },
+  "SPAN 1002": { pre: [["SPAN 1001","SPAN 1001E"]], text: "SPAN 1001 or SPAN 1001E" },
+};
+
+/* =====================================================================
+   MODEL
+   ===================================================================== */
+const STATUS_LABEL = { complete: "Complete", in_progress: "In progress", needed: "Needed" };
+const ITEMS = new Map();
+for (const [code, [title, credits, status, bid]] of Object.entries(COURSES))
+  ITEMS.set(code, { id: code, type: "course", label: code, title, credits, status, bid });
+for (const [id, r] of Object.entries(REQS))
+  ITEMS.set(id, { id, type: "req", ...r, status: "needed" });
+
+// Block status is derived in code from its children (per project brief).
+function deriveStatus(list) {
+  if (list.length && list.every(s => s === "complete")) return "complete";
+  if (list.some(s => s === "complete" || s === "in_progress")) return "in_progress";
+  return "needed";
+}
+for (const [id, c] of Object.entries(CHOICES))
+  ITEMS.set(id, { id, type: "choice", ...c, status: deriveStatus(c.options.map(o => ITEMS.get(o).status)) });
+
+const MEMBER = new Map(); // item id -> [{block, req}]
+for (const b of BLOCKS) {
+  for (const [id, req] of b.items) {
+    if (!ITEMS.has(id)) throw new Error("Unknown item " + id);
+    if (!MEMBER.has(id)) MEMBER.set(id, []);
+    MEMBER.get(id).push({ block: b.id, req });
+  }
+  ITEMS.set(b.id, { ...b, type: "block", childIds: b.items.map(i => i[0]),
+    status: deriveStatus(b.items.map(([id]) => ITEMS.get(id).status)) });
+}
+for (const [cid, c] of Object.entries(CHOICES))
+  for (const o of c.options) {
+    if (!MEMBER.has(o)) MEMBER.set(o, []);
+    MEMBER.get(o).push({ block: "BLK:MAJOR", req: c.label + " (option)" });
+  }
+ITEMS.set("DEGREE", { ...DEGREE, type: "degree",
+  status: deriveStatus(BLOCKS.filter(b => b.counts !== false).map(b => ITEMS.get(b.id).status)) });
+
+// Prerequisite / progression edges: only between items that are in the graph.
+const EDGES = [];
+for (const [code, p] of Object.entries(PRE)) {
+  if (!ITEMS.has(code)) continue;
+  for (const g of p.pre || []) {
+    const inG = g.filter(c => ITEMS.has(c));
+    inG.forEach(s => EDGES.push({ s, t: code, kind: inG.length > 1 ? "alt" : "prereq" }));
+  }
+  for (const g of p.preco || []) g.filter(c => ITEMS.has(c)).forEach(s => EDGES.push({ s, t: code, kind: "preco" }));
+}
+REQS["REQ:ADMIT"].from.forEach(s => EDGES.push({ s, t: "REQ:ADMIT", kind: "fulfills" }));
+for (const [cid, c] of Object.entries(CHOICES)) c.options.forEach(o => EDGES.push({ s: o, t: cid, kind: "fulfills" }));
+
+const IN = new Map(), OUT = new Map();
+for (const e of EDGES) {
+  if (!IN.has(e.t)) IN.set(e.t, []); IN.get(e.t).push(e);
+  if (!OUT.has(e.s)) OUT.set(e.s, []); OUT.get(e.s).push(e);
+}
+
+function closure(id, dir) {
+  const nodes = new Set(), edges = new Set(), stack = [id];
+  while (stack.length) {
+    const v = stack.pop();
+    for (const e of (dir === "up" ? IN : OUT).get(v) || []) {
+      edges.add(e);
+      const w = dir === "up" ? e.s : e.t;
+      if (!nodes.has(w)) { nodes.add(w); stack.push(w); }
+    }
+  }
+  return { nodes, edges };
+}
+
+// Eligibility (strict prerequisites only; pre-or-coreqs may be taken together).
+//  now     = needed, every prerequisite group has a completed course
+//  next    = needed, every group has a completed or in-progress course
+//  blocked = needed, something is still missing
+function prereqGroupsState(code) {
+  const p = PRE[code];
+  if (!p || !p.pre) return "now";
+  let now = true, next = true;
+  for (const g of p.pre) {
+    const sts = g.filter(c => ITEMS.has(c)).map(c => ITEMS.get(c).status);
+    if (!sts.includes("complete")) now = false;
+    if (!sts.some(s => s === "complete" || s === "in_progress")) next = false;
+  }
+  return now ? "now" : next ? "next" : "blocked";
+}
+const ELIG = new Map();
+for (const it of ITEMS.values()) {
+  if (it.type === "course" && it.status === "needed") ELIG.set(it.id, prereqGroupsState(it.id));
+}
+for (const [cid, c] of Object.entries(CHOICES)) {
+  if (ITEMS.get(cid).status !== "needed") continue;
+  const es = c.options.map(o => ELIG.get(o));
+  ELIG.set(cid, es.includes("now") ? "now" : es.includes("next") ? "next" : "blocked");
+}
+const elig = id => ELIG.get(id) || null;
+
+// Credits applied to the degree: distinct courses in counting blocks.
+const counted = new Set();
+BLOCKS.filter(b => b.counts !== false).forEach(b => b.items.forEach(([id]) => { if (ITEMS.get(id).type === "course") counted.add(id); }));
+let credComplete = 0, credIP = 0;
+counted.forEach(id => { const c = ITEMS.get(id); if (c.status === "complete") credComplete += c.credits; else if (c.status === "in_progress") credIP += c.credits; });
+if (credComplete + credIP !== DEGREE.applied)
+  console.warn(`Computed applied credits ${credComplete + credIP} differ from audit (${DEGREE.applied}).`);
+
+/* =====================================================================
+   THEME / PALETTE (SVG uses literal colors so PNG export is self-contained)
+   ===================================================================== */
+const PALETTES = {
+  light: { bg: "#f5f7fa", dot: "#d9e0e8", surface: "#ffffff", text: "#0f172a", muted: "#526070", faint: "#9aa6b5", border: "#d5dce5",
+    complete: { fill: "#e3f6ea", stroke: "#15803d" }, in_progress: { fill: "#fff3d6", stroke: "#b45309" },
+    needed: { fill: "#ffffff", stroke: "#1e293b" }, open: { fill: "#f8fafc", stroke: "#64748b" },
+    eligible: "#0284c7", accent: "#7c3aed", edge: "#8593a5", up: "#0284c7", down: "#db2777", sel: "#7c3aed" },
+  dark: { bg: "#0b0f14", dot: "#1c2530", surface: "#121820", text: "#e8eef5", muted: "#9aa7b6", faint: "#5b6776", border: "#2a3441",
+    complete: { fill: "#0f2d1d", stroke: "#3ccf7a" }, in_progress: { fill: "#33260a", stroke: "#f5b938" },
+    needed: { fill: "#151b23", stroke: "#dbe3ec" }, open: { fill: "#10161d", stroke: "#8b98a8" },
+    eligible: "#38bdf8", accent: "#a78bfa", edge: "#6f7d8f", up: "#38bdf8", down: "#f472b6", sel: "#a78bfa" },
+};
+const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif';
+
+const store = {
+  get(k) { try { return localStorage.getItem("degmap:" + k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem("degmap:" + k, v); } catch {} },
+};
+const state = {
+  view: "flow", filter: "all", sel: null, redact: store.get("redact") === "1",
+  theme: store.get("theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"),
+};
+const P = () => PALETTES[state.theme];
+
+/* =====================================================================
+   LAYOUT: layered DAG (Sugiyama-style) for the prerequisite flow
+   ===================================================================== */
+const NW = 212, NH = 60;
+const PREFIX_RANK = { ENGL: 0, CSCI: 1, "REQ:": 1.6, "CHOI": 1.7, MATH: 2, STAT: 3, PHYS: 4, CHEM: 5, ECOL: 6 };
+const rankOf = id => (PREFIX_RANK[id.slice(0, 4)] ?? 9) * 10000 + (parseInt(id.replace(/\D/g, "")) || 0);
+
+function layered(ids, edges, GX) {
+  const out = new Map(ids.map(i => [i, []])), inn = new Map(ids.map(i => [i, []]));
+  edges.forEach(e => { out.get(e.s).push(e.t); inn.get(e.t).push(e.s); });
+  const indeg = new Map(ids.map(i => [i, inn.get(i).length]));
+  const q = ids.filter(i => !indeg.get(i)).sort((a, b) => rankOf(a) - rankOf(b)), topo = [];
+  while (q.length) {
+    const v = q.shift(); topo.push(v);
+    for (const w of out.get(v)) { indeg.set(w, indeg.get(w) - 1); if (!indeg.get(w)) q.push(w); }
+  }
+  if (topo.length !== ids.length) throw new Error("Prerequisite graph has a cycle");
+  const L = new Map();
+  topo.forEach(v => L.set(v, Math.max(0, ...inn.get(v).map(u => L.get(u) + 1))));
+  [...topo].reverse().forEach(v => { if (!inn.get(v).length && out.get(v).length) L.set(v, Math.min(...out.get(v).map(w => L.get(w))) - 1); });
+
+  const nL = Math.max(...L.values()) + 1;
+  const N = new Map();
+  ids.forEach(id => N.set(id, { id, layer: L.get(id), dummy: false, h: NH, key: rankOf(id) }));
+  const segs = [], routes = [];
+  edges.forEach((e, i) => {
+    const path = [e.s]; let prev = e.s;
+    for (let l = L.get(e.s) + 1; l < L.get(e.t); l++) {
+      const d = `~${i}_${l}`;
+      N.set(d, { id: d, layer: l, dummy: true, h: 4, key: rankOf(e.s) + 0.5 });
+      segs.push([prev, d]); path.push(d); prev = d;
+    }
+    segs.push([prev, e.t]); path.push(e.t); routes.push({ e, path });
+  });
+  const up = new Map(), dn = new Map();
+  N.forEach((_, id) => { up.set(id, []); dn.set(id, []); });
+  segs.forEach(([a, b]) => { dn.get(a).push(b); up.get(b).push(a); });
+
+  let layers = Array.from({ length: nL }, () => []);
+  N.forEach(n => layers[n.layer].push(n.id));
+  layers.forEach(Lr => Lr.sort((a, b) => N.get(a).key - N.get(b).key));
+  const pos = new Map();
+  const index = () => layers.forEach(Lr => Lr.forEach((id, i) => pos.set(id, i)));
+  index();
+
+  const crossBetween = l => {
+    let c = 0; const S = [];
+    layers[l].forEach(a => dn.get(a).forEach(b => S.push([pos.get(a), pos.get(b)])));
+    for (let i = 0; i < S.length; i++) for (let j = i + 1; j < S.length; j++)
+      if ((S[i][0] - S[j][0]) * (S[i][1] - S[j][1]) < 0) c++;
+    return c;
+  };
+  const totalCross = () => { let c = 0; for (let l = 0; l < nL - 1; l++) c += crossBetween(l); return c; };
+  const pairCross = (u, v) => {
+    let c = 0;
+    for (const nb of [up, dn]) for (const a of nb.get(u)) for (const b of nb.get(v)) if (pos.get(a) > pos.get(b)) c++;
+    return c;
+  };
+  const transpose = () => {
+    let improved = true, guard = 0;
+    while (improved && guard++ < 12) {
+      improved = false;
+      for (const Lr of layers) for (let i = 0; i < Lr.length - 1; i++) {
+        const u = Lr[i], v = Lr[i + 1];
+        if (pairCross(v, u) < pairCross(u, v)) { Lr[i] = v; Lr[i + 1] = u; pos.set(v, i); pos.set(u, i + 1); improved = true; }
+      }
+    }
+  };
+  let best = layers.map(l => l.slice()), bestC = totalCross();
+  for (let it = 0; it < 28; it++) {
+    const down = it % 2 === 0;
+    const order = down ? [...Array(nL).keys()].slice(1) : [...Array(nL).keys()].reverse().slice(1);
+    for (const l of order) {
+      const nb = down ? up : dn;
+      const bc = new Map(layers[l].map(id => {
+        const ns = nb.get(id);
+        return [id, ns.length ? ns.reduce((s, x) => s + pos.get(x), 0) / ns.length : pos.get(id)];
+      }));
+      layers[l].sort((a, b) => bc.get(a) - bc.get(b) || pos.get(a) - pos.get(b));
+      layers[l].forEach((id, i) => pos.set(id, i));
+    }
+    transpose();
+    const c = totalCross();
+    if (c < bestC) { bestC = c; best = layers.map(l => l.slice()); }
+  }
+  layers = best; index();
+
+  // Vertical placement: pull each node toward its neighbours, keep order and spacing
+  // (weighted isotonic regression / pool-adjacent-violators per layer).
+  const cy = new Map();
+  layers.forEach(Lr => {
+    let y = 0;
+    Lr.forEach((id, i) => { if (i) y += gapBetween(Lr[i - 1], id); cy.set(id, y); });
+    const mid = y / 2; Lr.forEach(id => cy.set(id, cy.get(id) - mid));
+  });
+  function gapBetween(a, b) {
+    const A = N.get(a), B = N.get(b);
+    return A.h / 2 + B.h / 2 + (A.dummy || B.dummy ? (A.dummy && B.dummy ? 10 : 16) : 24);
+  }
+  function place(Lr) {
+    const n = Lr.length, o = [0], z = [], w = [];
+    for (let i = 1; i < n; i++) o[i] = o[i - 1] + gapBetween(Lr[i - 1], Lr[i]);
+    Lr.forEach((id, i) => {
+      let s = 0, ws = 0;
+      for (const x of [...up.get(id), ...dn.get(id)]) {
+        const wt = N.get(id).dummy && N.get(x).dummy ? 4 : N.get(id).dummy || N.get(x).dummy ? 2 : 1;
+        s += wt * cy.get(x); ws += wt;
+      }
+      z[i] = (ws ? s / ws : cy.get(id)) - o[i]; w[i] = ws || 0.3;
+    });
+    const blocks = [];
+    for (let i = 0; i < n; i++) {
+      blocks.push({ v: z[i], w: w[i], n: 1 });
+      while (blocks.length > 1 && blocks[blocks.length - 2].v > blocks[blocks.length - 1].v) {
+        const b2 = blocks.pop(), b1 = blocks.pop();
+        blocks.push({ v: (b1.v * b1.w + b2.v * b2.w) / (b1.w + b2.w), w: b1.w + b2.w, n: b1.n + b2.n });
+      }
+    }
+    let i = 0;
+    for (const b of blocks) for (let k = 0; k < b.n; k++, i++) cy.set(Lr[i], b.v + o[i]);
+  }
+  for (let it = 0; it < 80; it++) {
+    const order = it % 2 ? [...layers].reverse() : layers;
+    order.forEach(place);
+  }
+  let minY = Infinity;
+  N.forEach((n, id) => minY = Math.min(minY, cy.get(id) - n.h / 2));
+  const P = new Map();
+  N.forEach((n, id) => P.set(id, { x: n.layer * (NW + GX), cy: cy.get(id) - minY, dummy: n.dummy, w: NW, h: n.h }));
+  return { pos: P, routes, nL };
+}
+
+function buildFlowLayout() {
+  const GX = 96;
+  const ids = [...new Set(EDGES.flatMap(e => [e.s, e.t]))];
+  const L = layered(ids, EDGES, GX);
+  const nodes = [];
+  ids.forEach(id => { const p = L.pos.get(id); nodes.push({ id, x: p.x, y: p.cy - NH / 2, w: NW, h: NH }); });
+  let maxY = 0; nodes.forEach(n => maxY = Math.max(maxY, n.y + n.h));
+  const width = L.nL * (NW + GX) - GX;
+
+  // Shelf: items with no prerequisite links.
+  const inFlow = new Set(ids);
+  const open = [...ITEMS.values()].filter(it => it.type === "req" && !inFlow.has(it.id)).map(it => it.id);
+  const rest = [...ITEMS.values()].filter(it => it.type === "course" && !inFlow.has(it.id))
+    .sort((a, b) => ({ in_progress: 0, needed: 1, complete: 2 }[a.status] - { in_progress: 0, needed: 1, complete: 2 }[b.status]) || a.id.localeCompare(b.id))
+    .map(it => it.id);
+  const step = NW + 24, cols = Math.max(4, Math.floor((width + 24) / step));
+  const headings = [];
+  let y = maxY + 96;
+  for (const [title, list] of [["Open requirements: pick a course to fill each", open], ["No prerequisite links (core, gen-ed & electives)", rest]]) {
+    headings.push({ text: title, x: 0, y });
+    y += 22;
+    list.forEach((id, i) => nodes.push({ id, x: (i % cols) * step, y: y + Math.floor(i / cols) * (NH + 20), w: NW, h: NH }));
+    y += Math.ceil(list.length / cols) * (NH + 20) + 50;
+  }
+  return { nodes, routes: L.routes, layerPos: L.pos, headings, dagBottom: maxY, width };
+}
+
+/* Requirement map: degree → blocks (columns) → items (comb tree). */
+function buildReqLayout() {
+  const BW = 216, BH = 96, COL = BW + 40, DW = 380, DH = 108, BY = 190, CY0 = BY + BH + 26, ROW = NH + 14;
+  const nodes = [], combs = [], links = [];
+  const totalW = BLOCKS.length * COL - 40;
+  const dx = (totalW - DW) / 2;
+  nodes.push({ id: "DEGREE", x: dx, y: 0, w: DW, h: DH });
+  BLOCKS.forEach((b, i) => {
+    const x = i * COL;
+    nodes.push({ id: b.id, x, y: BY, w: BW, h: BH });
+    links.push({ block: b.id, x1: dx + DW / 2, y1: DH, x2: x + BW / 2, y2: BY });
+    let y = CY0; const spineX = x + 10, ticks = [];
+    for (const [id] of b.items) {
+      nodes.push({ id, x: x + 22, y, w: BW - 22, h: NH, block: b.id });
+      ticks.push({ id, y: y + NH / 2 });
+      y += ROW;
+      if (ITEMS.get(id).type === "choice") {
+        const ot = [], top = y - 14;
+        for (const o of CHOICES[id].options) {
+          nodes.push({ id: o, x: x + 44, y, w: BW - 44, h: NH, block: b.id });
+          ot.push({ id: o, y: y + NH / 2 }); y += ROW;
+        }
+        combs.push({ block: b.id, parent: id, x: x + 32, y0: top, ticks: ot, tx: x + 44 });
+      }
+    }
+    combs.push({ block: b.id, parent: b.id, x: spineX, y0: BY + BH, ticks, tx: x + 22 });
+  });
+  return { nodes, combs, links };
+}
+
+/* =====================================================================
+   RENDERING
+   ===================================================================== */
+const NS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById("svg");
+function el(tag, attrs, parent) {
+  const n = document.createElementNS(NS, tag);
+  for (const k in attrs) if (attrs[k] != null) n.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(n);
+  return n;
+}
+const mctx = document.createElement("canvas").getContext("2d");
+function fitText(text, size, weight, max) {
+  mctx.font = `${weight} ${size}px ${FONT}`;
+  if (mctx.measureText(text).width <= max) return text;
+  let lo = 0, hi = text.length;
+  while (lo < hi) { const m = (lo + hi + 1) >> 1; if (mctx.measureText(text.slice(0, m) + "…").width <= max) lo = m; else hi = m - 1; }
+  return text.slice(0, lo).trimEnd() + "…";
+}
+function txt(parent, x, y, s, size, weight, fill, anchor) {
+  const t = el("text", { x, y, "font-size": size, "font-weight": weight, fill, "text-anchor": anchor || null }, parent);
+  t.textContent = s; return t;
+}
+
+function statusIcon(g, it, cx, cy) {
+  const pal = P(), st = it.status, c = (it.type === "course" ? pal[st] : st === "needed" ? pal.open : pal[st]).stroke;
+  if (it.type === "choice") {
+    el("path", { d: "M0 -7.5 L7.5 0 L0 7.5 L-7.5 0 Z", transform: `translate(${cx},${cy})`, fill: st === "needed" ? "none" : c, stroke: c, "stroke-width": 2 }, g);
+    return;
+  }
+  if (it.milestone) {
+    el("path", { d: "M-5 7 L-5 -7 L6 -3.5 L-5 0", transform: `translate(${cx},${cy})`, fill: "none", stroke: c, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, g);
+    return;
+  }
+  if (st === "complete") {
+    el("circle", { cx, cy, r: 8, fill: c }, g);
+    el("path", { d: `M${cx - 3.6} ${cy + .2} L${cx - 1} ${cy + 2.9} L${cx + 3.8} ${cy - 2.6}`, fill: "none", stroke: pal.bg, "stroke-width": 2.2, "stroke-linecap": "round", "stroke-linejoin": "round" }, g);
+  } else if (st === "in_progress") {
+    el("circle", { cx, cy, r: 7, fill: "none", stroke: c, "stroke-width": 2 }, g);
+    el("path", { d: `M${cx} ${cy - 7} A7 7 0 0 1 ${cx} ${cy + 7} Z`, fill: c }, g);
+  } else {
+    el("circle", { cx, cy, r: 7, fill: "none", stroke: c, "stroke-width": 2, "stroke-dasharray": it.type === "req" ? "3 2.5" : null }, g);
+  }
+}
+
+function drawItemNode(parent, n) {
+  const it = ITEMS.get(n.id), pal = P(), { w, h } = n;
+  const g = el("g", { transform: `translate(${n.x},${n.y})`, "data-id": it.id, class: "node" }, parent);
+  const e = elig(it.id);
+  if (e === "now" || e === "next")
+    el("rect", { x: -6, y: -6, width: w + 12, height: h + 12, rx: 15, fill: "none", stroke: pal.eligible,
+      "stroke-width": e === "now" ? 3 : 2, "stroke-dasharray": e === "now" ? null : "6 5" }, g);
+  const sel = el("rect", { x: -9, y: -9, width: w + 18, height: h + 18, rx: 17, fill: "none", stroke: pal.sel, "stroke-width": 3.5, class: "selring" }, g);
+  sel.style.opacity = 0;
+  const isCourse = it.type === "course";
+  const sty = isCourse ? pal[it.status] : it.status === "needed" ? pal.open : pal[it.status];
+  el("rect", { width: w, height: h, rx: 11, fill: sty.fill, stroke: sty.stroke,
+    "stroke-width": isCourse && it.status === "needed" ? 2.6 : 1.8,
+    "stroke-dasharray": isCourse ? null : "7 4" }, g);
+  statusIcon(g, it, 19, 22);
+  if (isCourse) {
+    txt(g, 34, 27, it.id, 16, 700, pal.text);
+    txt(g, w - 12, 27, `${it.credits} cr`, 12.5, 600, pal.muted, "end");
+    const sub = state.redact ? STATUS_LABEL[it.status] : it.title;
+    txt(g, 14, 47, fitText(sub, 13, 400, w - 26), 13, 400, pal.muted);
+  } else {
+    txt(g, 34, 27, fitText(it.label, 14.5, 700, w - 44), 14.5, 700, pal.text);
+    const sub = it.type === "choice" ? `Pick 1 of ${it.options.length}` : it.sub;
+    txt(g, 14, 47, fitText(sub, 13, 400, w - 26), 13, 400, pal.muted);
+  }
+  return g;
+}
+
+function progressBar(g, x, y, w, h, parts, pal) {
+  el("rect", { x, y, width: w, height: h, rx: h / 2, fill: pal.bg, stroke: pal.border }, g);
+  const total = parts.reduce((s, p) => s + p[0], 0) || 1;
+  const clip = "clip" + Math.random().toString(36).slice(2, 8);
+  const cp = el("clipPath", { id: clip }, g);
+  el("rect", { x, y, width: w, height: h, rx: h / 2 }, cp);
+  let cx = x;
+  const gg = el("g", { "clip-path": `url(#${clip})` }, g);
+  for (const [v, color] of parts) { if (!v) continue; const ww = w * v / total; el("rect", { x: cx, y, width: ww, height: h, fill: color }, gg); cx += ww; }
+}
+
+function drawBlockNode(parent, n) {
+  const it = ITEMS.get(n.id), pal = P(), { w, h } = n;
+  const g = el("g", { transform: `translate(${n.x},${n.y})`, "data-id": it.id, class: "node" }, parent);
+  const sel = el("rect", { x: -9, y: -9, width: w + 18, height: h + 18, rx: 18, fill: "none", stroke: pal.sel, "stroke-width": 3.5, class: "selring" }, g);
+  sel.style.opacity = 0;
+  const excess = it.counts === false;
+  const c = excess ? pal.faint : (it.status === "needed" ? pal.open : pal[it.status]).stroke;
+  el("rect", { width: w, height: h, rx: 13, fill: pal.surface, stroke: c, "stroke-width": 2, "stroke-dasharray": excess ? "6 4" : null }, g);
+  el("rect", { x: 0, y: 14, width: 5, height: h - 28, rx: 2.5, fill: c }, g);
+  txt(g, 18, 27, fitText(it.short, 15, 700, w - 30), 15, 700, pal.text);
+  const kids = it.childIds.map(id => ITEMS.get(id));
+  const cnt = s => kids.filter(k => k.status === s).length;
+  const audit = it.audit ? it.audit.toLowerCase().replace("-", " ") : (excess ? "not counted" : "");
+  const cred = it.applied != null ? ` · ${it.applied}${it.req != null ? "/" + it.req : ""} cr` : "";
+  txt(g, 18, 47, fitText(`Audit: ${audit}${cred}`, 12.5, 400, w - 30), 12.5, 400, pal.muted);
+  progressBar(g, 18, 59, w - 36, 9, [[cnt("complete"), pal.complete.stroke], [cnt("in_progress"), pal.in_progress.stroke], [cnt("needed"), pal.border]], pal);
+  const parts = [];
+  if (cnt("complete")) parts.push(`${cnt("complete")} done`);
+  if (cnt("in_progress")) parts.push(`${cnt("in_progress")} in progress`);
+  if (cnt("needed")) parts.push(`${cnt("needed")} needed`);
+  txt(g, 18, 85, parts.join(" · "), 12, 500, pal.muted);
+  return g;
+}
+
+function drawDegreeNode(parent, n) {
+  const it = ITEMS.get("DEGREE"), pal = P(), { w, h } = n;
+  const g = el("g", { transform: `translate(${n.x},${n.y})`, "data-id": "DEGREE", class: "node" }, parent);
+  const sel = el("rect", { x: -9, y: -9, width: w + 18, height: h + 18, rx: 22, fill: "none", stroke: pal.sel, "stroke-width": 3.5, class: "selring" }, g);
+  sel.style.opacity = 0;
+  el("rect", { width: w, height: h, rx: 18, fill: pal.surface, stroke: pal.accent, "stroke-width": 2.5 }, g);
+  txt(g, w / 2, 34, it.label, 21, 750, pal.text, "middle");
+  txt(g, w / 2, 56, "University of Georgia · Fall 2026 Bulletin", 13, 400, pal.muted, "middle");
+  progressBar(g, 26, 70, w - 52, 10, [[credComplete, pal.complete.stroke], [credIP, pal.in_progress.stroke], [DEGREE.req - credComplete - credIP, pal.border]], pal);
+  txt(g, w / 2, 99, `${credComplete + credIP} of ${DEGREE.req} credits applied`, 12.5, 600, pal.muted, "middle");
+  return g;
+}
+
+let R = {}; // render registry
+const LAYOUT = { flow: buildFlowLayout(), req: buildReqLayout() };
+
+function defs(pal) {
+  const d = el("defs", {}, svg);
+  const marker = (id, color) => {
+    const m = el("marker", { id, viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 11, markerHeight: 11, markerUnits: "userSpaceOnUse", orient: "auto" }, d);
+    el("path", { d: "M0,0.5 L10,5 L0,9.5 Z", fill: color }, m);
+  };
+  marker("a-edge", pal.edge); marker("a-acc", pal.accent); marker("a-up", pal.up); marker("a-down", pal.down);
+  const pat = el("pattern", { id: "dots", width: 24, height: 24, patternUnits: "userSpaceOnUse" }, d);
+  el("circle", { cx: 2, cy: 2, r: 1.3, fill: pal.dot }, pat);
+  return pat;
+}
+
+const EDGE_STYLE = {
+  prereq:   { dash: null, w: 2.2 },
+  alt:      { dash: "8 6", w: 2.2 },
+  preco:    { dash: "1.5 5.5", w: 2.6, cap: "round" },
+  fulfills: { dash: null, w: 1.8 },
+};
+
+function render() {
+  const pal = P();
+  svg.innerHTML = "";
+  svg.style.background = pal.bg;
+  const pat = defs(pal);
+  el("rect", { x: 0, y: 0, width: "100%", height: "100%", fill: pal.bg }, svg);
+  el("rect", { x: 0, y: 0, width: "100%", height: "100%", fill: "url(#dots)" }, svg);
+  const vp = el("g", { "font-family": FONT }, svg);
+  R = { pat, vp, nodes: new Map(), edges: [], combs: [], links: [] };
+  const reg = (id, g) => { if (!R.nodes.has(id)) R.nodes.set(id, []); R.nodes.get(id).push(g); };
+
+  if (state.view === "flow") {
+    const Lo = LAYOUT.flow, gE = el("g", {}, vp), gN = el("g", {}, vp);
+    const pos = new Map(Lo.nodes.map(n => [n.id, n]));
+    // Port offsets so several edges into / out of one node fan out.
+    const ptY = (id) => { const p = Lo.layerPos.get(id); return p.cy; };
+    const ins = new Map(), outs = new Map();
+    Lo.routes.forEach(r => {
+      const s = r.path[0], t = r.path[r.path.length - 1];
+      (outs.get(s) || outs.set(s, []).get(s)).push(r);
+      (ins.get(t) || ins.set(t, []).get(t)).push(r);
+    });
+    const portOff = new Map();
+    const assign = (map, side) => map.forEach((rs, id) => {
+      rs.sort((a, b) => ptY(side === "in" ? a.path[a.path.length - 2] : a.path[1]) - ptY(side === "in" ? b.path[b.path.length - 2] : b.path[1]));
+      const n = rs.length, span = n > 1 ? Math.min(NH - 22, (n - 1) * 11) : 0;
+      rs.forEach((r, i) => portOff.set(r.e.s + ">" + r.e.t + side, n > 1 ? -span / 2 + i * span / (n - 1) : 0));
+    });
+    assign(ins, "in"); assign(outs, "out");
+    Lo.routes.forEach(r => {
+      const s = r.path[0], t = r.path[r.path.length - 1], ps = Lo.layerPos.get(s), pt = Lo.layerPos.get(t);
+      let px = ps.x + NW, py = ps.cy + portOff.get(s + ">" + t + "out");
+      let d = `M${px},${py}`;
+      for (let i = 1; i < r.path.length; i++) {
+        const q = Lo.layerPos.get(r.path[i]);
+        const last = i === r.path.length - 1;
+        const qx = q.x - (last ? 1 : 0), qy = last ? pt.cy + portOff.get(s + ">" + t + "in") : q.cy;
+        const dx = (qx - px) * 0.5;
+        d += ` C${px + dx},${py} ${qx - dx},${qy} ${qx},${qy}`;
+        if (!last) { d += ` L${q.x + NW},${qy}`; px = q.x + NW; py = qy; }
+      }
+      const st = EDGE_STYLE[r.e.kind];
+      const color = r.e.kind === "fulfills" ? pal.accent : pal.edge;
+      const p = el("path", { d, fill: "none", stroke: color, "stroke-width": st.w, "stroke-dasharray": st.dash, "stroke-linecap": st.cap || "butt",
+        "marker-end": `url(#${r.e.kind === "fulfills" ? "a-acc" : "a-edge"})`, class: "edge" }, gE);
+      R.edges.push({ el: p, e: r.e, base: { color, marker: r.e.kind === "fulfills" ? "a-acc" : "a-edge", w: st.w } });
+    });
+    Lo.headings.forEach(h => {
+      txt(vp, h.x, h.y, h.text.toUpperCase(), 13, 700, pal.muted).setAttribute("letter-spacing", "1.2");
+      el("line", { x1: h.x, x2: Lo.width, y1: h.y + 8, y2: h.y + 8, stroke: pal.border, "stroke-width": 1 }, vp);
+    });
+    txt(vp, 0, -26, "PROGRESSION →  each arrow points from a course to the course it unlocks", 13, 700, pal.muted).setAttribute("letter-spacing", "1.2");
+    Lo.nodes.forEach(n => reg(n.id, drawItemNode(gN, n)));
+  } else {
+    const Lo = LAYOUT.req, gE = el("g", {}, vp), gN = el("g", {}, vp);
+    Lo.links.forEach(l => {
+      const my = (l.y1 + l.y2) / 2;
+      const p = el("path", { d: `M${l.x1},${l.y1} C${l.x1},${my} ${l.x2},${my} ${l.x2},${l.y2}`, fill: "none", stroke: pal.faint, "stroke-width": 2, class: "edge" }, gE);
+      R.links.push({ el: p, block: l.block });
+    });
+    Lo.combs.forEach(c => {
+      const lastY = c.ticks[c.ticks.length - 1].y;
+      const sp = el("path", { d: `M${c.x},${c.y0} V${lastY - 10} Q${c.x},${lastY} ${c.x + 10},${lastY}`, fill: "none", stroke: pal.faint, "stroke-width": 2, class: "edge" }, gE);
+      R.combs.push({ el: sp, parent: c.parent, child: null, block: c.block });
+      c.ticks.forEach((t, i) => {
+        const d = i === c.ticks.length - 1 ? `M${c.x + 10},${t.y} H${c.tx}` : `M${c.x},${t.y} H${c.tx}`;
+        const p = el("path", { d, fill: "none", stroke: pal.faint, "stroke-width": 2, class: "edge" }, gE);
+        R.combs.push({ el: p, parent: c.parent, child: t.id, block: c.block });
+      });
+    });
+    Lo.nodes.forEach(n => {
+      const it = ITEMS.get(n.id);
+      const g = it.type === "degree" ? drawDegreeNode(gN, n) : it.type === "block" ? drawBlockNode(gN, n) : drawItemNode(gN, n);
+      reg(n.id, g);
+    });
+  }
+  applyView();
+  applyState();
+}
+
+/* =====================================================================
+   STATE: selection, filter, highlighting
+   ===================================================================== */
+function passFilter(it) {
+  if (it.type === "block" || it.type === "degree") return true;
+  switch (state.filter) {
+    case "needed": return it.status === "needed";
+    case "in_progress": return it.status === "in_progress";
+    case "complete": return it.status === "complete";
+    case "eligible": return elig(it.id) === "now";
+    default: return true;
+  }
+}
+function applyState() {
+  const pal = P();
+  let focus = null, upE = new Set(), dnE = new Set();
+  const sel = state.sel && ITEMS.get(state.sel);
+  if (sel && sel.type !== "degree") {
+    focus = new Set([sel.id, "DEGREE"]);
+    if (sel.type === "block") sel.childIds.forEach(i => { focus.add(i); if (CHOICES[i]) CHOICES[i].options.forEach(o => focus.add(o)); });
+    else {
+      const u = closure(sel.id, "up"), d = closure(sel.id, "down");
+      u.nodes.forEach(n => focus.add(n)); d.nodes.forEach(n => focus.add(n));
+      upE = u.edges; dnE = d.edges;
+      if (CHOICES[sel.id]) CHOICES[sel.id].options.forEach(o => focus.add(o));
+      [...focus].forEach(n => (MEMBER.get(n) || []).forEach(m => focus.add(m.block)));
+    }
+  }
+  const op = new Map();
+  R.nodes.forEach((gs, id) => {
+    const it = ITEMS.get(id);
+    const f = passFilter(it), s = !focus || focus.has(id);
+    const o = f && s ? 1 : 0.13;
+    op.set(id, o);
+    gs.forEach(g => {
+      g.style.opacity = o;
+      g.querySelector(".selring").style.opacity = state.sel === id ? 1 : 0;
+    });
+  });
+  R.edges.forEach(({ el: p, e, base }) => {
+    let color = base.color, marker = base.marker, w = base.w, o;
+    if (upE.has(e)) { color = pal.up; marker = "a-up"; w = base.w + 1.2; o = 1; }
+    else if (dnE.has(e)) { color = pal.down; marker = "a-down"; w = base.w + 1.2; o = 1; }
+    else o = focus ? 0.07 : Math.min(op.get(e.s), op.get(e.t)) < 1 ? 0.1 : 0.95;
+    p.setAttribute("stroke", color); p.setAttribute("marker-end", `url(#${marker})`); p.setAttribute("stroke-width", w);
+    p.style.opacity = o;
+  });
+  R.links.forEach(l => { l.el.style.opacity = op.get(l.block) ?? 1; });
+  R.combs.forEach(c => {
+    const a = c.child ? op.get(c.child) : 1, b = op.get(c.parent) ?? 1;
+    c.el.style.opacity = Math.min(a, b) < 1 ? 0.15 : 1;
+  });
+  renderPanel();
+}
+
+function select(id, center) {
+  state.sel = id && ITEMS.has(id) ? id : null;
+  applyState();
+  if (center && state.sel) centerOn(state.sel);
+}
+
+/* =====================================================================
+   PAN / ZOOM
+   ===================================================================== */
+const view = { k: 1, x: 40, y: 60 };
+function applyView() {
+  const t = `translate(${view.x},${view.y}) scale(${view.k})`;
+  if (R.vp) R.vp.setAttribute("transform", t);
+  if (R.pat) R.pat.setAttribute("patternTransform", t);
+}
+let anim = null;
+function animateTo(k, x, y) {
+  cancelAnimationFrame(anim);
+  const from = { ...view }, t0 = performance.now(), D = 380;
+  const step = now => {
+    const t = Math.min(1, (now - t0) / D), e = 1 - Math.pow(1 - t, 3);
+    view.k = from.k + (k - from.k) * e; view.x = from.x + (x - from.x) * e; view.y = from.y + (y - from.y) * e;
+    applyView(); if (t < 1) anim = requestAnimationFrame(step);
+  };
+  anim = requestAnimationFrame(step);
+}
+function fit(animate = true) {
+  const b = R.vp.getBBox(), r = svg.getBoundingClientRect(), pad = 48;
+  const k = Math.min((r.width - pad * 2) / b.width, (r.height - pad * 2 - 30) / b.height, 1.1);
+  const x = (r.width - b.width * k) / 2 - b.x * k, y = (r.height - b.height * k) / 2 - b.y * k + 15;
+  animate ? animateTo(k, x, y) : (Object.assign(view, { k, x, y }), applyView());
+}
+function centerOn(id) {
+  const g = (R.nodes.get(id) || [])[0]; if (!g) return;
+  const bb = g.getBBox(), m = g.transform.baseVal.consolidate().matrix;
+  const cx = m.e + bb.x + bb.width / 2, cy = m.f + bb.y + bb.height / 2;
+  const r = svg.getBoundingClientRect(), k = Math.max(view.k, 0.95);
+  animateTo(k, r.width / 2 - cx * k, r.height / 2 - cy * k);
+}
+function zoomBy(f, mx, my) {
+  const r = svg.getBoundingClientRect();
+  if (mx == null) { mx = r.width / 2; my = r.height / 2; }
+  const k2 = Math.min(3, Math.max(0.12, view.k * f));
+  view.x = mx - (mx - view.x) * k2 / view.k; view.y = my - (my - view.y) * k2 / view.k; view.k = k2;
+  applyView();
+}
+svg.addEventListener("wheel", e => {
+  e.preventDefault(); cancelAnimationFrame(anim);
+  const r = svg.getBoundingClientRect();
+  zoomBy(Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0018)), e.clientX - r.left, e.clientY - r.top);
+}, { passive: false });
+let drag = null;
+svg.addEventListener("pointerdown", e => {
+  if (e.button !== 0) return;
+  cancelAnimationFrame(anim);
+  drag = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: false, id: e.pointerId };
+});
+svg.addEventListener("pointermove", e => {
+  if (drag && drag.id === e.pointerId) {
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (!drag.moved && Math.hypot(dx, dy) > 4) { drag.moved = true; svg.classList.add("panning"); svg.setPointerCapture(e.pointerId); hideTip(); }
+    if (drag.moved) { view.x = drag.vx + dx; view.y = drag.vy + dy; applyView(); }
+    return;
+  }
+  const g = e.target.closest && e.target.closest(".node");
+  g ? showTip(g.getAttribute("data-id"), e) : hideTip();
+});
+svg.addEventListener("pointerup", e => {
+  if (!drag) return;
+  const wasMoved = drag.moved; drag = null; svg.classList.remove("panning");
+  if (wasMoved) return;
+  const g = e.target.closest && e.target.closest(".node");
+  select(g ? g.getAttribute("data-id") : null);
+});
+svg.addEventListener("pointerleave", hideTip);
+
+/* Tooltip */
+const tip = document.getElementById("tooltip");
+function showTip(id, e) {
+  const it = ITEMS.get(id), r = document.getElementById("stage").getBoundingClientRect();
+  let html = "";
+  if (it.type === "course") {
+    const el2 = elig(id);
+    html = `<b>${id}</b> · ${it.credits} cr${state.redact ? "" : `<div class="t">${esc(it.title)}</div>`}<div>${STATUS_LABEL[it.status]}${el2 === "now" ? " · eligible now" : el2 === "next" ? " · eligible after this term" : ""}</div>`;
+  } else if (it.type === "block") html = `<b>${esc(it.label)}</b><div class="t">${STATUS_LABEL[it.status]} (derived)</div>`;
+  else if (it.type === "degree") html = `<b>${esc(it.label)}</b><div class="t">${credComplete + credIP} of ${DEGREE.req} credits applied</div>`;
+  else html = `<b>${esc(it.label)}</b><div class="t">${esc(it.type === "choice" ? "Pick 1 of " + it.options.length : it.sub)}</div><div>${STATUS_LABEL[it.status]}</div>`;
+  tip.innerHTML = html;
+  let x = e.clientX - r.left + 16, y = e.clientY - r.top + 16;
+  if (x + 300 > r.width) x = e.clientX - r.left - 16 - tip.offsetWidth;
+  if (y + tip.offsetHeight > r.height) y = e.clientY - r.top - 16 - tip.offsetHeight;
+  tip.style.left = x + "px"; tip.style.top = y + "px"; tip.style.opacity = 1;
+}
+function hideTip() { tip.style.opacity = 0; }
+
+/* =====================================================================
+   SIDE PANEL
+   ===================================================================== */
+const panel = document.getElementById("panel");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const blockName = id => ITEMS.get(id).short;
+function chip(id) {
+  const it = ITEMS.get(id);
+  if (!it) return `<span class="chip ext" title="Not in your audit"><span class="dot ext"></span>${esc(id)}</span>`;
+  const name = it.type === "course" ? it.id : it.type === "block" ? it.short : it.label;
+  return `<button class="chip" data-go="${esc(id)}"><span class="dot ${it.status}"></span>${esc(name)}</button>`;
+}
+const pill = s => `<span class="pill ${s}">${STATUS_LABEL[s]}</span>`;
+const eligPill = e => e === "now" ? `<span class="pill elig">Eligible now</span>` : e === "next" ? `<span class="pill elig" style="border-style:dashed">Eligible after this term</span>` : e === "blocked" ? `<span class="pill muted">Prerequisites not met</span>` : "";
+const ELIG_TEXT = { now: "Now", next: "After this term", blocked: "Not yet" };
+
+function groupsHTML(groups) {
+  return groups.map((g, i) => {
+    const sts = g.filter(c => ITEMS.has(c)).map(c => ITEMS.get(c).status);
+    const ok = sts.includes("complete") ? ["complete", "Met"] : sts.includes("in_progress") ? ["in_progress", "In progress"] : ["needed", "Not met"];
+    const chips = g.map(chip).join(`<span class="or">or</span>`);
+    return (i ? `<div class="and">and</div>` : "") + `<div class="group">${chips}<span class="ok" style="color:var(--${ok[0] === "complete" ? "complete" : ok[0] === "in_progress" ? "progress" : "muted"})">${ok[1]}</span></div>`;
+  }).join("");
+}
+
+function renderPanel() {
+  const id = state.sel;
+  if (!id) return panel.innerHTML = overviewHTML();
+  const it = ITEMS.get(id);
+  let h = "";
+  if (it.type === "course") {
+    const p = PRE[id], e = elig(id);
+    h += `<div style="display:flex;gap:6px;flex-wrap:wrap">${pill(it.status)}${eligPill(e)}</div>`;
+    h += `<h2>${esc(id)}</h2>${state.redact ? "" : `<p class="title">${esc(it.title)}</p>`}`;
+    h += `<dl class="facts"><div><dt>Credits</dt><dd>${it.credits}</dd></div><div><dt>Status</dt><dd>${STATUS_LABEL[it.status]}</dd></div><div><dt>Can take</dt><dd>${it.status === "needed" ? ELIG_TEXT[e] : "—"}</dd></div></dl>`;
+    h += `<h3>Counts toward</h3><ul>${(MEMBER.get(id) || []).map(m => `<li><button class="linkbtn" data-go="${m.block}">${esc(blockName(m.block))}</button><span class="req">${esc(m.req)}</span></li>`).join("")}</ul>`;
+    h += `<h3>Prerequisites</h3>`;
+    if (p && p.pre) h += groupsHTML(p.pre) + `<p class="src">Bulletin${p.undergrad ? " (undergraduate prerequisite)" : ""}: ${esc(p.text)}</p>`;
+    else h += `<p class="note">${it.bid ? "None listed in the Bulletin." : "Transfer / test-credit placeholder; not a Bulletin course."}</p>`;
+    if (p && p.preco) h += `<h3>Pre- or corequisite</h3>${groupsHTML(p.preco)}<p class="src">Bulletin: ${esc(p.precoText)}</p>`;
+    if (p && p.coText) h += `<h3>Corequisite</h3><div class="chips">${chip(p.coText)}</div>`;
+    const outs = OUT.get(id) || [], down = closure(id, "down").nodes;
+    h += `<h3>Unlocks</h3>`;
+    h += outs.length ? `<div class="chips">${outs.map(o => chip(o.t)).join("")}</div><p class="note">${down.size} item${down.size === 1 ? "" : "s"} downstream in total (highlighted in pink).</p>` : `<p class="note">Nothing in this audit lists ${esc(id)} as a prerequisite.</p>`;
+    if (it.bid) h += `<p style="margin-top:16px"><a class="ext" href="https://bulletin.uga.edu/Course/Details/${it.bid}" target="_blank" rel="noopener">View in UGA Bulletin ↗</a></p>`;
+  } else if (it.type === "req") {
+    h += `<div>${pill(it.status)}</div><h2>${esc(it.label)}</h2><p class="title">${esc(it.sub)}</p>`;
+    h += `<h3>Counts toward</h3><ul>${(MEMBER.get(id) || []).map(m => `<li><button class="linkbtn" data-go="${m.block}">${esc(blockName(m.block))}</button><span class="req">${esc(m.req)}</span></li>`).join("")}</ul>`;
+    h += `<h3>From the audit</h3><p>${esc(it.desc)}</p>`;
+    if (it.from) {
+      const done = it.from.filter(c => ITEMS.get(c).status === "complete").length, ip = it.from.filter(c => ITEMS.get(c).status === "in_progress").length;
+      h += `<h3>Entrance courses: ${done} of ${it.from.length} complete${ip ? `, ${ip} in progress` : ""}</h3><div class="chips">${it.from.map(chip).join("")}</div>`;
+    }
+  } else if (it.type === "choice") {
+    h += `<div style="display:flex;gap:6px;flex-wrap:wrap">${pill(it.status)}${eligPill(elig(id))}</div><h2>${esc(it.label)}</h2><p class="title">Pick 1 of ${it.options.length}</p>`;
+    h += `<h3>Options</h3><ul>${it.options.map(o => `<li>${chip(o)}${state.redact ? "" : `<span class="req">${esc(ITEMS.get(o).title)}</span>`}<span style="margin-left:auto">${eligPill(elig(o))}</span></li>`).join("")}</ul>`;
+    if (id === "CHOICE:APP") h += `<p class="note">Both options also satisfy the major's Teamwork requirement.</p>`;
+  } else if (it.type === "block") {
+    h += `<div>${pill(it.status)} <span class="pill muted">Audit: ${esc(it.audit || (it.counts === false ? "not counted" : "—"))}</span></div><h2>${esc(it.short)}</h2><p class="title">${esc(it.label)}</p>`;
+    if (it.applied != null) h += `<dl class="facts"><div><dt>Required</dt><dd>${it.req != null ? esc(it.req) + " cr" : "—"}</dd></div><div><dt>Applied</dt><dd>${it.applied} cr</dd></div><div><dt>Items</dt><dd>${it.childIds.length}</dd></div></dl>`;
+    h += `<h3>Requirements</h3><ul>${it.items.map(([cid, req]) => `<li>${chip(cid)}<span class="req">${esc(req)}</span></li>`).join("")}</ul>`;
+    if (it.notes) h += `<h3>Notes from the audit</h3>${it.notes.map(n => `<p class="note">${esc(n)}</p>`).join("")}`;
+    h += `<p class="note" style="margin-top:14px">Block status is derived from its items: all complete → complete; some started → in progress; none started → needed.</p>`;
+  } else {
+    h += overviewHTML();
+  }
+  panel.innerHTML = h + `<p class="hint"><button class="linkbtn" data-go="">← Back to overview</button> &nbsp;or press <kbd>Esc</kbd></p>`;
+}
+
+function overviewHTML() {
+  const all = [...ITEMS.values()];
+  const now = [...ELIG].filter(([id, e]) => e === "now" && ITEMS.get(id).type === "course").map(([id]) => id);
+  const next = [...ELIG].filter(([id, e]) => e === "next" && ITEMS.get(id).type === "course").map(([id]) => id);
+  const required = BLOCKS.flatMap(b => b.items.map(i => i[0])).filter((v, i, a) => a.indexOf(v) === i);
+  const reqCourses = required.filter(id => ITEMS.get(id).type === "course" && ITEMS.get(id).status === "needed");
+  const groups = required.filter(id => ITEMS.get(id).type === "choice" && ITEMS.get(id).status === "needed");
+  const open = required.filter(id => ITEMS.get(id).type === "req");
+  const inProg = all.filter(i => i.type === "course" && i.status === "in_progress").map(i => i.id);
+  let h = `<h2 style="font-size:20px">Overview</h2><p class="note">Click any node to see details and trace its prerequisite chain. Blue arrows lead into the selection; pink arrows lead out of it.</p>`;
+  h += `<h3>Eligible now (${now.length})</h3>` + (now.length ? `<div class="chips">${now.map(chip).join("")}</div><p class="note">Needed, and every prerequisite is complete.</p>` : `<p class="note">None.</p>`);
+  h += `<h3>Eligible after this term (${next.length})</h3>` + (next.length ? `<div class="chips">${next.map(chip).join("")}</div><p class="note">Unlocks once your in-progress courses finish.</p>` : `<p class="note">None.</p>`);
+  h += `<h3>In progress (${inProg.length})</h3><div class="chips">${inProg.map(chip).join("")}</div>`;
+  h += `<h3>Required courses still needed (${reqCourses.length})</h3><div class="chips">${reqCourses.map(chip).join("")}</div>`;
+  h += `<h3>Pick-one groups (${groups.length})</h3><div class="chips">${groups.map(chip).join("")}</div>`;
+  h += `<h3>Open requirements (${open.length})</h3><div class="chips">${open.map(chip).join("")}</div>`;
+  h += `<h3>Degree checks from the audit</h3><ul>${DEGREE.checks.map(([a, b]) => `<li><b>${esc(a)}</b><span class="req">${esc(b)}</span></li>`).join("")}</ul>`;
+  h += `<p class="hint">Requirements: DegreeWorks audit (10/03/2026). Prerequisites: UGA Bulletin, checked 10/07/2026. Arrows are drawn only between courses in this audit; other accepted alternatives appear as dashed chips in each course's details.<br><br>Shortcuts: <kbd>/</kbd> search · <kbd>F</kbd> fit · <kbd>Esc</kbd> clear</p>`;
+  return h;
+}
+panel.addEventListener("click", e => {
+  const b = e.target.closest("[data-go]"); if (!b) return;
+  const id = b.getAttribute("data-go");
+  select(id || null, !!id);
+});
+
+/* =====================================================================
+   HEADER, LEGEND, CONTROLS
+   ===================================================================== */
+function renderHeader() {
+  const pal = P();
+  document.getElementById("credApplied").textContent = credComplete + credIP;
+  document.getElementById("credReq").textContent = DEGREE.req;
+  const bar = document.getElementById("credBar");
+  bar.innerHTML = `<span style="width:${credComplete / DEGREE.req * 100}%;background:var(--complete)" title="${credComplete} complete"></span><span style="width:${credIP / DEGREE.req * 100}%;background:var(--progress)" title="${credIP} in progress"></span>`;
+  const nowN = [...ELIG].filter(([id, e]) => e === "now" && ITEMS.get(id).type === "course").length;
+  const tiles = [
+    [credComplete, "credits complete", "var(--complete)"],
+    [credIP, "credits in progress", "var(--progress)"],
+    [DEGREE.req - credComplete - credIP, "credits remaining", "var(--text)"],
+    ["10 / 39", "upper-division cr", "var(--text)"],
+    [nowN, "eligible now", "var(--eligible)"],
+  ];
+  document.getElementById("tiles").innerHTML = tiles.map(([v, l, c]) => `<div class="tile"><b style="color:${c}">${v}</b><small>${l}</small></div>`).join("");
+}
+
+function renderLegend() {
+  const pal = P();
+  const box = (fill, stroke, dash, w) => `<svg width="26" height="18"><rect x="1.5" y="1.5" width="23" height="15" rx="4" fill="${fill}" stroke="${stroke}" stroke-width="${w || 2}" ${dash ? `stroke-dasharray="${dash}"` : ""}/></svg>`;
+  const ring = dash => `<svg width="26" height="18"><rect x="1.5" y="1.5" width="23" height="15" rx="5" fill="none" stroke="${pal.eligible}" stroke-width="${dash ? 2 : 2.6}" ${dash ? `stroke-dasharray="4 3"` : ""}/></svg>`;
+  const line = (color, dash, cap) => `<svg width="34" height="12"><line x1="1" y1="6" x2="25" y2="6" stroke="${color}" stroke-width="2.4" ${dash ? `stroke-dasharray="${dash}"` : ""} stroke-linecap="${cap || "butt"}"/><path d="M24,1.5 L33,6 L24,10.5 Z" fill="${color}"/></svg>`;
+  const items = [
+    [box(pal.complete.fill, pal.complete.stroke), "Complete"],
+    [box(pal.in_progress.fill, pal.in_progress.stroke), "In progress"],
+    [box(pal.needed.fill, pal.needed.stroke, null, 2.6), "Needed"],
+    [box(pal.open.fill, pal.open.stroke, "4 3"), "Open requirement / pick-one"],
+    [ring(false), "Eligible now"],
+    [ring(true), "Eligible after this term"],
+    [line(pal.edge), "Prerequisite"],
+    [line(pal.edge, "6 4"), "One of several options"],
+    [line(pal.edge, "1.5 4", "round"), "Pre- or corequisite"],
+    [line(pal.accent), "Fulfills requirement"],
+  ];
+  const reqItems = items.slice(0, 6);
+  document.getElementById("legend").innerHTML = (state.view === "flow" ? items : reqItems).map(([s, l]) => `<div class="it">${s}<span>${l}</span></div>`).join("");
+}
+
+const NOTES = {
+  flow: "Prerequisite flow: courses left → right in the order prerequisites allow. Click a course to trace what it needs and unlocks.",
+  req: "Requirement map: your degree → audit blocks → the courses and requirements in each. Shared courses appear under every block they count toward.",
+};
+function setView(v) {
+  state.view = v;
+  document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === v));
+  document.getElementById("viewnote").textContent = NOTES[v];
+  renderLegend(); render(); fit(false);
+  if (state.sel) centerOn(state.sel);
+}
+document.querySelectorAll("[data-view]").forEach(b => b.addEventListener("click", () => setView(b.dataset.view)));
+document.querySelectorAll("[data-filter]").forEach(b => b.addEventListener("click", () => {
+  state.filter = b.dataset.filter;
+  document.querySelectorAll("[data-filter]").forEach(x => x.setAttribute("aria-pressed", x === b));
+  applyState();
+}));
+
+const redactBtn = document.getElementById("redact");
+function syncRedact() { redactBtn.setAttribute("aria-pressed", state.redact); redactBtn.textContent = state.redact ? "Titles hidden" : "Redact titles"; }
+redactBtn.addEventListener("click", () => { state.redact = !state.redact; store.set("redact", state.redact ? "1" : "0"); syncRedact(); fillDatalist(); render(); });
+
+const themeBtn = document.getElementById("theme");
+function syncTheme() { document.documentElement.dataset.theme = state.theme; themeBtn.textContent = state.theme === "dark" ? "Light theme" : "Dark theme"; }
+themeBtn.addEventListener("click", () => { state.theme = state.theme === "dark" ? "light" : "dark"; store.set("theme", state.theme); syncTheme(); renderLegend(); render(); });
+
+document.getElementById("zin").addEventListener("click", () => zoomBy(1.25));
+document.getElementById("zout").addEventListener("click", () => zoomBy(0.8));
+document.getElementById("zfit").addEventListener("click", () => fit());
+
+/* Search */
+const search = document.getElementById("search");
+function fillDatalist() {
+  document.getElementById("courseList").innerHTML = [...ITEMS.values()]
+    .filter(i => i.type === "course" || i.type === "req" || i.type === "choice")
+    .map(i => `<option value="${esc(i.type === "course" ? i.id : i.label)}">${i.type === "course" && !state.redact ? esc(i.title) : ""}</option>`).join("");
+}
+function findItem(q) {
+  const k = q.toUpperCase().replace(/\s+/g, "");
+  if (!k) return null;
+  for (const it of ITEMS.values()) {
+    if (it.type === "degree" || it.type === "block") continue;
+    const code = (it.type === "course" ? it.id : it.label).toUpperCase().replace(/\s+/g, "");
+    if (code === k) return it.id;
+  }
+  for (const it of ITEMS.values()) {
+    if (it.type === "degree" || it.type === "block") continue;
+    const hay = (it.type === "course" ? it.id + (state.redact ? "" : " " + it.title) : it.label).toUpperCase();
+    if (hay.replace(/\s+/g, "").includes(k)) return it.id;
+  }
+  return null;
+}
+function doSearch() {
+  const id = findItem(search.value);
+  if (id) { select(id, true); search.style.outlineColor = ""; }
+  else if (search.value.trim()) { search.style.outline = "2px solid #e11d48"; setTimeout(() => search.style.outline = "", 900); }
+}
+search.addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
+search.addEventListener("change", doSearch);
+
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT") { if (e.key === "Escape") e.target.blur(); return; }
+  if (e.key === "Escape") select(null);
+  else if (e.key === "/") { e.preventDefault(); search.focus(); }
+  else if (e.key === "f" || e.key === "F") fit();
+  else if (e.key === "+" || e.key === "=") zoomBy(1.25);
+  else if (e.key === "-") zoomBy(0.8);
+});
+
+/* Export the current view as PNG */
+document.getElementById("export").addEventListener("click", () => {
+  const r = svg.getBoundingClientRect(), scale = 2;
+  const clone = svg.cloneNode(true);
+  clone.setAttribute("xmlns", NS);
+  clone.setAttribute("width", r.width); clone.setAttribute("height", r.height);
+  clone.setAttribute("viewBox", `0 0 ${r.width} ${r.height}`);
+  clone.querySelectorAll(".node,.edge,.selring").forEach(n => { n.removeAttribute("class"); });
+  const data = new XMLSerializer().serializeToString(clone);
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement("canvas");
+    c.width = r.width * scale; c.height = r.height * scale;
+    const ctx = c.getContext("2d");
+    ctx.scale(scale, scale); ctx.fillStyle = P().bg; ctx.fillRect(0, 0, r.width, r.height);
+    ctx.drawImage(img, 0, 0, r.width, r.height);
+    c.toBlob(b => {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(b);
+      a.download = `degree-map-${state.view}${state.redact ? "-redacted" : ""}.png`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    }, "image/png");
+  };
+  img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(data);
+});
+
+let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => fit(false), 150); });
+
+/* Boot */
+syncTheme(); syncRedact(); fillDatalist(); renderHeader();
+setView("flow");
+})();
+</script>
+</body>
+</html>
