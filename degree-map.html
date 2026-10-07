@@ -63,6 +63,14 @@ main{flex:1;display:flex;min-height:0}
 .legend summary::after{content:" ▾";color:var(--muted)}
 .legend:not([open]) summary::after{content:" ▸"}
 .legend .grid{display:grid;grid-template-columns:auto auto;gap:6px 18px;margin-top:8px}
+.legend .secs-grid{display:grid;grid-template-columns:repeat(3,auto);gap:4px 14px}
+.legend .lg-h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:10px 0 6px}
+.legend button.sec{border:0;background:none;padding:2px 0;cursor:pointer;font-size:13px;text-align:left}
+.legend button.sec:hover{text-decoration:underline}
+.sw{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none;margin-right:6px;vertical-align:baseline}
+.sw.big{width:16px;height:16px;margin:0}
+#tooltip .secs{margin-top:4px;font-size:12.5px;color:var(--muted)}
+.chip .sw{margin-right:0}
 .legend .it{display:flex;align-items:center;gap:8px;white-space:nowrap}
 .zoom{position:absolute;right:14px;bottom:14px;display:flex;flex-direction:column;gap:6px}
 .zoom .btn{width:38px;height:38px;padding:0;font-size:18px;box-shadow:var(--shadow);background:var(--surface)}
@@ -130,10 +138,6 @@ kbd{font:12px ui-monospace,Menlo,monospace;border:1px solid var(--border);border
   </div>
 </header>
 <div class="toolbar">
-  <div class="seg" role="group" aria-label="View">
-    <button data-view="flow" aria-pressed="true">Prerequisite flow</button>
-    <button data-view="req" aria-pressed="false">Requirement map</button>
-  </div>
   <div class="seg" role="group" aria-label="Filter">
     <button data-filter="all" aria-pressed="true">All</button>
     <button data-filter="needed" aria-pressed="false">Needed</button>
@@ -146,6 +150,8 @@ kbd{font:12px ui-monospace,Menlo,monospace;border:1px solid var(--border);border
     <datalist id="courseList"></datalist>
   </div>
   <div class="spacer"></div>
+  <button class="btn" id="arrows" aria-pressed="true" title="Show prerequisite arrows">Prereq arrows</button>
+  <button class="btn" id="relayout" title="Re-run the layout">Reset layout</button>
   <button class="btn" id="redact" aria-pressed="false" title="Show course codes only">Redact titles</button>
   <button class="btn" id="theme">Dark theme</button>
   <button class="btn" id="export">Export PNG</button>
@@ -157,7 +163,7 @@ kbd{font:12px ui-monospace,Menlo,monospace;border:1px solid var(--border);border
     <div id="tooltip"></div>
     <details class="legend" open>
       <summary>Legend</summary>
-      <div class="grid" id="legend"></div>
+      <div id="legend"></div>
     </details>
     <div class="zoom">
       <button class="btn" id="zin" title="Zoom in" aria-label="Zoom in">+</button>
@@ -451,218 +457,189 @@ if (credComplete + credIP !== DEGREE.applied)
   console.warn(`Computed applied credits ${credComplete + credIP} differ from audit (${DEGREE.applied}).`);
 
 /* =====================================================================
-   THEME / PALETTE (SVG uses literal colors so PNG export is self-contained)
+   THEME (SVG uses literal colors so PNG export is self-contained)
+   Each audit section gets its own hue; the three CS sections share a blue family.
    ===================================================================== */
 const PALETTES = {
-  light: { bg: "#f5f7fa", dot: "#d9e0e8", surface: "#ffffff", text: "#0f172a", muted: "#526070", faint: "#9aa6b5", border: "#d5dce5",
-    complete: { fill: "#e3f6ea", stroke: "#15803d" }, in_progress: { fill: "#fff3d6", stroke: "#b45309" },
-    needed: { fill: "#ffffff", stroke: "#1e293b" }, open: { fill: "#f8fafc", stroke: "#64748b" },
-    eligible: "#0284c7", accent: "#7c3aed", edge: "#8593a5", up: "#0284c7", down: "#db2777", sel: "#7c3aed" },
-  dark: { bg: "#0b0f14", dot: "#1c2530", surface: "#121820", text: "#e8eef5", muted: "#9aa7b6", faint: "#5b6776", border: "#2a3441",
-    complete: { fill: "#0f2d1d", stroke: "#3ccf7a" }, in_progress: { fill: "#33260a", stroke: "#f5b938" },
-    needed: { fill: "#151b23", stroke: "#dbe3ec" }, open: { fill: "#10161d", stroke: "#8b98a8" },
-    eligible: "#38bdf8", accent: "#a78bfa", edge: "#6f7d8f", up: "#38bdf8", down: "#f472b6", sel: "#a78bfa" },
+  light: { bg: "#f5f7fa", dot: "#dde3ea", surface: "#ffffff", text: "#0f172a", muted: "#526070", faint: "#9aa6b5", border: "#d5dce5",
+    edge: "#6b7889", up: "#0284c7", down: "#db2777", blob: 0.11,
+    blocks: { "BLK:UNIV": "#db2777", "BLK:FRANK": "#9333ea", "BLK:A1": "#ea580c", "BLK:A2": "#16a34a", "BLK:A3": "#ca8a04", "BLK:A4": "#dc2626",
+              "BLK:A5": "#0d9488", "BLK:A6": "#2563eb", "BLK:ENTR": "#0891b2", "BLK:MAJOR": "#4f46e5", "BLK:GENEL": "#65a30d", "BLK:EXCESS": "#64748b" } },
+  dark: { bg: "#0b0f14", dot: "#18202a", surface: "#121820", text: "#e8eef5", muted: "#9aa7b6", faint: "#4b5563", border: "#2a3441",
+    edge: "#8391a3", up: "#38bdf8", down: "#fb7185", blob: 0.10,
+    blocks: { "BLK:UNIV": "#f472b6", "BLK:FRANK": "#c084fc", "BLK:A1": "#fb923c", "BLK:A2": "#4ade80", "BLK:A3": "#facc15", "BLK:A4": "#f87171",
+              "BLK:A5": "#2dd4bf", "BLK:A6": "#60a5fa", "BLK:ENTR": "#22d3ee", "BLK:MAJOR": "#a5b4fc", "BLK:GENEL": "#a3e635", "BLK:EXCESS": "#94a3b8" } },
 };
 const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif';
-
 const store = {
   get(k) { try { return localStorage.getItem("degmap:" + k); } catch { return null; } },
   set(k, v) { try { localStorage.setItem("degmap:" + k, v); } catch {} },
 };
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const state = {
-  view: "flow", filter: "all", sel: null, redact: store.get("redact") === "1",
+  filter: "all", sel: null, hover: null, arrows: store.get("arrows") !== "0", redact: store.get("redact") === "1",
   theme: store.get("theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"),
 };
 const P = () => PALETTES[state.theme];
+const colorOf = b => P().blocks[b];
+const BLOCK_IDS = BLOCKS.map(b => b.id);
+function blocksOf(id) {
+  const it = ITEMS.get(id);
+  if (it.type === "block") return [id];
+  if (it.type === "degree") return [];
+  const bs = new Set((MEMBER.get(id) || []).map(m => m.block));
+  return BLOCK_IDS.filter(b => bs.has(b));
+}
+function radius(it) {
+  if (it.type === "degree") return 46;
+  if (it.type === "block") return 22 + Math.sqrt(it.childIds.length) * 5;
+  if (it.type === "choice") return 15;
+  if (it.type === "req") return 13;
+  return 8 + it.credits * 1.7;
+}
 
 /* =====================================================================
-   LAYOUT: layered DAG (Sugiyama-style) for the prerequisite flow
+   FORCE SIMULATION (small d3-force-style engine, no library)
+   Hubs = audit sections. Each item is linked to every section it counts
+   toward, so shared courses settle between those hubs.
    ===================================================================== */
-const NW = 212, NH = 60;
-const PREFIX_RANK = { ENGL: 0, CSCI: 1, "REQ:": 1.6, "CHOI": 1.7, MATH: 2, STAT: 3, PHYS: 4, CHEM: 5, ECOL: 6 };
-const rankOf = id => (PREFIX_RANK[id.slice(0, 4)] ?? 9) * 10000 + (parseInt(id.replace(/\D/g, "")) || 0);
+const HUB_ORDER = ["BLK:A1", "BLK:A4", "BLK:UNIV", "BLK:A5", "BLK:FRANK", "BLK:A2", "BLK:EXCESS", "BLK:A3", "BLK:ENTR", "BLK:A6", "BLK:MAJOR", "BLK:GENEL"];
+const SIM = { nodes: [], byId: new Map(), links: [], alpha: 1, alphaMin: 0.002, alphaDecay: 1 - Math.pow(0.002, 1 / 320), alphaTarget: 0, vDecay: 0.42 };
+const ADJ = new Map();
+function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const rnd = mulberry32(99);
 
-function layered(ids, edges, GX) {
-  const out = new Map(ids.map(i => [i, []])), inn = new Map(ids.map(i => [i, []]));
-  edges.forEach(e => { out.get(e.s).push(e.t); inn.get(e.t).push(e.s); });
-  const indeg = new Map(ids.map(i => [i, inn.get(i).length]));
-  const q = ids.filter(i => !indeg.get(i)).sort((a, b) => rankOf(a) - rankOf(b)), topo = [];
-  while (q.length) {
-    const v = q.shift(); topo.push(v);
-    for (const w of out.get(v)) { indeg.set(w, indeg.get(w) - 1); if (!indeg.get(w)) q.push(w); }
-  }
-  if (topo.length !== ids.length) throw new Error("Prerequisite graph has a cycle");
-  const L = new Map();
-  topo.forEach(v => L.set(v, Math.max(0, ...inn.get(v).map(u => L.get(u) + 1))));
-  [...topo].reverse().forEach(v => { if (!inn.get(v).length && out.get(v).length) L.set(v, Math.min(...out.get(v).map(w => L.get(w))) - 1); });
+function buildSim() {
+  SIM.nodes = []; SIM.byId.clear(); SIM.links = [];
+  const add = id => {
+    const it = ITEMS.get(id);
+    const n = { id, it, r: radius(it), x: 0, y: 0, vx: 0, vy: 0, fx: null, fy: null, jx: 0, jy: 0, jvx: 0, jvy: 0,
+      charge: it.type === "degree" ? -1600 : it.type === "block" ? -800 : -240,
+      pad: it.type === "degree" ? 44 : it.type === "block" ? 34 : 14 };
+    SIM.nodes.push(n); SIM.byId.set(id, n);
+  };
+  add("DEGREE"); BLOCKS.forEach(b => add(b.id));
+  for (const it of ITEMS.values()) if (!SIM.byId.has(it.id)) add(it.id);
+  const link = (s, t, kind, e) => SIM.links.push({ s: SIM.byId.get(s), t: SIM.byId.get(t), kind, e });
+  BLOCKS.forEach(b => link("DEGREE", b.id, "spine"));
+  BLOCKS.forEach(b => b.items.forEach(([id]) => link(b.id, id, "member")));
+  Object.entries(CHOICES).forEach(([cid, c]) => c.options.forEach(o => link(cid, o, "option")));
+  EDGES.forEach(e => { if (!(e.kind === "fulfills" && CHOICES[e.t])) link(e.s, e.t, "pre", e); });
 
-  const nL = Math.max(...L.values()) + 1;
-  const N = new Map();
-  ids.forEach(id => N.set(id, { id, layer: L.get(id), dummy: false, h: NH, key: rankOf(id) }));
-  const segs = [], routes = [];
-  edges.forEach((e, i) => {
-    const path = [e.s]; let prev = e.s;
-    for (let l = L.get(e.s) + 1; l < L.get(e.t); l++) {
-      const d = `~${i}_${l}`;
-      N.set(d, { id: d, layer: l, dummy: true, h: 4, key: rankOf(e.s) + 0.5 });
-      segs.push([prev, d]); path.push(d); prev = d;
-    }
-    segs.push([prev, e.t]); path.push(e.t); routes.push({ e, path });
+  const struct = new Map(), all = new Map();
+  const inc = (m, n) => m.set(n, (m.get(n) || 0) + 1);
+  SIM.links.forEach(l => { inc(all, l.s); inc(all, l.t); if (l.kind !== "pre") { inc(struct, l.s); inc(struct, l.t); } });
+  SIM.links.forEach(l => {
+    const m = l.kind === "pre" ? all : struct, ds = m.get(l.s), dt = m.get(l.t);
+    l.bias = ds / (ds + dt);
+    if (l.kind === "spine") { l.dist = 280; l.str = 0.5; }
+    else if (l.kind === "member") { l.dist = l.s.r + l.t.r + 58; l.str = 0.8 / dt; }
+    else if (l.kind === "option") { l.dist = l.s.r + l.t.r + 40; l.str = 0.8; }
+    else { l.dist = l.s.r + l.t.r + 80; l.str = 0.035; }
   });
-  const up = new Map(), dn = new Map();
-  N.forEach((_, id) => { up.set(id, []); dn.set(id, []); });
-  segs.forEach(([a, b]) => { dn.get(a).push(b); up.get(b).push(a); });
-
-  let layers = Array.from({ length: nL }, () => []);
-  N.forEach(n => layers[n.layer].push(n.id));
-  layers.forEach(Lr => Lr.sort((a, b) => N.get(a).key - N.get(b).key));
-  const pos = new Map();
-  const index = () => layers.forEach(Lr => Lr.forEach((id, i) => pos.set(id, i)));
-  index();
-
-  const crossBetween = l => {
-    let c = 0; const S = [];
-    layers[l].forEach(a => dn.get(a).forEach(b => S.push([pos.get(a), pos.get(b)])));
-    for (let i = 0; i < S.length; i++) for (let j = i + 1; j < S.length; j++)
-      if ((S[i][0] - S[j][0]) * (S[i][1] - S[j][1]) < 0) c++;
-    return c;
-  };
-  const totalCross = () => { let c = 0; for (let l = 0; l < nL - 1; l++) c += crossBetween(l); return c; };
-  const pairCross = (u, v) => {
-    let c = 0;
-    for (const nb of [up, dn]) for (const a of nb.get(u)) for (const b of nb.get(v)) if (pos.get(a) > pos.get(b)) c++;
-    return c;
-  };
-  const transpose = () => {
-    let improved = true, guard = 0;
-    while (improved && guard++ < 12) {
-      improved = false;
-      for (const Lr of layers) for (let i = 0; i < Lr.length - 1; i++) {
-        const u = Lr[i], v = Lr[i + 1];
-        if (pairCross(v, u) < pairCross(u, v)) { Lr[i] = v; Lr[i + 1] = u; pos.set(v, i); pos.set(u, i + 1); improved = true; }
-      }
-    }
-  };
-  let best = layers.map(l => l.slice()), bestC = totalCross();
-  for (let it = 0; it < 28; it++) {
-    const down = it % 2 === 0;
-    const order = down ? [...Array(nL).keys()].slice(1) : [...Array(nL).keys()].reverse().slice(1);
-    for (const l of order) {
-      const nb = down ? up : dn;
-      const bc = new Map(layers[l].map(id => {
-        const ns = nb.get(id);
-        return [id, ns.length ? ns.reduce((s, x) => s + pos.get(x), 0) / ns.length : pos.get(id)];
-      }));
-      layers[l].sort((a, b) => bc.get(a) - bc.get(b) || pos.get(a) - pos.get(b));
-      layers[l].forEach((id, i) => pos.set(id, i));
-    }
-    transpose();
-    const c = totalCross();
-    if (c < bestC) { bestC = c; best = layers.map(l => l.slice()); }
-  }
-  layers = best; index();
-
-  // Vertical placement: pull each node toward its neighbours, keep order and spacing
-  // (weighted isotonic regression / pool-adjacent-violators per layer).
-  const cy = new Map();
-  layers.forEach(Lr => {
-    let y = 0;
-    Lr.forEach((id, i) => { if (i) y += gapBetween(Lr[i - 1], id); cy.set(id, y); });
-    const mid = y / 2; Lr.forEach(id => cy.set(id, cy.get(id) - mid));
-  });
-  function gapBetween(a, b) {
-    const A = N.get(a), B = N.get(b);
-    return A.h / 2 + B.h / 2 + (A.dummy || B.dummy ? (A.dummy && B.dummy ? 10 : 16) : 24);
-  }
-  function place(Lr) {
-    const n = Lr.length, o = [0], z = [], w = [];
-    for (let i = 1; i < n; i++) o[i] = o[i - 1] + gapBetween(Lr[i - 1], Lr[i]);
-    Lr.forEach((id, i) => {
-      let s = 0, ws = 0;
-      for (const x of [...up.get(id), ...dn.get(id)]) {
-        const wt = N.get(id).dummy && N.get(x).dummy ? 4 : N.get(id).dummy || N.get(x).dummy ? 2 : 1;
-        s += wt * cy.get(x); ws += wt;
-      }
-      z[i] = (ws ? s / ws : cy.get(id)) - o[i]; w[i] = ws || 0.3;
-    });
-    const blocks = [];
-    for (let i = 0; i < n; i++) {
-      blocks.push({ v: z[i], w: w[i], n: 1 });
-      while (blocks.length > 1 && blocks[blocks.length - 2].v > blocks[blocks.length - 1].v) {
-        const b2 = blocks.pop(), b1 = blocks.pop();
-        blocks.push({ v: (b1.v * b1.w + b2.v * b2.w) / (b1.w + b2.w), w: b1.w + b2.w, n: b1.n + b2.n });
-      }
-    }
-    let i = 0;
-    for (const b of blocks) for (let k = 0; k < b.n; k++, i++) cy.set(Lr[i], b.v + o[i]);
-  }
-  for (let it = 0; it < 80; it++) {
-    const order = it % 2 ? [...layers].reverse() : layers;
-    order.forEach(place);
-  }
-  let minY = Infinity;
-  N.forEach((n, id) => minY = Math.min(minY, cy.get(id) - n.h / 2));
-  const P = new Map();
-  N.forEach((n, id) => P.set(id, { x: n.layer * (NW + GX), cy: cy.get(id) - minY, dummy: n.dummy, w: NW, h: n.h }));
-  return { pos: P, routes, nL };
+  ADJ.clear();
+  SIM.nodes.forEach(n => ADJ.set(n.id, new Set()));
+  SIM.links.forEach(l => { ADJ.get(l.s.id).add(l.t.id); ADJ.get(l.t.id).add(l.s.id); });
+  seedPositions();
 }
 
-function buildFlowLayout() {
-  const GX = 96;
-  const ids = [...new Set(EDGES.flatMap(e => [e.s, e.t]))];
-  const L = layered(ids, EDGES, GX);
-  const nodes = [];
-  ids.forEach(id => { const p = L.pos.get(id); nodes.push({ id, x: p.x, y: p.cy - NH / 2, w: NW, h: NH }); });
-  let maxY = 0; nodes.forEach(n => maxY = Math.max(maxY, n.y + n.h));
-  const width = L.nL * (NW + GX) - GX;
-
-  // Shelf: items with no prerequisite links.
-  const inFlow = new Set(ids);
-  const open = [...ITEMS.values()].filter(it => it.type === "req" && !inFlow.has(it.id)).map(it => it.id);
-  const rest = [...ITEMS.values()].filter(it => it.type === "course" && !inFlow.has(it.id))
-    .sort((a, b) => ({ in_progress: 0, needed: 1, complete: 2 }[a.status] - { in_progress: 0, needed: 1, complete: 2 }[b.status]) || a.id.localeCompare(b.id))
-    .map(it => it.id);
-  const step = NW + 24, cols = Math.max(4, Math.floor((width + 24) / step));
-  const headings = [];
-  let y = maxY + 96;
-  for (const [title, list] of [["Open requirements: pick a course to fill each", open], ["No prerequisite links (core, gen-ed & electives)", rest]]) {
-    headings.push({ text: title, x: 0, y });
-    y += 22;
-    list.forEach((id, i) => nodes.push({ id, x: (i % cols) * step, y: y + Math.floor(i / cols) * (NH + 20), w: NW, h: NH }));
-    y += Math.ceil(list.length / cols) * (NH + 20) + 50;
-  }
-  return { nodes, routes: L.routes, layerPos: L.pos, headings, dagBottom: maxY, width };
-}
-
-/* Requirement map: degree → blocks (columns) → items (comb tree). */
-function buildReqLayout() {
-  const BW = 216, BH = 96, COL = BW + 40, DW = 380, DH = 108, BY = 190, CY0 = BY + BH + 26, ROW = NH + 14;
-  const nodes = [], combs = [], links = [];
-  const totalW = BLOCKS.length * COL - 40;
-  const dx = (totalW - DW) / 2;
-  nodes.push({ id: "DEGREE", x: dx, y: 0, w: DW, h: DH });
-  BLOCKS.forEach((b, i) => {
-    const x = i * COL;
-    nodes.push({ id: b.id, x, y: BY, w: BW, h: BH });
-    links.push({ block: b.id, x1: dx + DW / 2, y1: DH, x2: x + BW / 2, y2: BY });
-    let y = CY0; const spineX = x + 10, ticks = [];
-    for (const [id] of b.items) {
-      nodes.push({ id, x: x + 22, y, w: BW - 22, h: NH, block: b.id });
-      ticks.push({ id, y: y + NH / 2 });
-      y += ROW;
-      if (ITEMS.get(id).type === "choice") {
-        const ot = [], top = y - 14;
-        for (const o of CHOICES[id].options) {
-          nodes.push({ id: o, x: x + 44, y, w: BW - 44, h: NH, block: b.id });
-          ot.push({ id: o, y: y + NH / 2 }); y += ROW;
-        }
-        combs.push({ block: b.id, parent: id, x: x + 32, y0: top, ticks: ot, tx: x + 44 });
-      }
-    }
-    combs.push({ block: b.id, parent: b.id, x: spineX, y0: BY + BH, ticks, tx: x + 22 });
+function seedPositions() {
+  const r0 = mulberry32(20261007);
+  HUB_ORDER.forEach((id, i) => {
+    const a = -Math.PI / 2 + i / HUB_ORDER.length * 2 * Math.PI, n = SIM.byId.get(id);
+    Object.assign(n, { x: Math.cos(a) * 440, y: Math.sin(a) * 440, vx: 0, vy: 0, fx: null, fy: null });
   });
-  return { nodes, combs, links };
+  Object.assign(SIM.byId.get("DEGREE"), { x: 0, y: 0, fx: 0, fy: 0 });
+  SIM.nodes.forEach(n => {
+    n.jx = n.jy = n.jvx = n.jvy = 0;
+    if (n.it.type === "block" || n.it.type === "degree") return;
+    const hubs = blocksOf(n.id).map(b => SIM.byId.get(b));
+    const hx = hubs.reduce((s, h) => s + h.x, 0) / hubs.length, hy = hubs.reduce((s, h) => s + h.y, 0) / hubs.length;
+    Object.assign(n, { x: hx * 1.15 + (r0() - 0.5) * 90, y: hy * 1.15 + (r0() - 0.5) * 90, vx: 0, vy: 0, fx: null, fy: null });
+  });
+  SIM.alpha = 1; SIM.alphaTarget = 0;
+  for (let i = 0; i < 380; i++) tick();
 }
+
+function tick() {
+  SIM.alpha += (SIM.alphaTarget - SIM.alpha) * SIM.alphaDecay;
+  const a = SIM.alpha, N = SIM.nodes;
+  for (const l of SIM.links) {
+    const s = l.s, t = l.t;
+    let dx = t.x + t.vx - s.x - s.vx, dy = t.y + t.vy - s.y - s.vy;
+    const d = Math.hypot(dx, dy) || 1e-6, k = (d - l.dist) / d * a * l.str;
+    dx *= k; dy *= k;
+    t.vx -= dx * l.bias; t.vy -= dy * l.bias;
+    s.vx += dx * (1 - l.bias); s.vy += dy * (1 - l.bias);
+  }
+  for (let i = 0; i < N.length; i++) for (let j = i + 1; j < N.length; j++) {
+    const p = N[i], q = N[j];
+    let dx = q.x - p.x, dy = q.y - p.y, d2 = dx * dx + dy * dy;
+    if (d2 > 810000) continue;
+    if (d2 < 1) { dx = (rnd() - 0.5) * 1e-3 + 1e-3; dy = (rnd() - 0.5) * 1e-3; d2 = 1; }
+    p.vx += dx * q.charge * a / d2; p.vy += dy * q.charge * a / d2;
+    q.vx -= dx * p.charge * a / d2; q.vy -= dy * p.charge * a / d2;
+    const rr = p.r + p.pad + q.r + q.pad, d = Math.sqrt(d2);
+    if (d < rr) {
+      const k = (rr - d) / d * 0.35;
+      p.vx -= dx * k; p.vy -= dy * k; q.vx += dx * k; q.vy += dy * k;
+    }
+  }
+  for (const n of N) {
+    if (n.fx != null) { n.x = n.fx; n.y = n.fy; n.vx = n.vy = 0; continue; }
+    n.vx -= n.x * 0.012 * a; n.vy -= n.y * 0.012 * a;
+    n.vx *= 1 - SIM.vDecay; n.vy *= 1 - SIM.vDecay;
+    n.x += n.vx; n.y += n.vy;
+  }
+}
+
+/* Hover "jiggle": a separate damped spring offset per node, so nodes wobble
+   and always return to where the layout put them. */
+function stepJiggle() {
+  let energy = 0;
+  for (const n of SIM.nodes) {
+    if (!n.jx && !n.jy && !n.jvx && !n.jvy) continue;
+    n.jvx = (n.jvx - n.jx * 0.14) * 0.85; n.jvy = (n.jvy - n.jy * 0.14) * 0.85;
+    n.jx += n.jvx; n.jy += n.jvy;
+    const e = Math.abs(n.jx) + Math.abs(n.jy) + Math.abs(n.jvx) + Math.abs(n.jvy);
+    if (e < 0.02) n.jx = n.jy = n.jvx = n.jvy = 0; else energy += e;
+  }
+  return energy;
+}
+function jiggle(src) {
+  if (reduced || !src) return;
+  const now = performance.now();
+  if (src.lastJ && now - src.lastJ < 450) return;
+  src.lastJ = now;
+  const adj = ADJ.get(src.id);
+  for (const m of SIM.nodes) {
+    if (m === src || m.it.type === "degree") continue;
+    const dx = m.x - src.x, dy = m.y - src.y, d = Math.hypot(dx, dy) || 1;
+    const isAdj = adj.has(m.id);
+    if (!isAdj && d > 190) continue;
+    const mag = (isAdj ? 4.2 : 3) * Math.max(0.35, 1 - d / 320) * (m.it.type === "block" ? 0.5 : 1);
+    const ang = Math.atan2(dy, dx) + (rnd() - 0.5) * 1.6;
+    m.jvx += Math.cos(ang) * mag; m.jvy += Math.sin(ang) * mag;
+  }
+  requestLoop();
+}
+
+// Physics advances in fixed ~60 Hz steps so motion looks the same on any refresh rate.
+let raf = null, lastT = 0;
+function requestLoop() { if (!raf) { if (!lastT) lastT = performance.now(); raf = requestAnimationFrame(frame); } }
+function frame(now) {
+  raf = null;
+  const steps = Math.max(1, Math.min(4, Math.round((now - lastT) / 16.67)));
+  lastT = now;
+  let active = false;
+  for (let i = 0; i < steps; i++) {
+    if (SIM.alpha > SIM.alphaMin || SIM.alphaTarget > 0) { tick(); active = true; }
+    if (stepJiggle() > 0) active = true;
+  }
+  draw();
+  if (active) requestLoop(); else lastT = 0;
+}
+function heat(a) { SIM.alpha = Math.max(SIM.alpha, a); requestLoop(); }
 
 /* =====================================================================
    RENDERING
@@ -675,220 +652,167 @@ function el(tag, attrs, parent) {
   if (parent) parent.appendChild(n);
   return n;
 }
-const mctx = document.createElement("canvas").getContext("2d");
-function fitText(text, size, weight, max) {
-  mctx.font = `${weight} ${size}px ${FONT}`;
-  if (mctx.measureText(text).width <= max) return text;
-  let lo = 0, hi = text.length;
-  while (lo < hi) { const m = (lo + hi + 1) >> 1; if (mctx.measureText(text.slice(0, m) + "…").width <= max) lo = m; else hi = m - 1; }
-  return text.slice(0, lo).trimEnd() + "…";
-}
 function txt(parent, x, y, s, size, weight, fill, anchor) {
   const t = el("text", { x, y, "font-size": size, "font-weight": weight, fill, "text-anchor": anchor || null }, parent);
   t.textContent = s; return t;
 }
+const pt = (r, a) => `${(Math.cos(a) * r).toFixed(2)},${(Math.sin(a) * r).toFixed(2)}`;
+const pie = (r, a0, a1) => `M0,0 L${pt(r, a0)} A${r},${r} 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${pt(r, a1)} Z`;
+const arc = (r, a0, a1) => `M${pt(r, a0)} A${r},${r} 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${pt(r, a1)}`;
 
-function statusIcon(g, it, cx, cy) {
-  const pal = P(), st = it.status, c = (it.type === "course" ? pal[st] : st === "needed" ? pal.open : pal[st]).stroke;
-  if (it.type === "choice") {
-    el("path", { d: "M0 -7.5 L7.5 0 L0 7.5 L-7.5 0 Z", transform: `translate(${cx},${cy})`, fill: st === "needed" ? "none" : c, stroke: c, "stroke-width": 2 }, g);
-    return;
-  }
-  if (it.milestone) {
-    el("path", { d: "M-5 7 L-5 -7 L6 -3.5 L-5 0", transform: `translate(${cx},${cy})`, fill: "none", stroke: c, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, g);
-    return;
-  }
-  if (st === "complete") {
-    el("circle", { cx, cy, r: 8, fill: c }, g);
-    el("path", { d: `M${cx - 3.6} ${cy + .2} L${cx - 1} ${cy + 2.9} L${cx + 3.8} ${cy - 2.6}`, fill: "none", stroke: pal.bg, "stroke-width": 2.2, "stroke-linecap": "round", "stroke-linejoin": "round" }, g);
-  } else if (st === "in_progress") {
-    el("circle", { cx, cy, r: 7, fill: "none", stroke: c, "stroke-width": 2 }, g);
-    el("path", { d: `M${cx} ${cy - 7} A7 7 0 0 1 ${cx} ${cy + 7} Z`, fill: c }, g);
-  } else {
-    el("circle", { cx, cy, r: 7, fill: "none", stroke: c, "stroke-width": 2, "stroke-dasharray": it.type === "req" ? "3 2.5" : null }, g);
-  }
-}
+let R = {};
 
-function drawItemNode(parent, n) {
-  const it = ITEMS.get(n.id), pal = P(), { w, h } = n;
-  const g = el("g", { transform: `translate(${n.x},${n.y})`, "data-id": it.id, class: "node" }, parent);
+function drawItem(g, n) {
+  const it = n.it, pal = P(), r = n.r, cols = blocksOf(it.id).map(colorOf), N = cols.length, seg = 2 * Math.PI / N, a0 = -Math.PI / 2;
   const e = elig(it.id);
-  if (e === "now" || e === "next")
-    el("rect", { x: -6, y: -6, width: w + 12, height: h + 12, rx: 15, fill: "none", stroke: pal.eligible,
-      "stroke-width": e === "now" ? 3 : 2, "stroke-dasharray": e === "now" ? null : "6 5" }, g);
-  const sel = el("rect", { x: -9, y: -9, width: w + 18, height: h + 18, rx: 17, fill: "none", stroke: pal.sel, "stroke-width": 3.5, class: "selring" }, g);
-  sel.style.opacity = 0;
-  const isCourse = it.type === "course";
-  const sty = isCourse ? pal[it.status] : it.status === "needed" ? pal.open : pal[it.status];
-  el("rect", { width: w, height: h, rx: 11, fill: sty.fill, stroke: sty.stroke,
-    "stroke-width": isCourse && it.status === "needed" ? 2.6 : 1.8,
-    "stroke-dasharray": isCourse ? null : "7 4" }, g);
-  statusIcon(g, it, 19, 22);
-  if (isCourse) {
-    txt(g, 34, 27, it.id, 16, 700, pal.text);
-    txt(g, w - 12, 27, `${it.credits} cr`, 12.5, 600, pal.muted, "end");
-    const sub = state.redact ? STATUS_LABEL[it.status] : it.title;
-    txt(g, 14, 47, fitText(sub, 13, 400, w - 26), 13, 400, pal.muted);
-  } else {
-    txt(g, 34, 27, fitText(it.label, 14.5, 700, w - 44), 14.5, 700, pal.text);
-    const sub = it.type === "choice" ? `Pick 1 of ${it.options.length}` : it.sub;
-    txt(g, 14, 47, fitText(sub, 13, 400, w - 26), 13, 400, pal.muted);
+  if (e === "now") {
+    el("circle", { r: r + 6, fill: "none", stroke: pal.text, "stroke-width": 2 }, g);
+    if (!reduced) {
+      const c = el("circle", { r: r + 6, fill: "none", stroke: pal.text, "stroke-width": 2 }, g);
+      el("animate", { attributeName: "r", values: `${r + 6};${r + 17}`, dur: "1.8s", repeatCount: "indefinite" }, c);
+      el("animate", { attributeName: "opacity", values: "0.8;0", dur: "1.8s", repeatCount: "indefinite" }, c);
+    }
+  } else if (e === "next") {
+    el("circle", { r: r + 6, fill: "none", stroke: pal.text, "stroke-width": 1.6, "stroke-dasharray": "3 3" }, g);
   }
-  return g;
+  el("circle", { r: r + 11, fill: "none", stroke: pal.text, "stroke-width": 3.5, class: "selring", style: "opacity:0" }, g);
+  el("circle", { r, fill: pal.bg }, g);
+  // Fill level = status: full = complete, bottom half = in progress, empty = needed.
+  if (it.status !== "needed") {
+    const fg = el("g", { "clip-path": it.status === "in_progress" ? "url(#lowerHalf)" : null }, g);
+    if (N === 1) el("circle", { r, fill: cols[0] }, fg);
+    else cols.forEach((c, i) => el("path", { d: pie(r, a0 + i * seg, a0 + (i + 1) * seg), fill: c }, fg));
+  }
+  // Ring split into one arc per section the item counts toward.
+  const w = it.type === "course" && it.status === "needed" ? 3.4 : 2.6, dash = it.type === "course" ? null : "4 3";
+  if (N === 1) el("circle", { r, fill: "none", stroke: cols[0], "stroke-width": w, "stroke-dasharray": dash }, g);
+  else cols.forEach((c, i) => el("path", { d: arc(r, a0 + i * seg, a0 + (i + 1) * seg), fill: "none", stroke: c, "stroke-width": w, "stroke-dasharray": dash }, g));
+  if (it.type === "req") {
+    el("path", { d: it.milestone ? "M-4 6 L-4 -6 L6 -3 L-4 0" : "M-5 0 H5 M0 -5 V5", fill: "none", stroke: cols[0], "stroke-width": 2.2, "stroke-linecap": "round", "stroke-linejoin": "round" }, g);
+  } else if (it.type === "choice") {
+    el("path", { d: "M0 -6.5 L6.5 0 L0 6.5 L-6.5 0 Z", fill: "none", stroke: cols[0], "stroke-width": 2 }, g);
+  }
+  const label = it.type === "course" ? it.id : it.label;
+  n.lbl = txt(g, 0, r + 17, label, it.type === "course" ? 13.5 : 12.5, 650, pal.text, "middle");
+  n.lbl.setAttribute("paint-order", "stroke"); n.lbl.setAttribute("stroke", pal.bg); n.lbl.setAttribute("stroke-width", 4); n.lbl.setAttribute("stroke-linejoin", "round");
 }
 
-function progressBar(g, x, y, w, h, parts, pal) {
-  el("rect", { x, y, width: w, height: h, rx: h / 2, fill: pal.bg, stroke: pal.border }, g);
+function progressRing(g, r, w, parts, pal) {
+  el("circle", { r, fill: "none", stroke: pal.border, "stroke-width": w }, g);
   const total = parts.reduce((s, p) => s + p[0], 0) || 1;
-  const clip = "clip" + Math.random().toString(36).slice(2, 8);
-  const cp = el("clipPath", { id: clip }, g);
-  el("rect", { x, y, width: w, height: h, rx: h / 2 }, cp);
-  let cx = x;
-  const gg = el("g", { "clip-path": `url(#${clip})` }, g);
-  for (const [v, color] of parts) { if (!v) continue; const ww = w * v / total; el("rect", { x: cx, y, width: ww, height: h, fill: color }, gg); cx += ww; }
+  let a = -Math.PI / 2;
+  for (const [v, color, op] of parts) {
+    if (!v) continue;
+    const b = a + v / total * 2 * Math.PI;
+    if (v === total) el("circle", { r, fill: "none", stroke: color, "stroke-width": w, opacity: op ?? 1 }, g);
+    else el("path", { d: arc(r, a, b), fill: "none", stroke: color, "stroke-width": w, opacity: op ?? 1 }, g);
+    a = b;
+  }
 }
 
-function drawBlockNode(parent, n) {
-  const it = ITEMS.get(n.id), pal = P(), { w, h } = n;
-  const g = el("g", { transform: `translate(${n.x},${n.y})`, "data-id": it.id, class: "node" }, parent);
-  const sel = el("rect", { x: -9, y: -9, width: w + 18, height: h + 18, rx: 18, fill: "none", stroke: pal.sel, "stroke-width": 3.5, class: "selring" }, g);
-  sel.style.opacity = 0;
-  const excess = it.counts === false;
-  const c = excess ? pal.faint : (it.status === "needed" ? pal.open : pal[it.status]).stroke;
-  el("rect", { width: w, height: h, rx: 13, fill: pal.surface, stroke: c, "stroke-width": 2, "stroke-dasharray": excess ? "6 4" : null }, g);
-  el("rect", { x: 0, y: 14, width: 5, height: h - 28, rx: 2.5, fill: c }, g);
-  txt(g, 18, 27, fitText(it.short, 15, 700, w - 30), 15, 700, pal.text);
-  const kids = it.childIds.map(id => ITEMS.get(id));
-  const cnt = s => kids.filter(k => k.status === s).length;
-  const audit = it.audit ? it.audit.toLowerCase().replace("-", " ") : (excess ? "not counted" : "");
-  const cred = it.applied != null ? ` · ${it.applied}${it.req != null ? "/" + it.req : ""} cr` : "";
-  txt(g, 18, 47, fitText(`Audit: ${audit}${cred}`, 12.5, 400, w - 30), 12.5, 400, pal.muted);
-  progressBar(g, 18, 59, w - 36, 9, [[cnt("complete"), pal.complete.stroke], [cnt("in_progress"), pal.in_progress.stroke], [cnt("needed"), pal.border]], pal);
-  const parts = [];
-  if (cnt("complete")) parts.push(`${cnt("complete")} done`);
-  if (cnt("in_progress")) parts.push(`${cnt("in_progress")} in progress`);
-  if (cnt("needed")) parts.push(`${cnt("needed")} needed`);
-  txt(g, 18, 85, parts.join(" · "), 12, 500, pal.muted);
-  return g;
+function drawHub(g, n) {
+  const it = n.it, pal = P(), r = n.r, c = colorOf(it.id);
+  el("circle", { r: r + 14, fill: "none", stroke: pal.text, "stroke-width": 3.5, class: "selring", style: "opacity:0" }, g);
+  el("circle", { r, fill: c, "fill-opacity": 0.2, stroke: c, "stroke-width": 2.5, "stroke-dasharray": it.counts === false ? "6 4" : null }, g);
+  const kids = it.childIds.map(id => ITEMS.get(id)), cnt = s => kids.filter(k => k.status === s).length;
+  progressRing(g, r + 6, 4, [[cnt("complete"), c], [cnt("in_progress"), c, 0.45], [cnt("needed"), "none"]], pal);
+  txt(g, 0, 5, `${cnt("complete")}/${kids.length}`, 14, 750, pal.text, "middle");
+  const l = txt(g, 0, r + 28, it.short, 15, 750, pal.text, "middle");
+  const s = txt(g, 0, r + 45, it.audit ? `Audit: ${it.audit.toLowerCase().replace("-", " ")}` : it.counts === false ? "Not counted" : `${it.applied} cr applied`, 12, 500, pal.muted, "middle");
+  for (const t of [l, s]) { t.setAttribute("paint-order", "stroke"); t.setAttribute("stroke", pal.bg); t.setAttribute("stroke-width", 5); t.setAttribute("stroke-linejoin", "round"); }
 }
 
-function drawDegreeNode(parent, n) {
-  const it = ITEMS.get("DEGREE"), pal = P(), { w, h } = n;
-  const g = el("g", { transform: `translate(${n.x},${n.y})`, "data-id": "DEGREE", class: "node" }, parent);
-  const sel = el("rect", { x: -9, y: -9, width: w + 18, height: h + 18, rx: 22, fill: "none", stroke: pal.sel, "stroke-width": 3.5, class: "selring" }, g);
-  sel.style.opacity = 0;
-  el("rect", { width: w, height: h, rx: 18, fill: pal.surface, stroke: pal.accent, "stroke-width": 2.5 }, g);
-  txt(g, w / 2, 34, it.label, 21, 750, pal.text, "middle");
-  txt(g, w / 2, 56, "University of Georgia · Fall 2026 Bulletin", 13, 400, pal.muted, "middle");
-  progressBar(g, 26, 70, w - 52, 10, [[credComplete, pal.complete.stroke], [credIP, pal.in_progress.stroke], [DEGREE.req - credComplete - credIP, pal.border]], pal);
-  txt(g, w / 2, 99, `${credComplete + credIP} of ${DEGREE.req} credits applied`, 12.5, 600, pal.muted, "middle");
-  return g;
+function drawDegree(g, n) {
+  const pal = P(), r = n.r;
+  el("circle", { r: r + 16, fill: "none", stroke: pal.text, "stroke-width": 3.5, class: "selring", style: "opacity:0" }, g);
+  el("circle", { r, fill: pal.surface, stroke: pal.text, "stroke-width": 2.5 }, g);
+  progressRing(g, r + 8, 6, [[credComplete, pal.text], [credIP, pal.text, 0.4], [DEGREE.req - credComplete - credIP, "none"]], pal);
+  txt(g, 0, 4, String(credComplete + credIP), 24, 800, pal.text, "middle");
+  txt(g, 0, 21, `of ${DEGREE.req} cr`, 11.5, 500, pal.muted, "middle");
+  const l = txt(g, 0, r + 36, DEGREE.label, 18, 800, pal.text, "middle");
+  l.setAttribute("paint-order", "stroke"); l.setAttribute("stroke", pal.bg); l.setAttribute("stroke-width", 5); l.setAttribute("stroke-linejoin", "round");
 }
 
-let R = {}; // render registry
-const LAYOUT = { flow: buildFlowLayout(), req: buildReqLayout() };
-
-function defs(pal) {
-  const d = el("defs", {}, svg);
-  const marker = (id, color) => {
-    const m = el("marker", { id, viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 11, markerHeight: 11, markerUnits: "userSpaceOnUse", orient: "auto" }, d);
-    el("path", { d: "M0,0.5 L10,5 L0,9.5 Z", fill: color }, m);
-  };
-  marker("a-edge", pal.edge); marker("a-acc", pal.accent); marker("a-up", pal.up); marker("a-down", pal.down);
-  const pat = el("pattern", { id: "dots", width: 24, height: 24, patternUnits: "userSpaceOnUse" }, d);
-  el("circle", { cx: 2, cy: 2, r: 1.3, fill: pal.dot }, pat);
-  return pat;
-}
-
-const EDGE_STYLE = {
-  prereq:   { dash: null, w: 2.2 },
-  alt:      { dash: "8 6", w: 2.2 },
-  preco:    { dash: "1.5 5.5", w: 2.6, cap: "round" },
-  fulfills: { dash: null, w: 1.8 },
-};
+const PRE_STYLE = { prereq: { dash: null, w: 1.8 }, alt: { dash: "7 5", w: 1.8 }, preco: { dash: "1.5 5", w: 2.2, cap: "round" }, fulfills: { dash: null, w: 1.6 } };
 
 function render() {
   const pal = P();
   svg.innerHTML = "";
   svg.style.background = pal.bg;
-  const pat = defs(pal);
-  el("rect", { x: 0, y: 0, width: "100%", height: "100%", fill: pal.bg }, svg);
-  el("rect", { x: 0, y: 0, width: "100%", height: "100%", fill: "url(#dots)" }, svg);
+  const d = el("defs", {}, svg);
+  const marker = (id, color) => {
+    const m = el("marker", { id, viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 10, markerHeight: 10, markerUnits: "userSpaceOnUse", orient: "auto" }, d);
+    el("path", { d: "M0,0.5 L10,5 L0,9.5 Z", fill: color }, m);
+  };
+  marker("a-edge", pal.edge); marker("a-up", pal.up); marker("a-down", pal.down);
+  const cp = el("clipPath", { id: "lowerHalf" }, d);
+  el("rect", { x: -60, y: 0, width: 120, height: 60 }, cp);
+  const pat = el("pattern", { id: "dots", width: 24, height: 24, patternUnits: "userSpaceOnUse" }, d);
+  el("circle", { cx: 2, cy: 2, r: 1.3, fill: pal.dot }, pat);
+  el("rect", { width: "100%", height: "100%", fill: pal.bg }, svg);
+  el("rect", { width: "100%", height: "100%", fill: "url(#dots)" }, svg);
   const vp = el("g", { "font-family": FONT }, svg);
-  R = { pat, vp, nodes: new Map(), edges: [], combs: [], links: [] };
-  const reg = (id, g) => { if (!R.nodes.has(id)) R.nodes.set(id, []); R.nodes.get(id).push(g); };
+  R = { pat, vp, lines: [], blobs: new Map() };
 
-  if (state.view === "flow") {
-    const Lo = LAYOUT.flow, gE = el("g", {}, vp), gN = el("g", {}, vp);
-    const pos = new Map(Lo.nodes.map(n => [n.id, n]));
-    // Port offsets so several edges into / out of one node fan out.
-    const ptY = (id) => { const p = Lo.layerPos.get(id); return p.cy; };
-    const ins = new Map(), outs = new Map();
-    Lo.routes.forEach(r => {
-      const s = r.path[0], t = r.path[r.path.length - 1];
-      (outs.get(s) || outs.set(s, []).get(s)).push(r);
-      (ins.get(t) || ins.set(t, []).get(t)).push(r);
-    });
-    const portOff = new Map();
-    const assign = (map, side) => map.forEach((rs, id) => {
-      rs.sort((a, b) => ptY(side === "in" ? a.path[a.path.length - 2] : a.path[1]) - ptY(side === "in" ? b.path[b.path.length - 2] : b.path[1]));
-      const n = rs.length, span = n > 1 ? Math.min(NH - 22, (n - 1) * 11) : 0;
-      rs.forEach((r, i) => portOff.set(r.e.s + ">" + r.e.t + side, n > 1 ? -span / 2 + i * span / (n - 1) : 0));
-    });
-    assign(ins, "in"); assign(outs, "out");
-    Lo.routes.forEach(r => {
-      const s = r.path[0], t = r.path[r.path.length - 1], ps = Lo.layerPos.get(s), pt = Lo.layerPos.get(t);
-      let px = ps.x + NW, py = ps.cy + portOff.get(s + ">" + t + "out");
-      let d = `M${px},${py}`;
-      for (let i = 1; i < r.path.length; i++) {
-        const q = Lo.layerPos.get(r.path[i]);
-        const last = i === r.path.length - 1;
-        const qx = q.x - (last ? 1 : 0), qy = last ? pt.cy + portOff.get(s + ">" + t + "in") : q.cy;
-        const dx = (qx - px) * 0.5;
-        d += ` C${px + dx},${py} ${qx - dx},${qy} ${qx},${qy}`;
-        if (!last) { d += ` L${q.x + NW},${qy}`; px = q.x + NW; py = qy; }
-      }
-      const st = EDGE_STYLE[r.e.kind];
-      const color = r.e.kind === "fulfills" ? pal.accent : pal.edge;
-      const p = el("path", { d, fill: "none", stroke: color, "stroke-width": st.w, "stroke-dasharray": st.dash, "stroke-linecap": st.cap || "butt",
-        "marker-end": `url(#${r.e.kind === "fulfills" ? "a-acc" : "a-edge"})`, class: "edge" }, gE);
-      R.edges.push({ el: p, e: r.e, base: { color, marker: r.e.kind === "fulfills" ? "a-acc" : "a-edge", w: st.w } });
-    });
-    Lo.headings.forEach(h => {
-      txt(vp, h.x, h.y, h.text.toUpperCase(), 13, 700, pal.muted).setAttribute("letter-spacing", "1.2");
-      el("line", { x1: h.x, x2: Lo.width, y1: h.y + 8, y2: h.y + 8, stroke: pal.border, "stroke-width": 1 }, vp);
-    });
-    txt(vp, 0, -26, "PROGRESSION →  each arrow points from a course to the course it unlocks", 13, 700, pal.muted).setAttribute("letter-spacing", "1.2");
-    Lo.nodes.forEach(n => reg(n.id, drawItemNode(gN, n)));
-  } else {
-    const Lo = LAYOUT.req, gE = el("g", {}, vp), gN = el("g", {}, vp);
-    Lo.links.forEach(l => {
-      const my = (l.y1 + l.y2) / 2;
-      const p = el("path", { d: `M${l.x1},${l.y1} C${l.x1},${my} ${l.x2},${my} ${l.x2},${l.y2}`, fill: "none", stroke: pal.faint, "stroke-width": 2, class: "edge" }, gE);
-      R.links.push({ el: p, block: l.block });
-    });
-    Lo.combs.forEach(c => {
-      const lastY = c.ticks[c.ticks.length - 1].y;
-      const sp = el("path", { d: `M${c.x},${c.y0} V${lastY - 10} Q${c.x},${lastY} ${c.x + 10},${lastY}`, fill: "none", stroke: pal.faint, "stroke-width": 2, class: "edge" }, gE);
-      R.combs.push({ el: sp, parent: c.parent, child: null, block: c.block });
-      c.ticks.forEach((t, i) => {
-        const d = i === c.ticks.length - 1 ? `M${c.x + 10},${t.y} H${c.tx}` : `M${c.x},${t.y} H${c.tx}`;
-        const p = el("path", { d, fill: "none", stroke: pal.faint, "stroke-width": 2, class: "edge" }, gE);
-        R.combs.push({ el: p, parent: c.parent, child: t.id, block: c.block });
-      });
-    });
-    Lo.nodes.forEach(n => {
-      const it = ITEMS.get(n.id);
-      const g = it.type === "degree" ? drawDegreeNode(gN, n) : it.type === "block" ? drawBlockNode(gN, n) : drawItemNode(gN, n);
-      reg(n.id, g);
-    });
+  // Cluster clouds: one translucent group per section, so overlaps blend.
+  const gB = el("g", {}, vp);
+  SIM.nodes.forEach(n => { n.blobEls = []; });
+  BLOCKS.forEach(b => {
+    const g = el("g", { opacity: pal.blob, fill: colorOf(b.id) }, gB);
+    R.blobs.set(b.id, g);
+    const hub = SIM.byId.get(b.id);
+    hub.blobEls.push(el("circle", { r: hub.r + 54 }, g));
+    const members = new Set(b.items.map(i => i[0]));
+    b.items.forEach(([id]) => { if (CHOICES[id]) CHOICES[id].options.forEach(o => members.add(o)); });
+    members.forEach(id => { const n = SIM.byId.get(id); n.blobEls.push(el("circle", { r: n.r + 34 }, g)); });
+  });
+
+  const gL = el("g", {}, vp), gP = el("g", {}, vp), gN = el("g", {}, vp);
+  for (const l of SIM.links) {
+    let line;
+    if (l.kind === "pre") {
+      const st = PRE_STYLE[l.e.kind];
+      line = el("line", { stroke: pal.edge, "stroke-width": st.w, "stroke-dasharray": st.dash, "stroke-linecap": st.cap || "butt", "marker-end": "url(#a-edge)", class: "edge" }, gP);
+    } else {
+      const c = l.kind === "spine" ? colorOf(l.t.id) : l.kind === "option" ? colorOf("BLK:MAJOR") : colorOf(l.s.id);
+      line = el("line", { stroke: c, "stroke-width": l.kind === "spine" ? 2.2 : 1.5, "stroke-dasharray": l.kind === "spine" && l.t.it.counts === false ? "5 5" : null, class: "edge" }, gL);
+    }
+    R.lines.push({ el: line, l });
   }
+  for (const n of SIM.nodes) {
+    n.g = el("g", { "data-id": n.id, class: "node" }, gN);
+    n.lbl = null;
+    if (n.it.type === "degree") drawDegree(n.g, n);
+    else if (n.it.type === "block") drawHub(n.g, n);
+    else drawItem(n.g, n);
+  }
+  // Hubs on top of their members' labels.
+  SIM.nodes.filter(n => n.it.type === "block" || n.it.type === "degree").forEach(n => gN.appendChild(n.g));
   applyView();
+  draw();
   applyState();
 }
 
+function draw() {
+  for (const n of SIM.nodes) {
+    n.px = n.x + n.jx; n.py = n.y + n.jy;
+    const s = state.hover === n.id && n.it.type !== "degree" ? 1.14 : 1;
+    n.g.setAttribute("transform", `translate(${n.px.toFixed(1)},${n.py.toFixed(1)})${s !== 1 ? ` scale(${s})` : ""}`);
+    for (const c of n.blobEls) { c.setAttribute("cx", n.px.toFixed(1)); c.setAttribute("cy", n.py.toFixed(1)); }
+  }
+  for (const { el: line, l } of R.lines) {
+    const a = l.s, b = l.t, dx = b.px - a.px, dy = b.py - a.py, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
+    const arrow = l.kind === "pre";
+    const sa = a.r + (arrow ? 3 : 1), sb = b.r + (arrow ? 4 : 1);
+    if (d < sa + sb) { line.setAttribute("visibility", "hidden"); continue; }
+    line.removeAttribute("visibility");
+    line.setAttribute("x1", (a.px + ux * sa).toFixed(1)); line.setAttribute("y1", (a.py + uy * sa).toFixed(1));
+    line.setAttribute("x2", (b.px - ux * sb).toFixed(1)); line.setAttribute("y2", (b.py - uy * sb).toFixed(1));
+  }
+}
+
 /* =====================================================================
-   STATE: selection, filter, highlighting
+   STATE: selection, hover, filter, highlighting
    ===================================================================== */
 function passFilter(it) {
   if (it.type === "block" || it.type === "degree") return true;
@@ -900,8 +824,7 @@ function passFilter(it) {
     default: return true;
   }
 }
-function applyState() {
-  const pal = P();
+function computeFocus() {
   let focus = null, upE = new Set(), dnE = new Set();
   const sel = state.sel && ITEMS.get(state.sel);
   if (sel && sel.type !== "degree") {
@@ -912,35 +835,52 @@ function applyState() {
       u.nodes.forEach(n => focus.add(n)); d.nodes.forEach(n => focus.add(n));
       upE = u.edges; dnE = d.edges;
       if (CHOICES[sel.id]) CHOICES[sel.id].options.forEach(o => focus.add(o));
-      [...focus].forEach(n => (MEMBER.get(n) || []).forEach(m => focus.add(m.block)));
+      [...focus].forEach(n => blocksOf(n).forEach(b => focus.add(b)));
     }
   }
-  const op = new Map();
-  R.nodes.forEach((gs, id) => {
-    const it = ITEMS.get(id);
-    const f = passFilter(it), s = !focus || focus.has(id);
-    const o = f && s ? 1 : 0.13;
-    op.set(id, o);
-    gs.forEach(g => {
-      g.style.opacity = o;
-      g.querySelector(".selring").style.opacity = state.sel === id ? 1 : 0;
-    });
-  });
-  R.edges.forEach(({ el: p, e, base }) => {
-    let color = base.color, marker = base.marker, w = base.w, o;
-    if (upE.has(e)) { color = pal.up; marker = "a-up"; w = base.w + 1.2; o = 1; }
-    else if (dnE.has(e)) { color = pal.down; marker = "a-down"; w = base.w + 1.2; o = 1; }
-    else o = focus ? 0.07 : Math.min(op.get(e.s), op.get(e.t)) < 1 ? 0.1 : 0.95;
-    p.setAttribute("stroke", color); p.setAttribute("marker-end", `url(#${marker})`); p.setAttribute("stroke-width", w);
-    p.style.opacity = o;
-  });
-  R.links.forEach(l => { l.el.style.opacity = op.get(l.block) ?? 1; });
-  R.combs.forEach(c => {
-    const a = c.child ? op.get(c.child) : 1, b = op.get(c.parent) ?? 1;
-    c.el.style.opacity = Math.min(a, b) < 1 ? 0.15 : 1;
-  });
-  renderPanel();
+  return { focus, upE, dnE };
 }
+function applyVisual() {
+  const pal = P(), { focus, upE, dnE } = computeFocus();
+  const hov = !focus && state.hover ? new Set([state.hover, ...ADJ.get(state.hover)]) : null;
+  const op = new Map();
+  for (const n of SIM.nodes) {
+    const inF = passFilter(n.it), inS = !focus || focus.has(n.id), inH = !hov || hov.has(n.id);
+    const o = !inF || !inS ? 0.12 : inH ? 1 : 0.28;
+    op.set(n.id, o);
+    n.g.style.opacity = o;
+    n.g.querySelector(".selring").style.opacity = state.sel === n.id ? 1 : 0;
+    if (n.lbl) {
+      const show = view.k >= 0.6 || state.sel === n.id || (focus && focus.has(n.id)) || (hov && hov.has(n.id));
+      n.lbl.style.opacity = show ? 1 : 0;
+    }
+  }
+  for (const { el: line, l } of R.lines) {
+    const ends = Math.min(op.get(l.s.id), op.get(l.t.id));
+    const touchesHover = state.hover && (l.s.id === state.hover || l.t.id === state.hover);
+    if (l.kind === "pre") {
+      let color = pal.edge, marker = "a-edge", w = PRE_STYLE[l.e.kind].w, o;
+      if (upE.has(l.e)) { color = pal.up; marker = "a-up"; w += 1.2; o = 1; }
+      else if (dnE.has(l.e)) { color = pal.down; marker = "a-down"; w += 1.2; o = 1; }
+      else if (!state.arrows) o = hov && touchesHover ? 0.9 : 0;
+      else if (focus) o = 0.04;
+      else if (hov) o = touchesHover ? 0.95 : 0.06;
+      else o = ends < 1 ? 0.06 : 0.55;
+      line.setAttribute("stroke", color); line.setAttribute("marker-end", `url(#${marker})`); line.setAttribute("stroke-width", w);
+      line.style.opacity = o;
+    } else {
+      let o = l.kind === "spine" ? 0.4 : 0.5;
+      if (focus) o = focus.has(l.s.id) && focus.has(l.t.id) && ends === 1 ? 0.75 : 0.04;
+      else if (hov) o = touchesHover ? 0.95 : 0.1;
+      else if (ends < 1) o = 0.05;
+      line.style.opacity = o;
+    }
+  }
+  const sel = state.sel && ITEMS.get(state.sel);
+  const lit = sel && sel.type === "block" ? new Set([sel.id]) : sel && sel.type !== "degree" ? new Set(blocksOf(sel.id)) : null;
+  R.blobs.forEach((g, b) => g.setAttribute("opacity", !lit ? pal.blob : lit.has(b) ? pal.blob * 1.8 : pal.blob * 0.3));
+}
+function applyState() { applyVisual(); renderPanel(); }
 
 function select(id, center) {
   state.sel = id && ITEMS.has(id) ? id : null;
@@ -949,9 +889,9 @@ function select(id, center) {
 }
 
 /* =====================================================================
-   PAN / ZOOM
+   PAN / ZOOM / DRAG / HOVER
    ===================================================================== */
-const view = { k: 1, x: 40, y: 60 };
+const view = { k: 1, x: 0, y: 0 };
 function applyView() {
   const t = `translate(${view.x},${view.y}) scale(${view.k})`;
   if (R.vp) R.vp.setAttribute("transform", t);
@@ -960,75 +900,102 @@ function applyView() {
 let anim = null;
 function animateTo(k, x, y) {
   cancelAnimationFrame(anim);
-  const from = { ...view }, t0 = performance.now(), D = 380;
+  const from = { ...view }, t0 = performance.now(), D = reduced ? 1 : 420;
   const step = now => {
     const t = Math.min(1, (now - t0) / D), e = 1 - Math.pow(1 - t, 3);
     view.k = from.k + (k - from.k) * e; view.x = from.x + (x - from.x) * e; view.y = from.y + (y - from.y) * e;
-    applyView(); if (t < 1) anim = requestAnimationFrame(step);
+    applyView();
+    if (t < 1) anim = requestAnimationFrame(step); else applyVisual();
   };
   anim = requestAnimationFrame(step);
 }
+function bounds() {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const n of SIM.nodes) {
+    const m = n.it.type === "block" ? n.r + 56 : n.r + 36;
+    x0 = Math.min(x0, n.x - m); x1 = Math.max(x1, n.x + m); y0 = Math.min(y0, n.y - m); y1 = Math.max(y1, n.y + m + (n.it.type === "block" ? 10 : 0));
+  }
+  return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+}
 function fit(animate = true) {
-  const b = R.vp.getBBox(), r = svg.getBoundingClientRect(), pad = 48;
-  const k = Math.min((r.width - pad * 2) / b.width, (r.height - pad * 2 - 30) / b.height, 1.1);
-  const x = (r.width - b.width * k) / 2 - b.x * k, y = (r.height - b.height * k) / 2 - b.y * k + 15;
-  animate ? animateTo(k, x, y) : (Object.assign(view, { k, x, y }), applyView());
+  const b = bounds(), r = svg.getBoundingClientRect(), pad = 20;
+  const k = Math.min((r.width - pad * 2) / b.w, (r.height - pad * 2 - 40) / b.h, 1.2);
+  const x = (r.width - b.w * k) / 2 - b.x * k, y = (r.height - b.h * k) / 2 - b.y * k + 20;
+  animate ? animateTo(k, x, y) : (Object.assign(view, { k, x, y }), applyView(), applyVisual());
 }
 function centerOn(id) {
-  const g = (R.nodes.get(id) || [])[0]; if (!g) return;
-  const bb = g.getBBox(), m = g.transform.baseVal.consolidate().matrix;
-  const cx = m.e + bb.x + bb.width / 2, cy = m.f + bb.y + bb.height / 2;
-  const r = svg.getBoundingClientRect(), k = Math.max(view.k, 0.95);
-  animateTo(k, r.width / 2 - cx * k, r.height / 2 - cy * k);
+  const n = SIM.byId.get(id); if (!n) return;
+  const r = svg.getBoundingClientRect(), k = Math.max(view.k, 1);
+  animateTo(k, r.width / 2 - n.x * k, r.height / 2 - n.y * k);
 }
 function zoomBy(f, mx, my) {
   const r = svg.getBoundingClientRect();
   if (mx == null) { mx = r.width / 2; my = r.height / 2; }
-  const k2 = Math.min(3, Math.max(0.12, view.k * f));
+  const k2 = Math.min(3, Math.max(0.15, view.k * f));
   view.x = mx - (mx - view.x) * k2 / view.k; view.y = my - (my - view.y) * k2 / view.k; view.k = k2;
-  applyView();
+  applyView(); applyVisual();
 }
 svg.addEventListener("wheel", e => {
   e.preventDefault(); cancelAnimationFrame(anim);
   const r = svg.getBoundingClientRect();
   zoomBy(Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0018)), e.clientX - r.left, e.clientY - r.top);
 }, { passive: false });
+
+const nodeAt = e => { const g = e.target.closest && e.target.closest(".node"); return g ? g.getAttribute("data-id") : null; };
+const toWorld = (cx, cy) => { const r = svg.getBoundingClientRect(); return [(cx - r.left - view.x) / view.k, (cy - r.top - view.y) / view.k]; };
 let drag = null;
 svg.addEventListener("pointerdown", e => {
   if (e.button !== 0) return;
   cancelAnimationFrame(anim);
-  drag = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: false, id: e.pointerId };
+  const id = nodeAt(e);
+  drag = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: false, pid: e.pointerId, node: id ? SIM.byId.get(id) : null };
 });
 svg.addEventListener("pointermove", e => {
-  if (drag && drag.id === e.pointerId) {
+  if (drag && drag.pid === e.pointerId) {
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-    if (!drag.moved && Math.hypot(dx, dy) > 4) { drag.moved = true; svg.classList.add("panning"); svg.setPointerCapture(e.pointerId); hideTip(); }
-    if (drag.moved) { view.x = drag.vx + dx; view.y = drag.vy + dy; applyView(); }
+    if (!drag.moved && Math.hypot(dx, dy) > 4) {
+      drag.moved = true; svg.setPointerCapture(e.pointerId); svg.classList.add("panning"); hideTip();
+      if (drag.node) { SIM.alphaTarget = 0.25; heat(0.3); }
+    }
+    if (!drag.moved) return;
+    if (drag.node) {
+      const [wx, wy] = toWorld(e.clientX, e.clientY);
+      const n = drag.node; n.fx = wx; n.fy = wy; n.jx = n.jy = n.jvx = n.jvy = 0;
+      requestLoop();
+    } else { view.x = drag.vx + dx; view.y = drag.vy + dy; applyView(); }
     return;
   }
-  const g = e.target.closest && e.target.closest(".node");
-  g ? showTip(g.getAttribute("data-id"), e) : hideTip();
+  const id = nodeAt(e);
+  if (id !== state.hover) {
+    state.hover = id;
+    if (id) jiggle(SIM.byId.get(id));
+    applyVisual(); requestLoop();
+  }
+  id ? showTip(id, e) : hideTip();
 });
 svg.addEventListener("pointerup", e => {
   if (!drag) return;
-  const wasMoved = drag.moved; drag = null; svg.classList.remove("panning");
-  if (wasMoved) return;
-  const g = e.target.closest && e.target.closest(".node");
-  select(g ? g.getAttribute("data-id") : null);
+  const d = drag; drag = null; svg.classList.remove("panning");
+  if (d.moved) {
+    if (d.node) { if (d.node.id !== "DEGREE") d.node.fx = d.node.fy = null; SIM.alphaTarget = 0; heat(0.1); }
+    return;
+  }
+  select(nodeAt(e));
 });
-svg.addEventListener("pointerleave", hideTip);
+svg.addEventListener("pointerleave", () => { hideTip(); if (state.hover && !drag) { state.hover = null; applyVisual(); requestLoop(); } });
 
 /* Tooltip */
 const tip = document.getElementById("tooltip");
 function showTip(id, e) {
   const it = ITEMS.get(id), r = document.getElementById("stage").getBoundingClientRect();
+  const sections = blocksOf(id).map(b => `<span class="sw" style="background:${colorOf(b)}"></span>${esc(ITEMS.get(b).short)}`).join("<br>");
   let html = "";
   if (it.type === "course") {
-    const el2 = elig(id);
-    html = `<b>${id}</b> · ${it.credits} cr${state.redact ? "" : `<div class="t">${esc(it.title)}</div>`}<div>${STATUS_LABEL[it.status]}${el2 === "now" ? " · eligible now" : el2 === "next" ? " · eligible after this term" : ""}</div>`;
-  } else if (it.type === "block") html = `<b>${esc(it.label)}</b><div class="t">${STATUS_LABEL[it.status]} (derived)</div>`;
+    const e2 = elig(id);
+    html = `<b>${id}</b> · ${it.credits} cr${state.redact ? "" : `<div class="t">${esc(it.title)}</div>`}<div>${STATUS_LABEL[it.status]}${e2 === "now" ? " · eligible now" : e2 === "next" ? " · eligible after this term" : ""}</div><div class="secs">${sections}</div>`;
+  } else if (it.type === "block") html = `<b>${esc(it.label)}</b><div class="t">${STATUS_LABEL[it.status]} (derived from its items)</div>`;
   else if (it.type === "degree") html = `<b>${esc(it.label)}</b><div class="t">${credComplete + credIP} of ${DEGREE.req} credits applied</div>`;
-  else html = `<b>${esc(it.label)}</b><div class="t">${esc(it.type === "choice" ? "Pick 1 of " + it.options.length : it.sub)}</div><div>${STATUS_LABEL[it.status]}</div>`;
+  else html = `<b>${esc(it.label)}</b><div class="t">${esc(it.type === "choice" ? "Pick 1 of " + it.options.length : it.sub)}</div><div>${STATUS_LABEL[it.status]}</div><div class="secs">${sections}</div>`;
   tip.innerHTML = html;
   let x = e.clientX - r.left + 16, y = e.clientY - r.top + 16;
   if (x + 300 > r.width) x = e.clientX - r.left - 16 - tip.offsetWidth;
@@ -1042,23 +1009,25 @@ function hideTip() { tip.style.opacity = 0; }
    ===================================================================== */
 const panel = document.getElementById("panel");
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const blockName = id => ITEMS.get(id).short;
+const swatch = b => `<span class="sw" style="background:${colorOf(b)}"></span>`;
 function chip(id) {
   const it = ITEMS.get(id);
   if (!it) return `<span class="chip ext" title="Not in your audit"><span class="dot ext"></span>${esc(id)}</span>`;
-  const name = it.type === "course" ? it.id : it.type === "block" ? it.short : it.label;
+  if (it.type === "block") return `<button class="chip" data-go="${esc(id)}">${swatch(id)}${esc(it.short)}</button>`;
+  const name = it.type === "course" ? it.id : it.label;
   return `<button class="chip" data-go="${esc(id)}"><span class="dot ${it.status}"></span>${esc(name)}</button>`;
 }
 const pill = s => `<span class="pill ${s}">${STATUS_LABEL[s]}</span>`;
 const eligPill = e => e === "now" ? `<span class="pill elig">Eligible now</span>` : e === "next" ? `<span class="pill elig" style="border-style:dashed">Eligible after this term</span>` : e === "blocked" ? `<span class="pill muted">Prerequisites not met</span>` : "";
 const ELIG_TEXT = { now: "Now", next: "After this term", blocked: "Not yet" };
+const membersHTML = id => `<ul>${(MEMBER.get(id) || []).map(m => `<li>${swatch(m.block)}<button class="linkbtn" data-go="${m.block}">${esc(ITEMS.get(m.block).short)}</button><span class="req">${esc(m.req)}</span></li>`).join("")}</ul>`;
 
 function groupsHTML(groups) {
   return groups.map((g, i) => {
     const sts = g.filter(c => ITEMS.has(c)).map(c => ITEMS.get(c).status);
-    const ok = sts.includes("complete") ? ["complete", "Met"] : sts.includes("in_progress") ? ["in_progress", "In progress"] : ["needed", "Not met"];
+    const ok = sts.includes("complete") ? ["complete", "Met"] : sts.includes("in_progress") ? ["progress", "In progress"] : ["muted", "Not met"];
     const chips = g.map(chip).join(`<span class="or">or</span>`);
-    return (i ? `<div class="and">and</div>` : "") + `<div class="group">${chips}<span class="ok" style="color:var(--${ok[0] === "complete" ? "complete" : ok[0] === "in_progress" ? "progress" : "muted"})">${ok[1]}</span></div>`;
+    return (i ? `<div class="and">and</div>` : "") + `<div class="group">${chips}<span class="ok" style="color:var(--${ok[0]})">${ok[1]}</span></div>`;
   }).join("");
 }
 
@@ -1068,11 +1037,11 @@ function renderPanel() {
   const it = ITEMS.get(id);
   let h = "";
   if (it.type === "course") {
-    const p = PRE[id], e = elig(id);
+    const p = PRE[id], e = elig(id), shared = blocksOf(id).length;
     h += `<div style="display:flex;gap:6px;flex-wrap:wrap">${pill(it.status)}${eligPill(e)}</div>`;
     h += `<h2>${esc(id)}</h2>${state.redact ? "" : `<p class="title">${esc(it.title)}</p>`}`;
     h += `<dl class="facts"><div><dt>Credits</dt><dd>${it.credits}</dd></div><div><dt>Status</dt><dd>${STATUS_LABEL[it.status]}</dd></div><div><dt>Can take</dt><dd>${it.status === "needed" ? ELIG_TEXT[e] : "—"}</dd></div></dl>`;
-    h += `<h3>Counts toward</h3><ul>${(MEMBER.get(id) || []).map(m => `<li><button class="linkbtn" data-go="${m.block}">${esc(blockName(m.block))}</button><span class="req">${esc(m.req)}</span></li>`).join("")}</ul>`;
+    h += `<h3>Counts toward${shared > 1 ? ` · shared by ${shared} sections` : ""}</h3>${membersHTML(id)}`;
     h += `<h3>Prerequisites</h3>`;
     if (p && p.pre) h += groupsHTML(p.pre) + `<p class="src">Bulletin${p.undergrad ? " (undergraduate prerequisite)" : ""}: ${esc(p.text)}</p>`;
     else h += `<p class="note">${it.bid ? "None listed in the Bulletin." : "Transfer / test-credit placeholder; not a Bulletin course."}</p>`;
@@ -1080,11 +1049,11 @@ function renderPanel() {
     if (p && p.coText) h += `<h3>Corequisite</h3><div class="chips">${chip(p.coText)}</div>`;
     const outs = OUT.get(id) || [], down = closure(id, "down").nodes;
     h += `<h3>Unlocks</h3>`;
-    h += outs.length ? `<div class="chips">${outs.map(o => chip(o.t)).join("")}</div><p class="note">${down.size} item${down.size === 1 ? "" : "s"} downstream in total (highlighted in pink).</p>` : `<p class="note">Nothing in this audit lists ${esc(id)} as a prerequisite.</p>`;
+    h += outs.length ? `<div class="chips">${outs.map(o => chip(o.t)).join("")}</div><p class="note">${down.size} item${down.size === 1 ? "" : "s"} downstream in total (pink arrows).</p>` : `<p class="note">Nothing in this audit lists ${esc(id)} as a prerequisite.</p>`;
     if (it.bid) h += `<p style="margin-top:16px"><a class="ext" href="https://bulletin.uga.edu/Course/Details/${it.bid}" target="_blank" rel="noopener">View in UGA Bulletin ↗</a></p>`;
   } else if (it.type === "req") {
     h += `<div>${pill(it.status)}</div><h2>${esc(it.label)}</h2><p class="title">${esc(it.sub)}</p>`;
-    h += `<h3>Counts toward</h3><ul>${(MEMBER.get(id) || []).map(m => `<li><button class="linkbtn" data-go="${m.block}">${esc(blockName(m.block))}</button><span class="req">${esc(m.req)}</span></li>`).join("")}</ul>`;
+    h += `<h3>Counts toward</h3>${membersHTML(id)}`;
     h += `<h3>From the audit</h3><p>${esc(it.desc)}</p>`;
     if (it.from) {
       const done = it.from.filter(c => ITEMS.get(c).status === "complete").length, ip = it.from.filter(c => ITEMS.get(c).status === "in_progress").length;
@@ -1095,11 +1064,13 @@ function renderPanel() {
     h += `<h3>Options</h3><ul>${it.options.map(o => `<li>${chip(o)}${state.redact ? "" : `<span class="req">${esc(ITEMS.get(o).title)}</span>`}<span style="margin-left:auto">${eligPill(elig(o))}</span></li>`).join("")}</ul>`;
     if (id === "CHOICE:APP") h += `<p class="note">Both options also satisfy the major's Teamwork requirement.</p>`;
   } else if (it.type === "block") {
-    h += `<div>${pill(it.status)} <span class="pill muted">Audit: ${esc(it.audit || (it.counts === false ? "not counted" : "—"))}</span></div><h2>${esc(it.short)}</h2><p class="title">${esc(it.label)}</p>`;
+    const shared = it.childIds.filter(c => blocksOf(c).length > 1);
+    h += `<div>${pill(it.status)} <span class="pill muted">Audit: ${esc(it.audit || (it.counts === false ? "not counted" : "—"))}</span></div><h2 style="display:flex;align-items:center;gap:10px">${swatch(it.id).replace('class="sw"', 'class="sw big"')}${esc(it.short)}</h2><p class="title">${esc(it.label)}</p>`;
     if (it.applied != null) h += `<dl class="facts"><div><dt>Required</dt><dd>${it.req != null ? esc(it.req) + " cr" : "—"}</dd></div><div><dt>Applied</dt><dd>${it.applied} cr</dd></div><div><dt>Items</dt><dd>${it.childIds.length}</dd></div></dl>`;
     h += `<h3>Requirements</h3><ul>${it.items.map(([cid, req]) => `<li>${chip(cid)}<span class="req">${esc(req)}</span></li>`).join("")}</ul>`;
+    if (shared.length) h += `<h3>Shared with other sections</h3><ul>${shared.map(c => `<li>${chip(c)}<span class="req">${blocksOf(c).filter(b => b !== it.id).map(b => swatch(b) + esc(ITEMS.get(b).short)).join(", ")}</span></li>`).join("")}</ul>`;
     if (it.notes) h += `<h3>Notes from the audit</h3>${it.notes.map(n => `<p class="note">${esc(n)}</p>`).join("")}`;
-    h += `<p class="note" style="margin-top:14px">Block status is derived from its items: all complete → complete; some started → in progress; none started → needed.</p>`;
+    h += `<p class="note" style="margin-top:14px">Section status is derived from its items: all complete → complete; some started → in progress; none started → needed.</p>`;
   } else {
     h += overviewHTML();
   }
@@ -1115,15 +1086,18 @@ function overviewHTML() {
   const groups = required.filter(id => ITEMS.get(id).type === "choice" && ITEMS.get(id).status === "needed");
   const open = required.filter(id => ITEMS.get(id).type === "req");
   const inProg = all.filter(i => i.type === "course" && i.status === "in_progress").map(i => i.id);
-  let h = `<h2 style="font-size:20px">Overview</h2><p class="note">Click any node to see details and trace its prerequisite chain. Blue arrows lead into the selection; pink arrows lead out of it.</p>`;
+  const shared = all.filter(i => i.type !== "block" && i.type !== "degree" && blocksOf(i.id).length > 1).map(i => i.id);
+  let h = `<h2 style="font-size:20px">Overview</h2><p class="note">Each colored cloud is an audit section. Courses that count toward more than one section sit between those hubs and wear every section's color. Click any node for details; blue arrows lead into it, pink arrows lead out.</p>`;
+  h += `<h3>Sections (${BLOCKS.length})</h3><div class="chips">${BLOCKS.map(b => chip(b.id)).join("")}</div>`;
   h += `<h3>Eligible now (${now.length})</h3>` + (now.length ? `<div class="chips">${now.map(chip).join("")}</div><p class="note">Needed, and every prerequisite is complete.</p>` : `<p class="note">None.</p>`);
   h += `<h3>Eligible after this term (${next.length})</h3>` + (next.length ? `<div class="chips">${next.map(chip).join("")}</div><p class="note">Unlocks once your in-progress courses finish.</p>` : `<p class="note">None.</p>`);
   h += `<h3>In progress (${inProg.length})</h3><div class="chips">${inProg.map(chip).join("")}</div>`;
   h += `<h3>Required courses still needed (${reqCourses.length})</h3><div class="chips">${reqCourses.map(chip).join("")}</div>`;
   h += `<h3>Pick-one groups (${groups.length})</h3><div class="chips">${groups.map(chip).join("")}</div>`;
   h += `<h3>Open requirements (${open.length})</h3><div class="chips">${open.map(chip).join("")}</div>`;
+  h += `<h3>Counted in more than one section (${shared.length})</h3><div class="chips">${shared.map(chip).join("")}</div>`;
   h += `<h3>Degree checks from the audit</h3><ul>${DEGREE.checks.map(([a, b]) => `<li><b>${esc(a)}</b><span class="req">${esc(b)}</span></li>`).join("")}</ul>`;
-  h += `<p class="hint">Requirements: DegreeWorks audit (10/03/2026). Prerequisites: UGA Bulletin, checked 10/07/2026. Arrows are drawn only between courses in this audit; other accepted alternatives appear as dashed chips in each course's details.<br><br>Shortcuts: <kbd>/</kbd> search · <kbd>F</kbd> fit · <kbd>Esc</kbd> clear</p>`;
+  h += `<p class="hint">Requirements: DegreeWorks audit (10/03/2026). Prerequisites: UGA Bulletin, checked 10/07/2026. Arrows are drawn only between courses in this audit; other accepted alternatives appear as dashed chips in each course's details.<br><br>Hover to nudge · drag nodes to rearrange · scroll to zoom<br>Shortcuts: <kbd>/</kbd> search · <kbd>F</kbd> fit · <kbd>Esc</kbd> clear</p>`;
   return h;
 }
 panel.addEventListener("click", e => {
@@ -1136,11 +1110,9 @@ panel.addEventListener("click", e => {
    HEADER, LEGEND, CONTROLS
    ===================================================================== */
 function renderHeader() {
-  const pal = P();
   document.getElementById("credApplied").textContent = credComplete + credIP;
   document.getElementById("credReq").textContent = DEGREE.req;
-  const bar = document.getElementById("credBar");
-  bar.innerHTML = `<span style="width:${credComplete / DEGREE.req * 100}%;background:var(--complete)" title="${credComplete} complete"></span><span style="width:${credIP / DEGREE.req * 100}%;background:var(--progress)" title="${credIP} in progress"></span>`;
+  document.getElementById("credBar").innerHTML = `<span style="width:${credComplete / DEGREE.req * 100}%;background:var(--complete)" title="${credComplete} complete"></span><span style="width:${credIP / DEGREE.req * 100}%;background:var(--progress)" title="${credIP} in progress"></span>`;
   const nowN = [...ELIG].filter(([id, e]) => e === "now" && ITEMS.get(id).type === "course").length;
   const tiles = [
     [credComplete, "credits complete", "var(--complete)"],
@@ -1153,52 +1125,44 @@ function renderHeader() {
 }
 
 function renderLegend() {
-  const pal = P();
-  const box = (fill, stroke, dash, w) => `<svg width="26" height="18"><rect x="1.5" y="1.5" width="23" height="15" rx="4" fill="${fill}" stroke="${stroke}" stroke-width="${w || 2}" ${dash ? `stroke-dasharray="${dash}"` : ""}/></svg>`;
-  const ring = dash => `<svg width="26" height="18"><rect x="1.5" y="1.5" width="23" height="15" rx="5" fill="none" stroke="${pal.eligible}" stroke-width="${dash ? 2 : 2.6}" ${dash ? `stroke-dasharray="4 3"` : ""}/></svg>`;
-  const line = (color, dash, cap) => `<svg width="34" height="12"><line x1="1" y1="6" x2="25" y2="6" stroke="${color}" stroke-width="2.4" ${dash ? `stroke-dasharray="${dash}"` : ""} stroke-linecap="${cap || "butt"}"/><path d="M24,1.5 L33,6 L24,10.5 Z" fill="${color}"/></svg>`;
-  const items = [
-    [box(pal.complete.fill, pal.complete.stroke), "Complete"],
-    [box(pal.in_progress.fill, pal.in_progress.stroke), "In progress"],
-    [box(pal.needed.fill, pal.needed.stroke, null, 2.6), "Needed"],
-    [box(pal.open.fill, pal.open.stroke, "4 3"), "Open requirement / pick-one"],
-    [ring(false), "Eligible now"],
-    [ring(true), "Eligible after this term"],
-    [line(pal.edge), "Prerequisite"],
-    [line(pal.edge, "6 4"), "One of several options"],
-    [line(pal.edge, "1.5 4", "round"), "Pre- or corequisite"],
-    [line(pal.accent), "Fulfills requirement"],
-  ];
-  const reqItems = items.slice(0, 6);
-  document.getElementById("legend").innerHTML = (state.view === "flow" ? items : reqItems).map(([s, l]) => `<div class="it">${s}<span>${l}</span></div>`).join("");
+  const pal = P(), c = pal.edge;
+  const dot = (inner) => `<svg width="22" height="22" viewBox="-11 -11 22 22">${inner}</svg>`;
+  const ring = `stroke="${pal.text}" stroke-width="2.2"`;
+  const line = (dash, cap) => `<svg width="34" height="12"><line x1="1" y1="6" x2="25" y2="6" stroke="${c}" stroke-width="2.2" ${dash ? `stroke-dasharray="${dash}"` : ""} stroke-linecap="${cap || "butt"}"/><path d="M24,1.5 L33,6 L24,10.5 Z" fill="${c}"/></svg>`;
+  const enc = [
+    [dot(`<circle r="8" fill="${pal.text}" ${ring}/>`), "Complete (filled)"],
+    [dot(`<circle r="8" fill="none" ${ring}/><path d="M-8,0 A8,8 0 0 0 8,0 Z" fill="${pal.text}"/>`), "In progress (half)"],
+    [dot(`<circle r="8" fill="none" stroke="${pal.text}" stroke-width="3"/>`), "Needed (empty)"],
+    [dot(`<circle r="8" fill="none" ${ring} stroke-dasharray="3 2.5"/>`), "Open req / pick-one"],
+    [dot(`<circle r="4" fill="${pal.text}"/><circle r="8.5" fill="none" ${ring}/>`), "Eligible now (pulses)"],
+    [dot(`<circle r="4" fill="none" ${ring}/><circle r="8.5" fill="none" stroke="${pal.text}" stroke-width="1.5" stroke-dasharray="2.5 2.5"/>`), "Eligible after this term"],
+    [dot(`<path d="M0,-8 A8,8 0 0 1 0,8" fill="none" stroke="${pal.blocks["BLK:A6"]}" stroke-width="3"/><path d="M0,8 A8,8 0 0 1 0,-8" fill="none" stroke="${pal.blocks["BLK:ENTR"]}" stroke-width="3"/>`), "Split ring = shared"],
+    [line(), "Prerequisite"],
+    [line("6 4"), "One of several options"],
+    [line("1.5 4", "round"), "Pre- or corequisite"],
+  ].map(([s, l]) => `<div class="it">${s}<span>${l}</span></div>`).join("");
+  document.getElementById("legend").innerHTML = `<div class="grid">${enc}</div>`;
 }
 
-const NOTES = {
-  flow: "Prerequisite flow: courses left → right in the order prerequisites allow. Click a course to trace what it needs and unlocks.",
-  req: "Requirement map: your degree → audit blocks → the courses and requirements in each. Shared courses appear under every block they count toward.",
-};
-function setView(v) {
-  state.view = v;
-  document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === v));
-  document.getElementById("viewnote").textContent = NOTES[v];
-  renderLegend(); render(); fit(false);
-  if (state.sel) centerOn(state.sel);
-}
-document.querySelectorAll("[data-view]").forEach(b => b.addEventListener("click", () => setView(b.dataset.view)));
 document.querySelectorAll("[data-filter]").forEach(b => b.addEventListener("click", () => {
   state.filter = b.dataset.filter;
   document.querySelectorAll("[data-filter]").forEach(x => x.setAttribute("aria-pressed", x === b));
-  applyState();
+  applyVisual();
 }));
+
+const arrowsBtn = document.getElementById("arrows");
+function syncArrows() { arrowsBtn.setAttribute("aria-pressed", state.arrows); }
+arrowsBtn.addEventListener("click", () => { state.arrows = !state.arrows; store.set("arrows", state.arrows ? "1" : "0"); syncArrows(); applyVisual(); });
 
 const redactBtn = document.getElementById("redact");
 function syncRedact() { redactBtn.setAttribute("aria-pressed", state.redact); redactBtn.textContent = state.redact ? "Titles hidden" : "Redact titles"; }
-redactBtn.addEventListener("click", () => { state.redact = !state.redact; store.set("redact", state.redact ? "1" : "0"); syncRedact(); fillDatalist(); render(); });
+redactBtn.addEventListener("click", () => { state.redact = !state.redact; store.set("redact", state.redact ? "1" : "0"); syncRedact(); fillDatalist(); renderPanel(); });
 
 const themeBtn = document.getElementById("theme");
 function syncTheme() { document.documentElement.dataset.theme = state.theme; themeBtn.textContent = state.theme === "dark" ? "Light theme" : "Dark theme"; }
 themeBtn.addEventListener("click", () => { state.theme = state.theme === "dark" ? "light" : "dark"; store.set("theme", state.theme); syncTheme(); renderLegend(); render(); });
 
+document.getElementById("relayout").addEventListener("click", () => { seedPositions(); draw(); fit(); });
 document.getElementById("zin").addEventListener("click", () => zoomBy(1.25));
 document.getElementById("zout").addEventListener("click", () => zoomBy(0.8));
 document.getElementById("zfit").addEventListener("click", () => fit());
@@ -1213,28 +1177,24 @@ function fillDatalist() {
 function findItem(q) {
   const k = q.toUpperCase().replace(/\s+/g, "");
   if (!k) return null;
+  const name = it => it.type === "course" ? it.id : it.type === "block" ? it.short : it.label;
+  for (const it of ITEMS.values()) if (name(it).toUpperCase().replace(/\s+/g, "") === k) return it.id;
   for (const it of ITEMS.values()) {
-    if (it.type === "degree" || it.type === "block") continue;
-    const code = (it.type === "course" ? it.id : it.label).toUpperCase().replace(/\s+/g, "");
-    if (code === k) return it.id;
-  }
-  for (const it of ITEMS.values()) {
-    if (it.type === "degree" || it.type === "block") continue;
-    const hay = (it.type === "course" ? it.id + (state.redact ? "" : " " + it.title) : it.label).toUpperCase();
+    const hay = (name(it) + (it.type === "course" && !state.redact ? " " + it.title : "") + (it.type === "block" ? " " + it.label : "")).toUpperCase();
     if (hay.replace(/\s+/g, "").includes(k)) return it.id;
   }
   return null;
 }
 function doSearch() {
   const id = findItem(search.value);
-  if (id) { select(id, true); search.style.outlineColor = ""; }
+  if (id) select(id, true);
   else if (search.value.trim()) { search.style.outline = "2px solid #e11d48"; setTimeout(() => search.style.outline = "", 900); }
 }
 search.addEventListener("keydown", e => { if (e.key === "Enter") doSearch(); });
 search.addEventListener("change", doSearch);
 
 document.addEventListener("keydown", e => {
-  if (e.target.tagName === "INPUT") { if (e.key === "Escape") e.target.blur(); return; }
+  if (e.target.tagName === "INPUT") { if (e.key === "Escape") { e.target.blur(); select(null); } return; }
   if (e.key === "Escape") select(null);
   else if (e.key === "/") { e.preventDefault(); search.focus(); }
   else if (e.key === "f" || e.key === "F") fit();
@@ -1249,7 +1209,8 @@ document.getElementById("export").addEventListener("click", () => {
   clone.setAttribute("xmlns", NS);
   clone.setAttribute("width", r.width); clone.setAttribute("height", r.height);
   clone.setAttribute("viewBox", `0 0 ${r.width} ${r.height}`);
-  clone.querySelectorAll(".node,.edge,.selring").forEach(n => { n.removeAttribute("class"); });
+  clone.querySelectorAll("animate").forEach(a => a.parentNode.remove());
+  clone.querySelectorAll(".node,.edge,.selring").forEach(n => n.removeAttribute("class"));
   const data = new XMLSerializer().serializeToString(clone);
   const img = new Image();
   img.onload = () => {
@@ -1261,7 +1222,7 @@ document.getElementById("export").addEventListener("click", () => {
     c.toBlob(b => {
       const a = document.createElement("a");
       a.href = URL.createObjectURL(b);
-      a.download = `degree-map-${state.view}${state.redact ? "-redacted" : ""}.png`;
+      a.download = `degree-map${state.redact ? "-redacted" : ""}.png`;
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     }, "image/png");
@@ -1272,8 +1233,12 @@ document.getElementById("export").addEventListener("click", () => {
 let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => fit(false), 150); });
 
 /* Boot */
-syncTheme(); syncRedact(); fillDatalist(); renderHeader();
-setView("flow");
+syncTheme(); syncRedact(); syncArrows(); fillDatalist(); renderHeader(); renderLegend();
+document.getElementById("viewnote").textContent = "Each colored cloud is one audit section. Shared courses sit where clouds overlap and wear both colors. Hover to nudge, drag to move, click for details.";
+buildSim();
+render();
+fit(false);
+requestAnimationFrame(() => fit(false));
 })();
 </script>
 </body>
