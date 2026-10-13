@@ -156,7 +156,7 @@ The audit doesn't contain prerequisite chains, so those come from the public [UG
 
 - Course detail pages were fetched with `curl` and parsed with Python. The fields used are *Prerequisite / Undergraduate Prerequisite*, *Pre or Corequisite*, *Corequisite*, *Semester Course Offered* and credit hours.
 - Prerequisite text such as `(CSCI 1302 or CSCI 1302H) and (CSCI 2610 or CSCI 2610E or CSCI 2611)` is parsed by a small recursive-descent parser into **AND-of-OR groups** (conjunctive normal form). Cross-listed codes like `CSCI(MATH) 2610` are normalized. "Permission of department" alternatives are dropped, so the planner never assumes permission.
-- The graph's prerequisite table (`PRE`) and the planner's catalog (`PLAN_CATALOG`, every CSCI 4000-level course plus a few others) are generated from that parsed data, not typed by hand. The Bulletin's exact wording is kept for display.
+- The planner's catalog (`PLAN_CATALOG`: every CSCI 4000-level course plus a few others) is **generated** from that parsed data, not typed by hand. The graph's prerequisite table (`PRE`) was transcribed from the same fetched Bulletin text. Both keep the Bulletin's exact wording for display.
 
 ### 3. The degree graph
 
@@ -194,8 +194,8 @@ The audit doesn't contain prerequisite chains, so those come from the public [UG
 
 | Layer | Technology |
 |---|---|
-| Page | One self-contained **HTML5** file (`degree-map.html`), about 135 KB |
-| Styling | **CSS** with custom properties for light/dark themes, Grid and Flexbox, responsive down to phone width |
+| Page | One self-contained **HTML5** file (`degree-map.html`), about 136 KB |
+| Styling | **CSS** with custom properties for light/dark themes, Grid and Flexbox, with a stacked layout for narrow screens |
 | Logic | **Vanilla JavaScript** (ES2020+), wrapped in one module-like IIFE. No frameworks, no dependencies, no build step |
 | Graph rendering | Hand-built **SVG** (`createElementNS`), custom force-directed layout and damped-spring hover physics |
 | Planner | Custom exact **depth-first search** with lower-bound pruning plus **local-search** refinement |
@@ -243,7 +243,7 @@ The script inside `degree-map.html` is organized top to bottom:
 - **Prerequisite arrows** are drawn only between courses in your audit. Other accepted alternatives (honors and online versions, etc.) appear as dashed chips in each course's details.
 - **Placeholders:**
   - Literature, Fine Arts and PE are generic slots. Pick real courses from the Bulletin lists. They aren't counted toward upper-division credit.
-  - Experiential Learning is listed with 0 credits.
+  - Experiential Learning is treated as 0 credits. The audit gives no credit amount; it's satisfied by an approved experience.
 - **Cross-listed electives** (e.g. MATH(CSCI) 4670) are flagged: confirm with your advisor that they count as CSCI electives.
 - **Admission to the major** requires grades (C or better, 2.7 GPA across CSCI 1302/2610/2720) that the planner can't predict; it only reports when the courses will be done.
 - **Bulletin wording is shown as written.** For example, CSCI 4760's prerequisite text ends with a stray `))`, and CSCI 4280's text requires both CSCI 2720 *and* 2720E. Because of that literal wording, CSCI 4280 shows as unavailable.
