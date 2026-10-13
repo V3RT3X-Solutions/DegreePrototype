@@ -1,0 +1,7 @@
+# Personal data: never commit the raw DegreeWorks audit (it contains name, student ID and GPA)
+audit-*.pdf
+raw/
+data/graph.json
+
+# OS clutter
+.DS_Store

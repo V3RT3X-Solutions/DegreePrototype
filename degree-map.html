@@ -1086,7 +1086,8 @@ function chip(id) {
 const pill = s => `<span class="pill ${s}">${STATUS_LABEL[s]}</span>`;
 const eligPill = e => e === "now" ? `<span class="pill elig">Eligible now</span>` : e === "next" ? `<span class="pill elig" style="border-style:dashed">Eligible after this term</span>` : e === "blocked" ? `<span class="pill muted">Prerequisites not met</span>` : "";
 const ELIG_TEXT = { now: "Now", next: "After this term", blocked: "Not yet" };
-const membersHTML = id => `<ul>${(MEMBER.get(id) || []).map(m => `<li>${swatch(m.block)}<button class="linkbtn" data-go="${m.block}">${esc(ITEMS.get(m.block).short)}</button><span class="req">${esc(m.req)}</span></li>`).join("")}</ul>`;
+// In redact mode the audit's requirement-line names are hidden too: for required courses they are the course titles.
+const membersHTML = id => `<ul>${(MEMBER.get(id) || []).map(m => `<li>${swatch(m.block)}<button class="linkbtn" data-go="${m.block}">${esc(ITEMS.get(m.block).short)}</button>${state.redact ? "" : `<span class="req">${esc(m.req)}</span>`}</li>`).join("")}</ul>`;
 
 function groupsHTML(groups) {
   return groups.map((g, i) => {
@@ -1136,7 +1137,7 @@ function renderPanel() {
     const shared = it.childIds.filter(c => blocksOf(c).length > 1);
     h += `<div>${pill(it.status)} <span class="pill muted">Audit: ${esc(it.audit || (it.counts === false ? "not counted" : "—"))}</span></div><h2 style="display:flex;align-items:center;gap:10px">${swatch(it.id).replace('class="sw"', 'class="sw big"')}${esc(it.short)}</h2><p class="title">${esc(it.label)}</p>`;
     if (it.applied != null) h += `<dl class="facts"><div><dt>Required</dt><dd>${it.req != null ? esc(it.req) + " cr" : "—"}</dd></div><div><dt>Applied</dt><dd>${it.applied} cr</dd></div><div><dt>Items</dt><dd>${it.childIds.length}</dd></div></dl>`;
-    h += `<h3>Requirements</h3><ul>${it.items.map(([cid, req]) => `<li>${chip(cid)}<span class="req">${esc(req)}</span></li>`).join("")}</ul>`;
+    h += `<h3>Requirements</h3><ul>${it.items.map(([cid, req]) => `<li>${chip(cid)}${state.redact && ITEMS.get(cid).type === "course" ? "" : `<span class="req">${esc(req)}</span>`}</li>`).join("")}</ul>`;
     if (shared.length) h += `<h3>Shared with other sections</h3><ul>${shared.map(c => `<li>${chip(c)}<span class="req">${blocksOf(c).filter(b => b !== it.id).map(b => swatch(b) + esc(ITEMS.get(b).short)).join(", ")}</span></li>`).join("")}</ul>`;
     if (it.notes) h += `<h3>Notes from the audit</h3>${it.notes.map(n => `<p class="note">${esc(n)}</p>`).join("")}`;
     h += `<p class="note" style="margin-top:14px">Section status is derived from its items: all complete → complete; some started → in progress; none started → needed.</p>`;
@@ -1856,7 +1857,7 @@ function cardHTML(it, i, P0) {
   return `<div class="pcard" style="--c:${color}">
     <div class="pc-top"><b>${esc(it.placeholder ? it.title : it.id)}</b><span>${it.cr} cr</span></div>
     ${title ? `<div class="pc-t">${esc(title)}</div>` : ""}
-    <div class="pc-meta">${it.blocks.map(b => `<span class="sw" style="background:${colorOf(b)}"></span>`).join("")}${esc(it.req || "")} · <i>${esc(role)}</i></div>
+    <div class="pc-meta">${it.blocks.map(b => `<span class="sw" style="background:${colorOf(b)}"></span>`).join("")}${esc(state.redact ? it.blocks.map(b => ITEMS.get(b).short).join(", ") : it.req || "")} · <i>${esc(role)}</i></div>
     ${prereqs.length ? `<div class="pc-pre">After: ${esc(prereqs.join(", "))}</div>` : ""}
     ${flags.map(f => `<div class="pc-flag">${esc(f)}</div>`).join("")}
     <div class="pc-foot"><select data-pin="${esc(it.id)}" aria-label="Lock ${esc(it.id)} to a semester">${pinOpts}</select>${PLAN_CFG.pins[it.id] ? `<span class="lock" title="Locked">🔒</span>` : ""}${it.bid ? `<a class="ext sm" href="https://bulletin.uga.edu/Course/Details/${it.bid}" target="_blank" rel="noopener">Bulletin ↗</a>` : ""}</div>
@@ -1869,7 +1870,7 @@ function planCsv() {
   const rows = [["Term", "Course", "Title", "Credits", "Counts toward", "Notes"]];
   const order = P0.items.map((it, i) => [it, i]).sort((a, b) => P0.assign[a[1]] - P0.assign[b[1]] || a[0].id.localeCompare(b[0].id));
   for (const [it, i] of order) rows.push([P0.terms[P0.assign[i]].label, it.placeholder ? it.title : it.id, it.placeholder ? it.sub : state.redact ? "" : it.title, it.cr,
-    it.blocks.map(b => ITEMS.get(b).short).join("; ") + (it.req ? ` (${it.req})` : ""), OFF_FLAG[it.off] || ""]);
+    it.blocks.map(b => ITEMS.get(b).short).join("; ") + (it.req && !state.redact ? ` (${it.req})` : ""), OFF_FLAG[it.off] || ""]);
   const blob = new Blob([rows.map(r => r.map(q).join(",")).join("\n")], { type: "text/csv" });
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "semester-plan.csv";
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
