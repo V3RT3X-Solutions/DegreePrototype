@@ -111,7 +111,68 @@ a.ext:hover{text-decoration:underline}
 .linkbtn{border:0;background:none;padding:0;color:var(--text);font-weight:600;cursor:pointer;text-decoration:underline;text-decoration-color:var(--border);text-underline-offset:3px}
 .hint{font-size:13px;color:var(--muted);margin-top:22px;border-top:1px solid var(--border);padding-top:12px}
 kbd{font:12px ui-monospace,Menlo,monospace;border:1px solid var(--border);border-bottom-width:2px;border-radius:5px;padding:0 5px;background:var(--bg)}
+/* Semester planner */
+#planner{display:none;flex:1;min-height:0}
+body.mode-plan #stage,body.mode-plan #panel,body.mode-plan .graph-only{display:none!important}
+body.mode-plan #planner{display:flex}
+.pl-side{width:370px;flex:none;overflow-y:auto;border-right:1px solid var(--border);background:var(--surface);padding:16px 18px 40px}
+.pl-main{flex:1;min-width:0;overflow:auto;padding:18px 22px 40px}
+.pl-h{margin:0 0 6px;font-size:20px}
+.pl-side section{margin-top:18px}
+.pl-side h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.terms-tbl{width:100%;border-collapse:collapse;font-size:14px}
+.terms-tbl th{font-size:11px;color:var(--muted);text-align:left;font-weight:600;padding:2px 4px}
+.terms-tbl td{padding:3px 4px;border-top:1px solid var(--border)}
+.terms-tbl tr.off td:nth-child(n+2){opacity:.45}
+.terms-tbl input[type=number],.bulk input{width:56px;border:1px solid var(--border);background:var(--bg);border-radius:7px;padding:3px 6px}
+.pl-side select{width:100%;border:1px solid var(--border);background:var(--bg);border-radius:8px;padding:6px 8px;font-size:13.5px}
+.fld{display:block;font-size:13.5px;margin-bottom:8px}
+.fld select{margin-top:4px}
+.erow{margin-bottom:6px}
+.erow.auto select{border-style:dashed}
+.chk{display:flex;gap:8px;align-items:center;font-size:13.5px;margin-bottom:5px}
+.bulk{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px;margin-top:8px}
+.btn.sm{padding:4px 10px;font-size:13px;border-radius:8px}
+.warn-dot{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:var(--progress);color:var(--bg);font-size:11px;font-weight:800;margin-left:4px}
+.pins{margin:0 0 8px;padding:0;list-style:none;font-size:13.5px}
+.pins li{padding:3px 0}
+.plan-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:12px}
+.plan-head h2{margin:0;font-size:30px;letter-spacing:-.02em}
+.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:6px 16px;margin:6px 0 12px}
+.ck{display:flex;gap:8px;font-size:13.5px;align-items:baseline}
+.ck span{font-weight:800}
+.ck.ok span{color:var(--complete)} .ck.bad span{color:#e11d48}
+.alert{border-radius:10px;padding:8px 12px;font-size:13.5px;margin:6px 0;border:1px solid}
+.alert.warn{border-color:var(--progress);background:var(--progress-bg)}
+.alert.bad{border-color:#e11d48;background:color-mix(in srgb,#e11d48 12%,transparent)}
+.terms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;margin-top:14px;align-items:start}
+.term{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;box-shadow:var(--shadow)}
+.term-h{display:flex;justify-content:space-between;align-items:baseline;font-size:17px}
+.load{font-weight:800;font-size:15px}
+.load.ok{color:var(--complete)} .load.warn{color:var(--progress)} .load.bad{color:#e11d48}
+.tbar{position:relative;height:6px;border-radius:4px;background:var(--surface2);margin:8px 0 4px}
+.tbar span{display:block;height:100%;border-radius:4px;background:var(--text);opacity:.7}
+.tbar i{position:absolute;top:-3px;width:2px;height:12px;background:var(--muted)}
+.tsub{font-size:12px;color:var(--muted);margin-bottom:8px}
+.pcard{border:1px solid var(--border);border-left:5px solid var(--c);border-radius:10px;padding:8px 10px;margin-top:8px;background:var(--bg)}
+.pc-top{display:flex;justify-content:space-between;font-size:15px}
+.pc-top span{color:var(--muted);font-size:13px;font-weight:600}
+.pc-t{font-size:13px;color:var(--muted);margin-top:1px}
+.pc-meta{font-size:12px;color:var(--muted);margin-top:5px}
+.pc-meta .sw{margin-right:4px}
+.pc-pre{font-size:12px;margin-top:4px}
+.pc-flag{font-size:12px;margin-top:4px;padding:3px 7px;border-radius:6px;background:var(--progress-bg);color:var(--text)}
+.pc-foot{display:flex;gap:8px;align-items:center;margin-top:7px}
+.pc-foot select{border:1px solid var(--border);background:var(--surface);border-radius:7px;padding:3px 6px;font-size:12.5px;max-width:170px}
+.pc-foot .lock{font-size:12px}
+a.ext.sm{font-size:12.5px;margin-left:auto}
+.assume{margin-top:18px;font-size:13.5px;color:var(--muted)}
+.assume summary{cursor:pointer;font-weight:600;color:var(--text)}
+.planned{background:var(--surface2);border-radius:10px;padding:8px 10px;margin-top:12px;font-size:14px}
 @media (max-width:900px){
+  body.mode-plan #planner{flex-direction:column}
+  .pl-side{width:auto;border-right:0;border-bottom:1px solid var(--border)}
   body{overflow:auto}
   main{flex-direction:column}
   #stage{min-height:70vh}
@@ -138,23 +199,27 @@ kbd{font:12px ui-monospace,Menlo,monospace;border:1px solid var(--border);border
   </div>
 </header>
 <div class="toolbar">
-  <div class="seg" role="group" aria-label="Filter">
+  <div class="seg" role="group" aria-label="View">
+    <button data-mode="graph" aria-pressed="true">Degree graph</button>
+    <button data-mode="plan" aria-pressed="false">Semester plan</button>
+  </div>
+  <div class="seg graph-only" role="group" aria-label="Filter">
     <button data-filter="all" aria-pressed="true">All</button>
     <button data-filter="needed" aria-pressed="false">Needed</button>
     <button data-filter="in_progress" aria-pressed="false">In progress</button>
     <button data-filter="complete" aria-pressed="false">Complete</button>
     <button data-filter="eligible" aria-pressed="false">Eligible now</button>
   </div>
-  <div class="search">
+  <div class="search graph-only">
     <input id="search" type="search" list="courseList" placeholder="Jump to course, e.g. CSCI 2720" autocomplete="off" aria-label="Search courses">
     <datalist id="courseList"></datalist>
   </div>
   <div class="spacer"></div>
-  <button class="btn" id="arrows" aria-pressed="true" title="Show prerequisite arrows">Prereq arrows</button>
-  <button class="btn" id="relayout" title="Re-run the layout">Reset layout</button>
+  <button class="btn graph-only" id="arrows" aria-pressed="true" title="Show prerequisite arrows">Prereq arrows</button>
+  <button class="btn graph-only" id="relayout" title="Re-run the layout">Reset layout</button>
   <button class="btn" id="redact" aria-pressed="false" title="Show course codes only">Redact titles</button>
   <button class="btn" id="theme">Dark theme</button>
-  <button class="btn" id="export">Export PNG</button>
+  <button class="btn graph-only" id="export">Export PNG</button>
 </div>
 <main>
   <div id="stage">
@@ -172,6 +237,7 @@ kbd{font:12px ui-monospace,Menlo,monospace;border:1px solid var(--border);border
     </div>
   </div>
   <aside id="panel" aria-live="polite"></aside>
+  <div id="planner"></div>
 </main>
 
 <script>
@@ -1041,6 +1107,7 @@ function renderPanel() {
     h += `<div style="display:flex;gap:6px;flex-wrap:wrap">${pill(it.status)}${eligPill(e)}</div>`;
     h += `<h2>${esc(id)}</h2>${state.redact ? "" : `<p class="title">${esc(it.title)}</p>`}`;
     h += `<dl class="facts"><div><dt>Credits</dt><dd>${it.credits}</dd></div><div><dt>Status</dt><dd>${STATUS_LABEL[it.status]}</dd></div><div><dt>Can take</dt><dd>${it.status === "needed" ? ELIG_TEXT[e] : "—"}</dd></div></dl>`;
+    h += plannedHTML(id);
     h += `<h3>Counts toward${shared > 1 ? ` · shared by ${shared} sections` : ""}</h3>${membersHTML(id)}`;
     h += `<h3>Prerequisites</h3>`;
     if (p && p.pre) h += groupsHTML(p.pre) + `<p class="src">Bulletin${p.undergrad ? " (undergraduate prerequisite)" : ""}: ${esc(p.text)}</p>`;
@@ -1053,6 +1120,7 @@ function renderPanel() {
     if (it.bid) h += `<p style="margin-top:16px"><a class="ext" href="https://bulletin.uga.edu/Course/Details/${it.bid}" target="_blank" rel="noopener">View in UGA Bulletin ↗</a></p>`;
   } else if (it.type === "req") {
     h += `<div>${pill(it.status)}</div><h2>${esc(it.label)}</h2><p class="title">${esc(it.sub)}</p>`;
+    h += plannedHTML(id);
     h += `<h3>Counts toward</h3>${membersHTML(id)}`;
     h += `<h3>From the audit</h3><p>${esc(it.desc)}</p>`;
     if (it.from) {
@@ -1061,6 +1129,7 @@ function renderPanel() {
     }
   } else if (it.type === "choice") {
     h += `<div style="display:flex;gap:6px;flex-wrap:wrap">${pill(it.status)}${eligPill(elig(id))}</div><h2>${esc(it.label)}</h2><p class="title">Pick 1 of ${it.options.length}</p>`;
+    h += plannedHTML(id);
     h += `<h3>Options</h3><ul>${it.options.map(o => `<li>${chip(o)}${state.redact ? "" : `<span class="req">${esc(ITEMS.get(o).title)}</span>`}<span style="margin-left:auto">${eligPill(elig(o))}</span></li>`).join("")}</ul>`;
     if (id === "CHOICE:APP") h += `<p class="note">Both options also satisfy the major's Teamwork requirement.</p>`;
   } else if (it.type === "block") {
@@ -1100,7 +1169,18 @@ function overviewHTML() {
   h += `<p class="hint">Requirements: DegreeWorks audit (10/03/2026). Prerequisites: UGA Bulletin, checked 10/07/2026. Arrows are drawn only between courses in this audit; other accepted alternatives appear as dashed chips in each course's details.<br><br>Hover to nudge · drag nodes to rearrange · scroll to zoom<br>Shortcuts: <kbd>/</kbd> search · <kbd>F</kbd> fit · <kbd>Esc</kbd> clear</p>`;
   return h;
 }
+function plannedHTML(id) {
+  if (typeof PLANNED_TERM === "undefined" || !PLANNED_TERM.size) return "";
+  let list = [];
+  if (id === "REQ:FL") list = PLANNED_TERM.has("SPAN 2001") ? [["SPAN 2001", PLANNED_TERM.get("SPAN 2001")]] : [];
+  else if (id === "REQ:MAJEL") list = PLAN.items.filter(it => it.role === "elective").map(it => [it.id, PLANNED_TERM.get(it.id)]);
+  else if (CHOICES[id]) list = CHOICES[id].options.filter(o => PLANNED_TERM.has(o) && PLAN.items.find(it => it.id === o).role !== "elective").map(o => [o, PLANNED_TERM.get(o)]);
+  else if (PLANNED_TERM.has(id)) list = [[null, PLANNED_TERM.get(id)]];
+  if (!list.length) return "";
+  return `<div class="planned">Planned: ${list.map(([c, t]) => `${c ? esc(c) + " in " : ""}<b>${esc(t)}</b>`).join(", ")} · <button class="linkbtn" data-openplan>Open semester plan</button></div>`;
+}
 panel.addEventListener("click", e => {
+  if (e.target.closest("[data-openplan]")) return setMode("plan");
   const b = e.target.closest("[data-go]"); if (!b) return;
   const id = b.getAttribute("data-go");
   select(id || null, !!id);
@@ -1156,11 +1236,11 @@ arrowsBtn.addEventListener("click", () => { state.arrows = !state.arrows; store.
 
 const redactBtn = document.getElementById("redact");
 function syncRedact() { redactBtn.setAttribute("aria-pressed", state.redact); redactBtn.textContent = state.redact ? "Titles hidden" : "Redact titles"; }
-redactBtn.addEventListener("click", () => { state.redact = !state.redact; store.set("redact", state.redact ? "1" : "0"); syncRedact(); fillDatalist(); renderPanel(); });
+redactBtn.addEventListener("click", () => { state.redact = !state.redact; store.set("redact", state.redact ? "1" : "0"); syncRedact(); fillDatalist(); renderPanel(); renderPlanner(); });
 
 const themeBtn = document.getElementById("theme");
 function syncTheme() { document.documentElement.dataset.theme = state.theme; themeBtn.textContent = state.theme === "dark" ? "Light theme" : "Dark theme"; }
-themeBtn.addEventListener("click", () => { state.theme = state.theme === "dark" ? "light" : "dark"; store.set("theme", state.theme); syncTheme(); renderLegend(); render(); });
+themeBtn.addEventListener("click", () => { state.theme = state.theme === "dark" ? "light" : "dark"; store.set("theme", state.theme); syncTheme(); renderLegend(); render(); renderPlanner(); });
 
 document.getElementById("relayout").addEventListener("click", () => { seedPositions(); draw(); fit(); });
 document.getElementById("zin").addEventListener("click", () => zoomBy(1.25));
@@ -1232,6 +1312,615 @@ document.getElementById("export").addEventListener("click", () => {
 
 let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => fit(false), 150); });
 
+/* =====================================================================
+   SEMESTER PLANNER
+   Catalog below is generated from the UGA Bulletin (retrieved 2026-10-13):
+   titles, credit hours, "Semester Course Offered" text, and prerequisite
+   text parsed into AND-of-OR groups. "Permission of department"
+   alternatives are dropped: the planner never assumes permission.
+   off: FSU / FS / F / S = offered those terms; Y = "Offered every year."
+   (no term given); I = "Not offered on a regular basis."; N = no info.
+   ===================================================================== */
+const PLAN_CATALOG = {
+  "CBIO 4835": {"display": "CBIO(CSCI) 4835/6835", "title": "Introduction to Computational Biology", "id": 31322, "offText": null, "off": "N", "cr": 3, "perm": false},
+  "CSCI 1730": {"display": "CSCI 1730", "title": "Systems Programming", "id": 12406, "offText": "Offered fall, spring and summer", "off": "FSU", "cr": 4, "preText": "CSCI 1302", "pre": [["CSCI 1302"]], "perm": false},
+  "CSCI 2720": {"display": "CSCI 2720", "title": "Data Structures", "id": 4304, "offText": "Offered fall, spring and summer", "off": "FSU", "cr": 4, "preText": "(CSCI 1302 or CSCI 1302H) and (CSCI 2610 or CSCI 2610E or CSCI 2611)", "pre": [["CSCI 1302", "CSCI 1302H"], ["CSCI 2610", "CSCI 2610E", "CSCI 2611"]], "perm": false},
+  "CSCI 3030": {"display": "CSCI 3030", "title": "Computing, Ethics, and Society", "id": 20694, "offText": "Offered spring", "off": "S", "cr": 3, "preText": "ENGL 1050H or ENGL 1102 or ENGL 1102E", "pre": [["ENGL 1050H", "ENGL 1102", "ENGL 1102E"]], "perm": false},
+  "CSCI 4050": {"display": "CSCI 4050/6050", "title": "Software Engineering", "id": 4181, "offText": "Offered fall and spring", "off": "FS", "cr": 4, "preText": "CSCI 2720 or CSCI 2725", "pre": [["CSCI 2720", "CSCI 2725"]], "perm": false},
+  "CSCI 4060": {"display": "CSCI 4060/6060", "title": "Mobile Software Development", "id": 36517, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 2720", "pre": [["CSCI 2720"]], "perm": false},
+  "CSCI 4070": {"display": "CSCI 4070/6070", "title": "Introduction to Game Programming", "id": 18134, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 1730", "pre": [["CSCI 1730"]], "precoText": "CSCI 2720", "preco": [["CSCI 2720"]], "perm": false},
+  "CSCI 4080": {"display": "CSCI 4080/6080", "title": "Intermediate Game Programming", "id": 20027, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 4070/6070", "pre": [["CSCI 4070"]], "precoText": "CSCI 4810/6810", "preco": [["CSCI 4810"]], "perm": false},
+  "CSCI 4130": {"display": "CSCI 4130/6130", "title": "CUDA C Programming on GPUs for High Performance Computing", "id": 26532, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 1730 or permission of department", "pre": [["CSCI 1730"]], "perm": true},
+  "CSCI 4140": {"display": "CSCI 4140/6140", "title": "Numerical Methods and Computing", "id": 4736, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 1730 and MATH 2250 and CSCI 2150-2150L", "pre": [["CSCI 1730"], ["MATH 2250"], ["CSCI 2150"]], "perm": false},
+  "CSCI 4170": {"display": "CSCI 4170/6170", "title": "Introduction to Computational Investing", "id": 38217, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "precoText": "CSCI 2720 or CSCI 2725", "preco": [["CSCI 2720", "CSCI 2725"]], "perm": false},
+  "CSCI 4210": {"display": "CSCI 4210/6210", "title": "Simulation and Modeling", "id": 4303, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 2720 or CSCI 2725", "pre": [["CSCI 2720", "CSCI 2725"]], "perm": false},
+  "CSCI 4250": {"display": "CSCI 4250/6250", "title": "Cyber Security", "id": 17670, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 4730/6730 or CSCI 4760/6760", "pre": [["CSCI 4730", "CSCI 4760"]], "perm": false},
+  "CSCI 4260": {"display": "CSCI 4260/6260", "title": "Data Security and Privacy", "id": 36781, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 1302", "pre": [["CSCI 1302"]], "perm": false},
+  "CSCI 4270": {"display": "CSCI 4270/6270", "title": "Introduction to Computer Forensics", "id": 36904, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 4730/6730 or CSCI 4250/6250", "pre": [["CSCI 4730", "CSCI 4250"]], "perm": false},
+  "CSCI 4280": {"display": "CSCI 4280/6280", "title": "Introduction to Cryptography", "id": 52259, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "(CSCI 2610 or CSCI 2610E) and (CSCI 2720 and CSCI 2720E)", "pre": [["CSCI 2610", "CSCI 2610E"], ["CSCI 2720"], ["CSCI 2720E"]], "perm": false},
+  "CSCI 4300": {"display": "CSCI 4300", "title": "Web Programming", "id": 13776, "offText": "Offered spring", "off": "S", "cr": 4, "preText": "CSCI 1302", "pre": [["CSCI 1302"]], "perm": false},
+  "CSCI 4330": {"display": "CSCI 4330/6330", "title": "Artificial Intelligence and the Web", "id": 19227, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "precoText": "CSCI 2720", "preco": [["CSCI 2720"]], "perm": false},
+  "CSCI 4350": {"display": "CSCI 4350/6350", "title": "Global Information Systems", "id": 4406, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 4300", "pre": [["CSCI 4300"]], "perm": false},
+  "CSCI 4360": {"display": "CSCI 4360/6360", "title": "Data Science and Applied Machine Learning II", "id": 32634, "offText": "Offered every year.", "off": "Y", "cr": 4, "preText": "CSCI 3360 or CSCI 3360E or INFO 3000 or INFO 3000E", "pre": [["CSCI 3360", "CSCI 3360E", "INFO 3000", "INFO 3000E"]], "perm": false},
+  "CSCI 4370": {"display": "CSCI 4370/6370", "title": "Database Management", "id": 4302, "offText": "Offered fall and spring", "off": "FS", "cr": 4, "preText": "CSCI 2720 or CSCI 2725", "pre": [["CSCI 2720", "CSCI 2725"]], "perm": false},
+  "CSCI 4380": {"display": "CSCI 4380/6380", "title": "Data Mining", "id": 31068, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 2720 or CSCI 2725", "pre": [["CSCI 2720", "CSCI 2725"]], "perm": false},
+  "CSCI 4470": {"display": "CSCI 4470/6470", "title": "Algorithms", "id": 4360, "offText": "Offered every year.", "off": "Y", "cr": 4, "preText": "(CSCI 2720 or CSCI 2725) and (CSCI 2670 or CSCI 2670E)", "pre": [["CSCI 2720", "CSCI 2725"], ["CSCI 2670", "CSCI 2670E"]], "perm": false},
+  "CSCI 4490": {"display": "CSCI 4490/6490", "title": "Algorithms for Computational Biology", "id": 4527, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 4470/6470 or permission of department", "pre": [["CSCI 4470"]], "perm": true},
+  "CSCI 4500": {"display": "CSCI 4500/6500", "title": "Programming Languages", "id": 4375, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 1302", "pre": [["CSCI 1302"]], "precoText": "CSCI 2720", "preco": [["CSCI 2720"]], "perm": false},
+  "CSCI 4520": {"display": "CSCI 4520/6520", "title": "Functional Programming", "id": 4761, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 2720 and CSCI(MATH) 2610", "pre": [["CSCI 2720"], ["CSCI 2610"]], "perm": false},
+  "CSCI 4530": {"display": "CSCI(ARTI) 4530/6530", "title": "Introduction to Robotics", "id": 14113, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "(CSCI 2610 or CSCI 2611) and CSCI 2720", "pre": [["CSCI 2610", "CSCI 2611"], ["CSCI 2720"]], "perm": false},
+  "CSCI 4540": {"display": "CSCI(ARTI) 4540/6540", "title": "Symbolic Programming", "id": 4690, "offText": "Not offered on a regular basis.", "off": "I", "cr": 3, "preText": "CSCI 1302 or permission of department", "pre": [["CSCI 1302"]], "precoText": "CSCI(PHIL) 4550/6550", "preco": [["CSCI 4550"]], "perm": true},
+  "CSCI 4550": {"display": "CSCI(ARTI) 4550/6550", "title": "Artificial Intelligence", "id": 4947, "offText": "Not offered on a regular basis.", "off": "I", "cr": 3, "preText": "[(CSCI 2610 or CSCI 2610E or CSCI 2611 or PHIL 2500) and (CSCI 1300-1300L or CSCI 1301-1301L or CSCI 1301E)] or permission of department", "pre": [["CSCI 2610", "CSCI 2610E", "CSCI 2611", "PHIL 2500"], ["CSCI 1300", "CSCI 1301", "CSCI 1301E"]], "perm": true},
+  "CSCI 4560": {"display": "CSCI 4560/6560", "title": "Evolutionary Computation and Its Applications", "id": 13144, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 2720 or CSCI 2725", "pre": [["CSCI 2720", "CSCI 2725"]], "perm": false},
+  "CSCI 4570": {"display": "CSCI 4570/6570", "title": "Compilers", "id": 4202, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 4720", "pre": [["CSCI 4720"]], "perm": false},
+  "CSCI 4580": {"display": "CSCI 4580/6580", "title": "Foundations of Deep Learning and Generative AI", "id": 53173, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 2720 or CSCI 2720E or CSCI 2725", "pre": [["CSCI 2720", "CSCI 2720E", "CSCI 2725"]], "perm": false},
+  "CSCI 4600": {"display": "CSCI(ARTI) 4600/6600", "title": "Reinforcement Learning", "id": 44048, "offText": "Not offered on a regular basis.", "off": "I", "cr": 3, "preText": "CSCI(PHIL) 4550/6550", "pre": [["CSCI 4550"]], "perm": false},
+  "CSCI 4720": {"display": "CSCI 4720", "title": "Computer Architecture and Organization", "id": 4922, "offText": "Offered fall, spring and summer", "off": "FSU", "cr": 4, "preText": "(CSCI 2670 or CSCI 2670E or CSEE 2220 or CSEE 2220E) and CSCI 1730", "pre": [["CSCI 2670", "CSCI 2670E", "CSEE 2220", "CSEE 2220E"], ["CSCI 1730"]], "perm": false},
+  "CSCI 4730": {"display": "CSCI 4730/6730", "title": "Operating Systems", "id": 4253, "offText": "Offered fall", "off": "F", "cr": 4, "preText": "(CSCI 4720 or CSCI 4720E or CSEE 4280) and CSCI 2720", "pre": [["CSCI 4720", "CSCI 4720E", "CSEE 4280"], ["CSCI 2720"]], "perm": false},
+  "CSCI 4740": {"display": "CSCI 4740/6740", "title": "Real-Time Scheduling for the Internet of Things", "id": 19862, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 2720", "pre": [["CSCI 2720"]], "perm": false},
+  "CSCI 4760": {"display": "CSCI 4760/6760", "title": "Computer Networks", "id": 4759, "offText": "Offered spring", "off": "S", "cr": 4, "preText": "(CSCI 1730 or CSCI 1730E) and (CSCI 2720 or CSCI 2720E) and (CSCI 2670 or CSCI 2670E or CSEE 2220 or CSEE 2220E or CSEE 2220H))", "pre": [["CSCI 1730", "CSCI 1730E"], ["CSCI 2720", "CSCI 2720E"], ["CSCI 2670", "CSCI 2670E", "CSEE 2220", "CSEE 2220E", "CSEE 2220H"]], "perm": false},
+  "CSCI 4770": {"display": "CSCI 4770/6770", "title": "Ubiquitous Computing", "id": 13596, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 2720", "pre": [["CSCI 2720"]], "precoText": "CSCI 4730/6730 or CSCI 4760/6760", "preco": [["CSCI 4730", "CSCI 4760"]], "perm": false},
+  "CSCI 4780": {"display": "CSCI 4780/6780", "title": "Distributed Computing Systems", "id": 19863, "offText": "Offered spring", "off": "S", "cr": 4, "preText": "CSCI 2720 and CSCI 1730", "pre": [["CSCI 2720"], ["CSCI 1730"]], "perm": false},
+  "CSCI 4795": {"display": "CSCI 4795/6795", "title": "Cloud Computing", "id": 38252, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 2720", "pre": [["CSCI 2720"]], "perm": false},
+  "CSCI 4800": {"display": "CSCI 4800/6800", "title": "Human-Computer Interaction", "id": 11193, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 1302", "pre": [["CSCI 1302"]], "perm": false},
+  "CSCI 4810": {"display": "CSCI 4810/6810", "title": "Computer Graphics", "id": 4956, "offText": "Offered fall", "off": "F", "cr": 4, "preText": "CSCI 1302", "pre": [["CSCI 1302"]], "perm": false},
+  "CSCI 4830": {"display": "CSCI(ENGR) 4830/6830", "title": "Virtual Reality", "id": 18135, "offText": "Offered fall", "off": "F", "cr": 4, "preText": "CSCI 2720 or CSCI 2720E", "pre": [["CSCI 2720", "CSCI 2720E"]], "perm": false},
+  "CSCI 4840": {"display": "CSCI 4840/6840", "title": "Signal Processing", "id": 39348, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 2720 or permission of department", "pre": [["CSCI 2720"]], "perm": true},
+  "CSCI 4850": {"display": "CSCI 4850/6850", "title": "Biomedical Image Analysis", "id": 22798, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 2720 or CSCI 2725 or permission of department", "pre": [["CSCI 2720", "CSCI 2725"]], "perm": true},
+  "CSCI 4860": {"display": "CSCI 4860/6860", "title": "Computational Neuroscience", "id": 45617, "offText": "Not offered on a regular basis.", "off": "I", "cr": 4, "preText": "CSCI 2720 or CSCI 2725 or permission of department", "pre": [["CSCI 2720", "CSCI 2725"]], "perm": true},
+  "CSCI 4910": {"display": "CSCI 4910", "title": "Capstone Design I", "id": 46687, "offText": null, "off": "N", "cr": 2, "preText": "CSCI 4050/6050 or CSCI 4050E/6050E or CSCI 4370/6370", "pre": [["CSCI 4050", "CSCI 4050E", "CSCI 4370"]], "perm": false},
+  "CSCI 4911": {"display": "CSCI 4911", "title": "Capstone Design II", "id": 46688, "offText": null, "off": "N", "cr": 2, "preText": "CSCI 4910", "pre": [["CSCI 4910"]], "perm": false},
+  "MATH 4670": {"display": "MATH(CSCI) 4670/6670", "title": "Combinatorics", "id": 1124, "offText": "Offered fall", "off": "F", "cr": 3, "preText": "(MATH 3000 or MATH 3300 or MATH 3300E or MATH 3500 or MATH 3500H) and (CSCI 2610 or CSCI 2610E or MATH 3200 or MATH 3200W)", "pre": [["MATH 3000", "MATH 3300", "MATH 3300E", "MATH 3500", "MATH 3500H"], ["CSCI 2610", "CSCI 2610E", "MATH 3200", "MATH 3200W"]], "perm": false},
+  "MATH 4690": {"display": "MATH(CSCI) 4690/6690", "title": "Graph Theory", "id": 1126, "offText": "Offered spring", "off": "S", "cr": 3, "precoText": "(CSCI 2610 or CSCI 2610E or MATH 3200) and (MATH 3000 or MATH 3300 or MATH 3300E or MATH 3510 or MATH 3510H)", "preco": [["CSCI 2610", "CSCI 2610E", "MATH 3200"], ["MATH 3000", "MATH 3300", "MATH 3300E", "MATH 3510", "MATH 3510H"]], "perm": false},
+  "SPAN 2001": {"display": "SPAN 2001", "title": "Intermediate Spanish I", "id": 3403, "offText": "Offered every year.", "off": "Y", "cr": 3, "preText": "SPAN 1002 or SPAN 1002E or SPAN 1110 or SPAN 1110E or SPAN 1110H", "pre": [["SPAN 1002", "SPAN 1002E", "SPAN 1110", "SPAN 1110E", "SPAN 1110H"]], "perm": false},
+};
+
+const SEASON_NAME = { S: "Spring", U: "Summer", F: "Fall" };
+// Y / I / N courses are treated as Fall or Spring (and flagged), per your choice.
+const OFF_SEASONS = { FSU: "FSU", FS: "FS", F: "F", S: "S", U: "U", Y: "FS", I: "FS", N: "FS" };
+const OFF_FLAG = {
+  F: "Offered fall only", S: "Offered spring only",
+  Y: "Bulletin: “Offered every year”, no term given. Confirm the term in Athena",
+  I: "Bulletin: “Not offered on a regular basis”. Confirm it is offered",
+  N: "No offering info in the Bulletin. Confirm it is offered",
+};
+const HORIZON = [];
+for (let y = 2027; y <= 2030; y++) for (const s of ["S", "U", "F"]) HORIZON.push({ key: `${s}${y}`, season: s, year: y, label: `${SEASON_NAME[s]} ${y}` });
+const TERM_LABEL = Object.fromEntries(HORIZON.map(t => [t.key, t.label]));
+
+const DONE = new Set([...ITEMS.values()].filter(i => i.type === "course" && i.status !== "needed").map(i => i.id));
+const OPTION_IDS = new Set(Object.values(CHOICES).flatMap(c => c.options));
+const BASE_IDS = [...ITEMS.values()].filter(i => i.type === "course" && i.status === "needed" && !OPTION_IDS.has(i.id)).map(i => i.id);
+const MAJOR_ELECTIVE_CREDITS = REQS["REQ:MAJEL"].credits; // 12
+const PLACEHOLDERS = {
+  "REQ:LIT": { cr: 3, blocks: ["BLK:FRANK"], req: "Literature" },
+  "REQ:FA2": { cr: 3, blocks: ["BLK:FRANK"], req: "Fine Arts/Philosophy/Religion" },
+  "REQ:PE":  { cr: 1, blocks: ["BLK:UNIV"],  req: "Physical Education" },
+  "REQ:EXP": { cr: 0, blocks: ["BLK:UNIV"],  req: "Experiential Learning" },
+};
+const GENED_IDS = ["SPAN 2001", "REQ:LIT", "REQ:FA2", "REQ:PE", "REQ:EXP"];
+const APP_OPTS = CHOICES["CHOICE:APP"].options, SYS_OPTS = CHOICES["CHOICE:SYS"].options;
+const isRegular = id => ["FSU", "FS", "F", "S", "Y"].includes(PLAN_CATALOG[id].off);
+const courseNum = id => parseInt(id.split(" ")[1], 10);
+
+// Elective catalog: every CSCI 4000-level course (plus cross-listed MATH/CBIO
+// ones) except CSCI 4150 and those already required or in a design group.
+const ELECTIVE_IDS = Object.keys(PLAN_CATALOG).filter(id => courseNum(id) >= 4000 && !BASE_IDS.includes(id));
+const CROSS_LISTED = id => !id.startsWith("CSCI");
+const PLANNABLE = new Set([...BASE_IDS, ...ELECTIVE_IDS, "SPAN 2001"]);
+// A course whose prerequisites can never be met inside this plan (needs a course
+// outside the catalog, e.g. CSCI 4140 needs CSCI 2150) cannot be chosen.
+function blockedReason(id) {
+  const c = PLAN_CATALOG[id];
+  for (const k of ["pre", "preco"]) for (const g of c[k] || []) {
+    if (!g.length) return `needs ${k === "pre" ? "permission of department" : "permission"}`;
+    if (!g.some(x => DONE.has(x) || PLANNABLE.has(x))) return `needs ${g.join(" or ")}, which is not in your plan`;
+  }
+  return null;
+}
+const AUTO_POOL = ELECTIVE_IDS.filter(id => isRegular(id) && !CROSS_LISTED(id) && !blockedReason(id) &&
+  (PLAN_CATALOG[id].pre || []).every(g => g.some(x => DONE.has(x) || BASE_IDS.includes(x) || APP_OPTS.includes(x) || SYS_OPTS.includes(x))));
+
+/* ---------- settings ---------- */
+function planDefaults() {
+  return {
+    terms: Object.fromEntries(HORIZON.map(t => [t.key, { on: t.season !== "U", min: t.season === "U" ? 0 : 12, max: t.season === "U" ? 9 : 18 }])),
+    app: "auto", sys: "auto", electives: [], maxCS: 0, pins: {},
+    geneds: Object.fromEntries(GENED_IDS.map(id => [id, true])),
+  };
+}
+function loadPlanCfg() {
+  const d = planDefaults();
+  try {
+    const s = JSON.parse(store.get("plan") || "null");
+    if (!s) return d;
+    for (const k of Object.keys(d.terms)) if (s.terms && s.terms[k]) {
+      const t = s.terms[k];
+      d.terms[k] = { on: !!t.on, min: clampInt(t.min, 0, 24, d.terms[k].min), max: clampInt(t.max, 0, 24, d.terms[k].max) };
+    }
+    if ([...APP_OPTS, "auto"].includes(s.app)) d.app = s.app;
+    if ([...SYS_OPTS, "auto"].includes(s.sys)) d.sys = s.sys;
+    if (Array.isArray(s.electives)) d.electives = s.electives.filter(id => ELECTIVE_IDS.includes(id)).filter((v, i, a) => a.indexOf(v) === i);
+    if ([0, 2, 3, 4].includes(s.maxCS)) d.maxCS = s.maxCS;
+    if (s.pins) for (const [id, key] of Object.entries(s.pins)) if (TERM_LABEL[key]) d.pins[id] = key;
+    if (s.geneds) for (const id of GENED_IDS) if (id in s.geneds) d.geneds[id] = !!s.geneds[id];
+  } catch {}
+  return d;
+}
+function clampInt(v, lo, hi, dflt) { const n = Math.round(Number(v)); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : dflt; }
+let PLAN_CFG = loadPlanCfg();
+const savePlanCfg = () => store.set("plan", JSON.stringify(PLAN_CFG));
+
+/* ---------- plan items ---------- */
+function planItem(id, role) {
+  if (PLACEHOLDERS[id]) {
+    const r = REQS[id], p = PLACEHOLDERS[id];
+    return { id, role, cr: p.cr, title: r.label, sub: r.sub, display: r.label, seasons: new Set("FSU"), off: "FSU", pre: [], preco: [], cs: false, blocks: p.blocks, req: p.req, placeholder: true };
+  }
+  const c = PLAN_CATALOG[id];
+  const blocks = role === "elective" ? ["BLK:MAJOR"] : id === "SPAN 2001" ? ["BLK:FRANK"] : blocksOf(id);
+  const req = role === "elective" ? "Major Electives" : id === "SPAN 2001" ? "Foreign Language (3rd semester)"
+    : role === "app" ? "Application Design Group" : role === "sys" ? "Systems Design Group" : [...new Set((MEMBER.get(id) || []).map(m => m.req))].join("; ");
+  return { id, role, cr: c.cr, title: c.title, display: c.display, seasons: new Set(OFF_SEASONS[c.off]), off: c.off, offText: c.offText,
+    pre: c.pre || [], preco: c.preco || [], preText: c.preText, precoText: c.precoText, cs: id.startsWith("CSCI") || c.display.includes("(CSCI)"),
+    blocks, req, bid: c.id, perm: c.perm };
+}
+
+/* ---------- solver ----------
+   Exact depth-first search for the fewest semesters (prerequisites in an
+   earlier term, pre-/corequisites in the same or an earlier term, offered
+   seasons, per-term max credits, optional max CSCI courses, pins), then a
+   local search that, without adding a semester, (1) keeps loads at or above
+   your minimums, (2) moves "gateway" courses (ones other planned courses
+   depend on) as early as possible, (3) evens out credit loads. */
+function solvePlan(items, terms, maxCS, maxT = Infinity) {
+  const n = items.length, idx = new Map(items.map((it, i) => [it.id, i]));
+  for (const it of items) {
+    it.preI = []; it.precoI = []; it.missing = [];
+    for (const [src, dst] of [[it.pre, it.preI], [it.preco, it.precoI]]) for (const g of src) {
+      if (g.some(c => DONE.has(c))) continue;
+      const o = g.filter(c => idx.has(c)).map(c => idx.get(c));
+      if (o.length) dst.push(o); else it.missing.push(g);
+    }
+  }
+  const missing = items.filter(it => it.missing.length);
+  if (missing.length) return { error: "missing", missing };
+  // Topological depth (all alternatives placed before the course is considered).
+  const depth = new Array(n).fill(-1), visiting = new Array(n).fill(false);
+  const dep = i => {
+    if (depth[i] >= 0) return depth[i];
+    if (visiting[i]) throw new Error("prerequisite cycle at " + items[i].id);
+    visiting[i] = true;
+    let d = 0;
+    for (const g of items[i].preI) for (const o of g) d = Math.max(d, dep(o) + 1);
+    for (const g of items[i].precoI) for (const o of g) d = Math.max(d, dep(o) + 1);
+    visiting[i] = false; return depth[i] = d;
+  };
+  items.forEach((_, i) => dep(i));
+  // Terms that must follow a course: only through single-option prerequisite groups (sound bound).
+  const chain = new Array(n).fill(-1);
+  const ch = i => {
+    if (chain[i] >= 0) return chain[i];
+    let c = 0;
+    items.forEach((s, j) => { if (s.preI.some(g => g.length === 1 && g[0] === i)) c = Math.max(c, ch(j) + 1); });
+    return chain[i] = c;
+  };
+  items.forEach((_, i) => ch(i));
+  // Gateway weight: how many planned items depend on this one, directly or not.
+  const kids = items.map(() => new Set());
+  items.forEach((s, j) => [...s.preI, ...s.precoI].forEach(g => g.forEach(o => kids[o].add(j))));
+  const desc = items.map((_, i) => { const seen = new Set(), st = [i]; while (st.length) for (const k of kids[st.pop()]) if (!seen.has(k)) { seen.add(k); st.push(k); } return seen.size; });
+  items.forEach((it, i) => it.gw = desc[i]);
+  const order = items.map((_, i) => i).sort((a, b) => depth[a] - depth[b] || items[a].seasons.size - items[b].seasons.size || chain[b] - chain[a] || (items[a].id < items[b].id ? -1 : 1));
+  const pinIdx = items.map(it => it.pin == null ? null : terms.findIndex(t => t.key === it.pin));
+  const totalCr = items.reduce((s, it) => s + it.cr, 0);
+  const suffix = new Array(n + 1).fill(0);
+  for (let k = n - 1; k >= 0; k--) suffix[k] = suffix[k + 1] + items[order[k]].cr;
+
+  const loTerm = (i, a) => {
+    let l = 0;
+    for (const g of items[i].preI) l = Math.max(l, Math.min(...g.map(o => a[o])) + 1);
+    for (const g of items[i].precoI) l = Math.max(l, Math.min(...g.map(o => a[o])));
+    return l;
+  };
+  // Earliest possible term per course (prerequisite order + offered seasons + locks), ignoring credit limits.
+  const early = new Array(n);
+  for (const i of order) {
+    const it = items[i];
+    let lo = 0;
+    for (const g of it.preI) lo = Math.max(lo, Math.min(...g.map(o => early[o])) + 1);
+    for (const g of it.precoI) lo = Math.max(lo, Math.min(...g.map(o => early[o])));
+    while (lo < terms.length && !it.seasons.has(terms[lo].season)) lo++;
+    if (pinIdx[i] != null) {
+      if (pinIdx[i] < lo || !it.seasons.has(terms[pinIdx[i]].season)) return { error: "nofit" };
+      lo = pinIdx[i];
+    }
+    if (lo >= terms.length) return { error: "nofit" };
+    early[i] = lo;
+  }
+  let startT = Math.max(1, ...early.map(e => e + 1));
+  const csCount = items.filter(it => it.cs).length;
+  if (maxCS) startT = Math.max(startT, Math.ceil(csCount / maxCS));
+  let incomplete = false;
+  for (let T = startT; T <= Math.min(terms.length, maxT); T++) {
+    let cap = 0; for (let t = 0; t < T; t++) cap += terms[t].max;
+    if (cap < totalCr) continue;
+    if (pinIdx.some(p => p != null && p >= T)) continue;
+    const a = new Array(n).fill(-1), used = new Array(T).fill(0), cs = new Array(T).fill(0);
+    let nodes = 0, capLeft = cap;
+    const dfs = k => {
+      if (++nodes > 250000) throw "budget";
+      if (k === n) return true;
+      const i = order[k], it = items[i];
+      const lo = Math.max(early[i], loTerm(i, a)), hi = T - 1 - chain[i];
+      if (suffix[k] > capLeft) return false;
+      const cand = pinIdx[i] != null ? [pinIdx[i]] : Array.from({ length: Math.max(0, hi - lo + 1) }, (_, x) => lo + x);
+      for (const t of cand) {
+        if (t < lo || t > hi) continue;
+        if (!it.seasons.has(terms[t].season)) continue;
+        if (used[t] + it.cr > terms[t].max) continue;
+        if (maxCS && it.cs && cs[t] >= maxCS) continue;
+        a[i] = t; used[t] += it.cr; capLeft -= it.cr; if (it.cs) cs[t]++;
+        if (dfs(k + 1)) return true;
+        a[i] = -1; used[t] -= it.cr; capLeft += it.cr; if (it.cs) cs[t]--;
+      }
+      return false;
+    };
+    let ok = false;
+    try { ok = dfs(0); } catch (e) { if (e === "budget") { incomplete = true; continue; } throw e; }
+    if (!ok) continue;
+    balance(items, terms, T, a, pinIdx, maxCS, loTerm);
+    return { T, assign: a, incomplete };
+  }
+  return { error: maxT < terms.length ? "worse" : "nofit" };
+}
+
+function planLoads(items, T, a) { const l = new Array(T).fill(0); items.forEach((it, i) => l[a[i]] += it.cr); return l; }
+function planParts(items, terms, T, a) {
+  const l = planLoads(items, T, a), mean = l.reduce((s, x) => s + x, 0) / T;
+  let under = 0, v = 0, gate = 0;
+  l.forEach((x, t) => { if (t < T - 1) under += Math.max(0, terms[t].min - x); v += (x - mean) ** 2; });
+  items.forEach((it, i) => gate += it.gw * a[i]);
+  return { under, gate, v };
+}
+// Lexicographic: under-minimum credits, then gateway lateness, then load variance.
+function planScore(items, terms, T, a) { const p = planParts(items, terms, T, a); return p.under * 1e8 + p.gate * 1e4 + p.v; }
+function planValid(items, terms, T, a, pinIdx, maxCS, loTerm) {
+  const used = new Array(T).fill(0), cs = new Array(T).fill(0);
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i], t = a[i];
+    if (t < 0 || t >= T) return false;
+    if (pinIdx[i] != null && pinIdx[i] !== t) return false;
+    if (!it.seasons.has(terms[t].season)) return false;
+    if (loTerm(i, a) > t) return false;
+    used[t] += it.cr; if (it.cs) cs[t]++;
+  }
+  for (let t = 0; t < T; t++) { if (used[t] > terms[t].max) return false; if (maxCS && cs[t] > maxCS) return false; }
+  return used[T - 1] > 0;
+}
+function balance(items, terms, T, a, pinIdx, maxCS, loTerm) {
+  let best = planScore(items, terms, T, a);
+  for (let round = 0; round < 60; round++) {
+    let improved = false;
+    for (let i = 0; i < items.length; i++) {
+      if (pinIdx[i] != null) continue;
+      const cur = a[i];
+      for (let t = 0; t < T; t++) {
+        if (t === cur) continue;
+        a[i] = t;
+        if (planValid(items, terms, T, a, pinIdx, maxCS, loTerm)) { const s = planScore(items, terms, T, a); if (s < best - 1e-9) { best = s; improved = true; break; } }
+        a[i] = cur;
+      }
+    }
+    for (let i = 0; i < items.length && !improved; i++) for (let j = i + 1; j < items.length; j++) {
+      if (pinIdx[i] != null || pinIdx[j] != null || a[i] === a[j]) continue;
+      [a[i], a[j]] = [a[j], a[i]];
+      if (planValid(items, terms, T, a, pinIdx, maxCS, loTerm)) { const s = planScore(items, terms, T, a); if (s < best - 1e-9) { best = s; improved = true; break; } }
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    if (!improved) break;
+  }
+}
+
+function kSubsets(arr, k) {
+  const out = [];
+  const rec = (start, acc) => { if (acc.length === k) { out.push(acc.slice()); return; } for (let i = start; i < arr.length; i++) { acc.push(arr[i]); rec(i + 1, acc); acc.pop(); } };
+  rec(0, []); return out;
+}
+
+/* Builds every candidate (design-group choices × auto electives), solves each,
+   and keeps the best: fewest semesters → fewest credits under minimum →
+   most even loads → fewest single-season electives. */
+function buildPlan(cfg) {
+  const terms = HORIZON.filter(t => cfg.terms[t.key].on).map(t => ({ ...t, min: Math.min(cfg.terms[t.key].min, cfg.terms[t.key].max), max: cfg.terms[t.key].max }));
+  const errors = [], notes = [];
+  if (!terms.length) return { errors: ["No semesters are enabled. Turn on at least one term."] };
+  const pinnedE = [];
+  for (const id of cfg.electives) {
+    const why = blockedReason(id);
+    if (why) errors.push(`${id} can't be planned: it ${why}.`); else pinnedE.push(id);
+  }
+  const apps = cfg.app === "auto" ? APP_OPTS.filter(isRegular) : [cfg.app];
+  const syss = cfg.sys === "auto" ? SYS_OPTS.filter(isRegular) : [cfg.sys];
+  const pinnedCr = pinnedE.reduce((s, id) => s + PLAN_CATALOG[id].cr, 0);
+  const need = Math.max(0, MAJOR_ELECTIVE_CREDITS - pinnedCr);
+  let best = null, lastFail = null, tried = 0, timedOut = false;
+  const started = performance.now();
+  for (const app of apps) for (const sys of syss) {
+    if (pinnedE.includes(app) || pinnedE.includes(sys)) { lastFail = { error: "dup", which: pinnedE.includes(app) ? app : sys }; continue; }
+    const pool = AUTO_POOL.filter(id => id !== app && id !== sys && !pinnedE.includes(id));
+    const k = Math.ceil(need / 4);
+    const subsets = k === 0 ? [[]] : kSubsets(pool, k).filter(s => s.reduce((x, id) => x + PLAN_CATALOG[id].cr, 0) >= need);
+    for (const autos of subsets) {
+      tried++;
+      const items = [
+        ...BASE_IDS.map(id => planItem(id, "required")),
+        planItem(app, "app"), planItem(sys, "sys"),
+        ...pinnedE.map(id => Object.assign(planItem(id, "elective"), { pinnedElective: true })),
+        ...autos.map(id => Object.assign(planItem(id, "elective"), { autoElective: true })),
+        ...GENED_IDS.filter(id => cfg.geneds[id]).map(id => planItem(id, "gened")),
+      ];
+      items.forEach(it => { if (cfg.pins[it.id]) it.pin = cfg.pins[it.id]; });
+      if (performance.now() - started > 2500) { timedOut = true; break; }
+      const r = solvePlan(items, terms, cfg.maxCS, best ? best.T : Infinity);
+      if (r.error === "worse") continue;
+      if (r.error) { lastFail = { ...r, items }; continue; }
+      const loads = planLoads(items, r.T, r.assign);
+      const { under, gate, v } = planParts(items, terms, r.T, r.assign);
+      const single = autos.filter(id => PLAN_CATALOG[id].off.length === 1).length;
+      const key = [r.T, under, gate, Math.round(v * 100) / 100, single, autos.join(",") + "|" + app + "|" + sys];
+      if (!best || cmpKey(key, best.key) < 0) best = { key, items, terms, ...r, app, sys, autos, loads };
+    }
+  }
+  if (!best) { if (lastFail && lastFail.error === "nofit") errors.push(...pinConflicts(lastFail.items, terms)); return { errors, fail: lastFail, terms, tried }; }
+  return { ...best, incomplete: best.incomplete || timedOut, errors, notes };
+}
+// Explains locked semesters that can never work (prerequisite order or season), ignoring credit limits.
+function pinConflicts(items, terms) {
+  const out = [], idx = new Map(items.map((it, i) => [it.id, i])), memo = new Map();
+  const pinT = it => it.pin ? terms.findIndex(t => t.key === it.pin) : -1;
+  const earliest = i => {
+    if (memo.has(i)) return memo.get(i);
+    memo.set(i, Infinity);
+    const it = items[i]; let lo = 0, why = null;
+    for (const [groups, step] of [[it.preI || [], 1], [it.precoI || [], 0]]) for (const g of groups) {
+      const best = Math.min(...g.map(o => (pinT(items[o]) >= 0 ? pinT(items[o]) : earliest(o)) + step));
+      if (best > lo) { lo = best; why = g.map(o => items[o].id).join(" or "); }
+    }
+    while (lo < terms.length && !it.seasons.has(terms[lo].season)) lo++;
+    memo.set(i, lo); it._why = why; return lo;
+  };
+  items.forEach((it, i) => {
+    const p = pinT(it); if (p < 0) return;
+    if (!it.seasons.has(terms[p].season)) out.push(`${it.id} is locked to ${terms[p].label}, but it is not offered in ${SEASON_NAME[terms[p].season].toLowerCase()} (${it.offText || "see Bulletin"}).`);
+    else { const e = earliest(i); if (e > p) out.push(`${it.id} is locked to ${terms[p].label}, but ${it._why} must be finished first, so ${terms[e] ? terms[e].label : "a later term"} is the earliest it can go.`); }
+  });
+  return out;
+}
+const cmpKey = (a, b) => { for (let i = 0; i < a.length; i++) { if (a[i] < b[i]) return -1; if (a[i] > b[i]) return 1; } return 0; };
+
+/* ---------- planner UI ---------- */
+let PLAN = null;
+const PLANNED_TERM = new Map(); // id -> term label, for the graph panel
+const plannerEl = document.getElementById("planner");
+
+function runPlanner() {
+  PLAN = buildPlan(PLAN_CFG);
+  PLANNED_TERM.clear();
+  if (PLAN.items) PLAN.items.forEach((it, i) => PLANNED_TERM.set(it.id, PLAN.terms[PLAN.assign[i]].label));
+  renderPlanner();
+  if (state.mode !== "plan") renderPanel();
+}
+
+function catLabel(id) {
+  const c = PLAN_CATALOG[id];
+  const tag = c.off === "I" ? " · not offered regularly" : c.off === "N" ? " · no offering info" : SEASON_NAME[c.off] ? ` · ${SEASON_NAME[c.off]} only` : "";
+  const x = CROSS_LISTED(id) ? " · cross-listed" : "";
+  return `${id}${state.redact ? "" : " " + c.title} (${c.cr} cr)${tag}${x}`;
+}
+function electiveOptions(selected, exclude) {
+  return ELECTIVE_IDS.filter(id => id === selected || !exclude.has(id)).map(id => {
+    const why = blockedReason(id);
+    return `<option value="${esc(id)}"${id === selected ? " selected" : ""}${why && id !== selected ? " disabled" : ""}>${esc(catLabel(id))}${why ? " (unavailable)" : ""}</option>`;
+  }).join("");
+}
+
+function renderPlanner() {
+  const cfg = PLAN_CFG, P0 = PLAN;
+  // ----- side: parameters -----
+  const termRows = HORIZON.map(t => {
+    const s = cfg.terms[t.key];
+    const warn = s.max > 18 ? `<span class="warn-dot" title="Above the 18-hour Registrar limit; needs advisor approval">!</span>` : "";
+    return `<tr class="${s.on ? "" : "off"}"><td><input type="checkbox" data-term-on="${t.key}" ${s.on ? "checked" : ""} aria-label="Use ${t.label}"></td><td>${t.label}</td>
+      <td><input type="number" min="0" max="24" value="${s.min}" data-term-min="${t.key}" aria-label="${t.label} minimum credits"></td>
+      <td><input type="number" min="0" max="24" value="${s.max}" data-term-max="${t.key}" aria-label="${t.label} maximum credits">${warn}</td></tr>`;
+  }).join("");
+  const used = new Set([...BASE_IDS, ...(cfg.app !== "auto" ? [cfg.app] : []), ...(cfg.sys !== "auto" ? [cfg.sys] : []), ...cfg.electives]);
+  const autos = P0 && P0.autos ? P0.autos : [];
+  const pinnedRows = cfg.electives.map((id, i) => `<div class="erow"><select data-epin="${i}"><option value="">Auto (let the planner choose)</option>${electiveOptions(id, used)}</select></div>`).join("");
+  const autoRows = autos.map((id, j) => `<div class="erow auto"><select data-eauto="${j}"><option value="" selected>Auto → ${esc(catLabel(id))}</option>${electiveOptions(null, used)}</select></div>`).join("");
+  const eCr = cfg.electives.reduce((s, id) => s + PLAN_CATALOG[id].cr, 0) + autos.reduce((s, id) => s + PLAN_CATALOG[id].cr, 0);
+  const pins = Object.entries(cfg.pins);
+  const sel = (name, val, opts) => `<select data-cfg="${name}">${opts.map(([v, l, dis]) => `<option value="${esc(v)}"${v === val ? " selected" : ""}${dis ? " disabled" : ""}>${esc(l)}</option>`).join("")}</select>`;
+  const appOpts = [["auto", P0 && P0.app && cfg.app === "auto" ? `Auto → ${P0.app}` : "Auto (best fit)"], ...APP_OPTS.map(id => [id, catLabel(id)])];
+  const sysOpts = [["auto", P0 && P0.sys && cfg.sys === "auto" ? `Auto → ${P0.sys}` : "Auto (best fit)"], ...SYS_OPTS.map(id => [id, catLabel(id)])];
+
+  let side = `<h2 class="pl-h">Plan settings</h2>
+  <p class="note">Plans start <b>Spring 2027</b> and assume your Fall 2026 in-progress courses (${[...ITEMS.values()].filter(i => i.type === "course" && i.status === "in_progress").map(i => i.id).join(", ")}) are passed.</p>
+  <section><h3>Semesters &amp; credit hours</h3>
+    <table class="terms-tbl"><thead><tr><th></th><th>Term</th><th>Min</th><th>Max</th></tr></thead><tbody>${termRows}</tbody></table>
+    <div class="bulk">All fall/spring: min <input type="number" id="bulkMin" min="0" max="24" value="12"> max <input type="number" id="bulkMax" min="0" max="24" value="18"> <button class="btn sm" id="bulkApply">Apply</button></div>
+    <div class="bulk"><button class="btn sm" id="summersOn">Use all summers</button> <button class="btn sm" id="summersOff">No summers</button></div>
+    <p class="note">Min is a target: a semester under it gets a warning (the final semester is exempt). Max is a hard limit; the Registrar's cap is 18 hours without advisor approval.</p>
+  </section>
+  <section><h3>Workload</h3>
+    <label class="fld">Max CSCI courses per semester ${sel("maxCS", String(cfg.maxCS), [["0", "No limit"], ["2", "2"], ["3", "3"], ["4", "4"]])}</label>
+  </section>
+  <section><h3>Design groups (pick 1 each)</h3>
+    <label class="fld">Application Design ${sel("app", cfg.app, appOpts)}</label>
+    <label class="fld">Systems Design ${sel("sys", cfg.sys, sysOpts)}</label>
+  </section>
+  <section><h3>Major electives · ${eCr} of ${MAJOR_ELECTIVE_CREDITS} cr</h3>
+    ${pinnedRows}${autoRows}
+    <div class="erow add"><select id="eAdd"><option value="">+ Add a specific elective…</option>${electiveOptions(null, new Set([...used, ...autos]))}</select></div>
+    <p class="note">Auto picks only regularly offered CSCI 4000-level courses (not CSCI 4150). Picking a course from any dropdown locks it in; the planner fills the remaining credits.</p>
+  </section>
+  <section><h3>Gen-ed requirements</h3>
+    ${GENED_IDS.map(id => { const lbl = id === "SPAN 2001" ? `SPAN 2001${state.redact ? "" : " Intermediate Spanish I"} (Foreign Language, 3 cr)` : `${REQS[id].label} (${PLACEHOLDERS[id].cr} cr placeholder)`;
+      return `<label class="chk"><input type="checkbox" data-gened="${id}" ${cfg.geneds[id] ? "checked" : ""}> ${esc(lbl)}</label>`; }).join("")}
+  </section>
+  <section><h3>Locked semesters</h3>
+    ${pins.length ? `<ul class="pins">${pins.map(([id, k]) => `<li><b>${esc(id.startsWith("REQ:") ? REQS[id].label : id)}</b> → ${TERM_LABEL[k]} <button class="linkbtn" data-unpin="${esc(id)}">remove</button></li>`).join("")}</ul><button class="btn sm" id="clearPins">Clear all</button>`
+      : `<p class="note">Use the term menu on any course card to lock it to a semester.</p>`}
+  </section>
+  <section><button class="btn sm" id="planReset">Reset all plan settings</button></section>`;
+
+  // ----- main: plan -----
+  let main = "";
+  const errs = (P0.errors || []).map(e => `<div class="alert bad">${esc(e)}</div>`).join("");
+  if (!P0.items) {
+    main += `<div class="plan-head"><h2>No plan fits these settings</h2></div>${errs}`;
+    const f = P0.fail;
+    if (f && f.error === "missing") main += f.missing.map(it => `<div class="alert bad">${esc(it.id)} needs ${esc(it.missing.map(g => g.join(" or ")).join(" and "))}, which is not in the plan. Add it as an elective or remove ${esc(it.id)}.</div>`).join("");
+    else if (f && f.error === "dup") main += `<div class="alert bad">${esc(f.which)} is chosen both as a design-group course and as a major elective. Pick a different elective.</div>`;
+    else main += `<div class="alert bad">The courses can't be fitted into the enabled semesters. Try raising max credits, enabling more terms or summers, removing a CSCI-per-semester limit, or removing locked semesters${pins.length ? ` (${pins.length} locked)` : ""}.</div>`;
+  } else {
+    const { items, terms, T, assign, loads } = P0;
+    const plannedCr = loads.reduce((s, x) => s + x, 0);
+    const applied = credComplete + credIP;
+    const upper = items.filter(it => !it.placeholder && courseNum(it.id) >= 3000).reduce((s, it) => s + it.cr, 0);
+    const major = items.filter(it => ["app", "sys", "elective"].includes(it.role) || (it.role === "required" && MEMBER.get(it.id).some(m => m.block === "BLK:MAJOR"))).reduce((s, it) => s + it.cr, 0);
+    const areaVI = items.filter(it => MEMBER.get(it.id) && MEMBER.get(it.id).some(m => m.block === "BLK:A6")).reduce((s, it) => s + it.cr, 0);
+    const idxOf = id => items.findIndex(it => it.id === id);
+    const i2720 = idxOf("CSCI 2720");
+    const checks = [
+      [applied + plannedCr >= DEGREE.req, `Total credits: ${applied} applied + ${plannedCr} planned = ${applied + plannedCr} of ${DEGREE.req}`],
+      [10 + upper >= 39, `Upper-division: 10 so far + ${upper} planned = ${10 + upper} of 39 (placeholders not counted)`],
+      [11 + major >= 42, `Major credits: 11 applied + ${major} planned = ${11 + major} of 42`],
+      [12 + areaVI >= 19, `Area VI: 12 applied + ${areaVI} planned = ${12 + areaVI} of 19`],
+      [Math.min(60, 15 + plannedCr) >= 45, `Residency: ${Math.min(60, 15 + plannedCr)} UGA credits in your last 60 (45 required; assumes every planned course is taken at UGA)`],
+      [major >= 15, `Major residency: ${major} major credits planned at UGA (15 required)`],
+      [true, `Teamwork: ${P0.app} (Application Design) is a team-based course`],
+    ];
+    if (i2720 >= 0) checks.push([true, `Major admission: entrance courses are done after ${terms[assign[i2720]].label} (CSCI 2720). Admission also needs C or better and a 2.7 GPA across CSCI 1302/2610/2720.`]);
+    const warns = [];
+    loads.forEach((x, t) => {
+      if (t < T - 1 && x < terms[t].min) warns.push(`${terms[t].label} has ${x} cr, under your ${terms[t].min}-cr minimum. Full-time is 12+ in fall/spring (6+ in summer); add a free elective if you need full-time status.`);
+      if (x > 18) warns.push(`${terms[t].label} has ${x} cr, above the 18-hour Registrar limit; needs advisor approval.`);
+    });
+    if (P0.incomplete) warns.push("The search hit its time limit for a shorter plan, so this one may not be the absolute shortest.");
+    const grad = terms[T - 1].label;
+    main += `<div class="plan-head"><div><div class="eyebrow">Earliest graduation with these settings</div><h2>${grad}</h2>
+      <p class="note">${T} semester${T > 1 ? "s" : ""} · ${plannedCr} credits planned · ${items.filter(i => i.cr > 0 || i.placeholder).length} items</p></div>
+      <div class="plan-actions"><button class="btn" id="planCsv">Download CSV</button></div></div>${errs}`;
+    main += `<div class="checks">${checks.map(([ok, t]) => `<div class="ck ${ok ? "ok" : "bad"}"><span>${ok ? "✓" : "✕"}</span>${esc(t)}</div>`).join("")}</div>`;
+    main += warns.map(w => `<div class="alert warn">${esc(w)}</div>`).join("");
+    main += `<div class="terms-grid">`;
+    for (let t = 0; t < T; t++) {
+      const list = items.map((it, i) => [it, i]).filter(([, i]) => assign[i] === t).sort((a, b) => (b[0].cs - a[0].cs) || a[0].id.localeCompare(b[0].id));
+      const tm = terms[t], x = loads[t], pct = Math.min(100, x / Math.max(tm.max, 1) * 100);
+      const cls = x > 18 ? "bad" : t < T - 1 && x < tm.min ? "warn" : "ok";
+      main += `<div class="term"><div class="term-h"><b>${tm.label}</b><span class="load ${cls}">${x} cr</span></div>
+        <div class="tbar"><span style="width:${pct}%"></span><i style="left:${Math.min(100, tm.min / Math.max(tm.max, 1) * 100)}%" title="Minimum ${tm.min}"></i></div>
+        <div class="tsub">${tm.min}–${tm.max} cr allowed${list.some(([it]) => it.cs) ? ` · ${list.filter(([it]) => it.cs).length} CSCI` : ""}</div>`;
+      for (const [it, i] of list) main += cardHTML(it, i, P0);
+      main += `</div>`;
+    }
+    main += `</div>`;
+    main += `<details class="assume"><summary>How this plan is built</summary><ul>
+      <li>Prerequisites must be finished in an earlier semester; pre- or corequisites may be taken in the same semester. Data: UGA Bulletin, retrieved 10/13/2026.</li>
+      <li>Courses only go in seasons the Bulletin lists. “Offered every year” and irregular courses are placed in fall or spring and flagged; confirm actual sections in Athena.</li>
+      <li>The planner finds the fewest semesters, then keeps loads at or above your minimums, then evens them out, then prefers electives offered in more than one season.</li>
+      <li>Literature, Fine Arts and PE are placeholders: pick the actual course from the Bulletin list. They are not counted toward upper-division credit.</li>
+      <li>“Permission of department” is never assumed.</li>
+      <li>This is a planning aid, not an official audit. Confirm with your advisor before registering.</li>
+    </ul></details>`;
+  }
+  plannerEl.innerHTML = `<div class="pl-side">${side}</div><div class="pl-main">${main}</div>`;
+}
+
+function cardHTML(it, i, P0) {
+  const { items, terms, assign } = P0, t = assign[i];
+  const color = colorOf(it.blocks[0] || "BLK:MAJOR");
+  const flags = [];
+  if (OFF_FLAG[it.off]) flags.push(OFF_FLAG[it.off]);
+  if (it.id.startsWith("MATH") || it.id.startsWith("CBIO")) flags.push("Cross-listed with CSCI: confirm with your advisor that it counts as a CSCI elective");
+  const same = [];
+  for (const g of it.precoI || []) { const o = g.find(o => assign[o] === t); if (o != null && !g.some(x => assign[x] < t)) same.push(items[o].id); }
+  if (same.length) flags.push(`Taken alongside ${same.join(", ")} (pre- or corequisite)`);
+  if (it.id === "REQ:EXP") flags.push("0 credits listed: satisfied by an approved experience; see the Bulletin");
+  const prereqs = (it.preI || []).map(g => g.map(o => items[o].id).join(" or ")).filter(Boolean);
+  const role = it.autoElective ? "Auto-picked elective" : it.pinnedElective ? "Your elective" : it.role === "app" ? (PLAN_CFG.app === "auto" ? "Auto-picked: Application Design" : "Application Design") : it.role === "sys" ? (PLAN_CFG.sys === "auto" ? "Auto-picked: Systems Design" : "Systems Design") : it.placeholder ? "Placeholder: choose a course" : it.role === "gened" ? "Gen-ed" : "Required";
+  const pinOpts = `<option value="">${PLAN_CFG.pins[it.id] ? "Unlock" : "Auto term"}</option>` + HORIZON.filter(h => PLAN_CFG.terms[h.key].on).map(h => `<option value="${h.key}"${PLAN_CFG.pins[it.id] === h.key ? " selected" : ""}>Lock to ${h.label}</option>`).join("");
+  const title = it.placeholder ? it.sub : state.redact ? "" : it.title;
+  return `<div class="pcard" style="--c:${color}">
+    <div class="pc-top"><b>${esc(it.placeholder ? it.title : it.id)}</b><span>${it.cr} cr</span></div>
+    ${title ? `<div class="pc-t">${esc(title)}</div>` : ""}
+    <div class="pc-meta">${it.blocks.map(b => `<span class="sw" style="background:${colorOf(b)}"></span>`).join("")}${esc(it.req || "")} · <i>${esc(role)}</i></div>
+    ${prereqs.length ? `<div class="pc-pre">After: ${esc(prereqs.join(", "))}</div>` : ""}
+    ${flags.map(f => `<div class="pc-flag">${esc(f)}</div>`).join("")}
+    <div class="pc-foot"><select data-pin="${esc(it.id)}" aria-label="Lock ${esc(it.id)} to a semester">${pinOpts}</select>${PLAN_CFG.pins[it.id] ? `<span class="lock" title="Locked">🔒</span>` : ""}${it.bid ? `<a class="ext sm" href="https://bulletin.uga.edu/Course/Details/${it.bid}" target="_blank" rel="noopener">Bulletin ↗</a>` : ""}</div>
+  </div>`;
+}
+
+function planCsv() {
+  const P0 = PLAN; if (!P0 || !P0.items) return;
+  const q = s => `"${String(s).replace(/"/g, '""')}"`;
+  const rows = [["Term", "Course", "Title", "Credits", "Counts toward", "Notes"]];
+  const order = P0.items.map((it, i) => [it, i]).sort((a, b) => P0.assign[a[1]] - P0.assign[b[1]] || a[0].id.localeCompare(b[0].id));
+  for (const [it, i] of order) rows.push([P0.terms[P0.assign[i]].label, it.placeholder ? it.title : it.id, it.placeholder ? it.sub : state.redact ? "" : it.title, it.cr,
+    it.blocks.map(b => ITEMS.get(b).short).join("; ") + (it.req ? ` (${it.req})` : ""), OFF_FLAG[it.off] || ""]);
+  const blob = new Blob([rows.map(r => r.map(q).join(",")).join("\n")], { type: "text/csv" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "semester-plan.csv";
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+const planChanged = () => { savePlanCfg(); runPlanner(); };
+plannerEl.addEventListener("change", e => {
+  const el = e.target, d = el.dataset, cfg = PLAN_CFG;
+  if (d.termOn) cfg.terms[d.termOn].on = el.checked;
+  else if (d.termMin) cfg.terms[d.termMin].min = clampInt(el.value, 0, 24, 12);
+  else if (d.termMax) cfg.terms[d.termMax].max = clampInt(el.value, 0, 24, 18);
+  else if (d.cfg === "maxCS") cfg.maxCS = Number(el.value);
+  else if (d.cfg === "app" || d.cfg === "sys") {
+    cfg[d.cfg] = el.value;
+    if (el.value !== "auto") cfg.electives = cfg.electives.filter(x => x !== el.value);
+  }
+  else if (d.epin != null) { const i = Number(d.epin); if (el.value) cfg.electives[i] = el.value; else cfg.electives.splice(i, 1); cfg.electives = [...new Set(cfg.electives)]; }
+  else if (d.eauto != null) { if (el.value) cfg.electives.push(el.value); cfg.electives = [...new Set(cfg.electives)]; }
+  else if (el.id === "eAdd") { if (el.value) cfg.electives = [...new Set([...cfg.electives, el.value])]; }
+  else if (d.gened) cfg.geneds[d.gened] = el.checked;
+  else if (d.pin) { if (el.value) cfg.pins[d.pin] = el.value; else delete cfg.pins[d.pin]; }
+  else return;
+  for (const [id, k] of Object.entries(cfg.pins)) if (!cfg.terms[k].on) delete cfg.pins[id];
+  planChanged();
+});
+plannerEl.addEventListener("click", e => {
+  const el = e.target, cfg = PLAN_CFG;
+  if (el.id === "bulkApply") {
+    const mn = clampInt(document.getElementById("bulkMin").value, 0, 24, 12), mx = clampInt(document.getElementById("bulkMax").value, 0, 24, 18);
+    HORIZON.filter(t => t.season !== "U").forEach(t => { cfg.terms[t.key].min = mn; cfg.terms[t.key].max = mx; });
+  } else if (el.id === "summersOn" || el.id === "summersOff") HORIZON.filter(t => t.season === "U").forEach(t => cfg.terms[t.key].on = el.id === "summersOn");
+  else if (el.dataset.unpin) delete cfg.pins[el.dataset.unpin];
+  else if (el.id === "clearPins") cfg.pins = {};
+  else if (el.id === "planReset") PLAN_CFG = planDefaults();
+  else if (el.id === "planCsv") return planCsv();
+  else return;
+  for (const [id, k] of Object.entries(PLAN_CFG.pins)) if (!PLAN_CFG.terms[k].on) delete PLAN_CFG.pins[id];
+  planChanged();
+});
+
+/* ---------- mode switch ---------- */
+state.mode = store.get("mode") === "plan" ? "plan" : "graph";
+function setMode(m) {
+  state.mode = m; store.set("mode", m);
+  document.body.classList.toggle("mode-plan", m === "plan");
+  document.querySelectorAll("[data-mode]").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === m));
+  if (m === "graph") { renderPanel(); requestAnimationFrame(() => fit(false)); }
+}
+document.querySelectorAll("[data-mode]").forEach(b => b.addEventListener("click", () => setMode(b.dataset.mode)));
+
+
 /* Boot */
 syncTheme(); syncRedact(); syncArrows(); fillDatalist(); renderHeader(); renderLegend();
 document.getElementById("viewnote").textContent = "Each colored cloud is one audit section. Shared courses sit where clouds overlap and wear both colors. Hover to nudge, drag to move, click for details.";
@@ -1239,6 +1928,8 @@ buildSim();
 render();
 fit(false);
 requestAnimationFrame(() => fit(false));
+runPlanner();
+setMode(state.mode);
 })();
 </script>
 </body>
