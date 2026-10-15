@@ -51,26 +51,31 @@ Switching saves the choice and reloads the page. Planner settings are saved sepa
 
 ### Reading the graph
 
-Each visual property has exactly one meaning:
+Each visual property has exactly one meaning. The table follows the legend's sections, which are named the same way:
 
-| Property | Meaning |
+| Legend section | Meaning |
 |---|---|
-| **Color** | Requirement type: **blue** = major / CS (Major, Area VI, Entrance), **green** = gen ed / university / college (Areas I–V, University, Franklin College), **gray** = electives / excess. Sections of the same type use lighter or darker shades of one hue. An item that counts toward two types is split between both colors. |
-| **Fill** | Progress: **empty** = needed, **half** = in progress, **full** = complete. |
-| **Thin red outer ring** | Eligibility, shown only on courses you still need: **solid** = eligible now, **dashed** = eligible after this term, **no ring** = blocked. |
-| **Size** | Credit hours: circle area is proportional to credits (a 4-cr course has 4× the area of a 1-cr course). |
-| **Inner symbol** | Node kind: **none** = course, **+** = open requirement (e.g. Literature, Major Electives), **◇** = pick one (Application Design, Systems Design), **flag** = milestone (Admission to CS Major). Outlines are always solid. |
-| **Lines** | A thin **white line** (dark in light mode) links a course to its section, a section to the degree, and a pick-one group to its options. Prerequisite arrows are hidden until you click a course: then **yellow** arrows show what it needs and **green** arrows what it unlocks. A **solid** arrow is a prerequisite (finish it in an earlier term; "one of several" alternatives included). A **dashed** arrow is a pre- or corequisite (take it before or in the same term). The side panel lists the full AND/OR groups. |
+| **Color = Requirement type** | **Blue** = major / CS (Major, Area VI, Entrance), **green** = gen ed / university / college (Areas I–V, University, Franklin College), **gray** = electives / excess. Sections of the same type use lighter or darker shades of one hue. An item that counts toward two types is split between both colors. |
+| **Symbol = Special requirement** | A symbol inside the circle marks a requirement that isn't one specific course: **+** = open requirement filled by any qualifying course (e.g. Literature, Major Electives), **◇** = pick one of a few listed courses (Application Design, Systems Design). A **flag** marks a milestone (Admission to CS Major). Plain courses have no symbol, and every outline is solid. |
+| **Fill = Progress** | **Empty** = needed, **half** = in progress, **full** = complete. On section hubs and the center node, the ring does the same job: **solid** = completed, **translucent** = in progress. |
+| **Outer ring = Availability** | A thin red ring, shown only on courses you still need: **solid** = eligible now, **dashed** = eligible after this term, **no ring** = blocked. |
+| **Line style = Relationship** | A thin **white line** (dark in light mode) means "belongs to": a course to its section, a section to the degree, a pick-one group to its options. Prerequisite arrows are hidden until you click a course; then **solid yellow** = prerequisite (finish it in an earlier term), **dashed yellow** = pre- or corequisite (before or in the same term), **green** = what it unlocks. The side panel lists the full AND/OR groups. |
+
+**Size** isn't in the legend: circle area is proportional to credit hours (a 4-cr course has 4× the area of a 1-cr course). The Overview panel mentions it.
 
 | Element | Meaning |
 |---|---|
-| **Center node** | The degree. Its ring and number both show credits applied, including this term's in-progress courses (83 of 121 for Vivek). |
-| **Hub nodes** | The 12 audit sections, larger than courses, each in a soft cloud of its section color. The thick ring and the number inside both show items complete / total. |
+| **Center node** | The degree. The number is credits applied, including this term's in-progress courses (83 of 121 for Vivek). The ring shows the same total split into completed (solid, 71) and in progress (translucent, 12). |
+| **Hub nodes** | The 12 audit sections, larger than courses, each in a soft cloud of its section color. The number inside is items complete / total. The thick ring shows completed items solid and in-progress items translucent. |
 | **Shared courses** | A course that counts toward more than one section is pulled between those hubs, so it sits where their clouds overlap. Its tooltip lists every section. |
 
 **Progressive disclosure:** at overview zoom, the graph emphasizes requirement type, progress, hubs and course codes. Audit text, eligibility rings and open-requirement labels stay faint until you hover, select or zoom in (about 110%+). Prerequisite arrows are hidden entirely until you click a course; then only that course's arrows appear.
 
-The **Overview** panel on the right opens with a four-sentence intro: the degree at the center, its audit sections, then the classes in each, plus what color, fill and clicking do.
+The **Overview** panel on the right opens with a short intro:
+
+> A graph of your college curriculum. Your degree sits at the center, linked to each section of your degree audit, and each section is linked to the classes that count toward it. Color shows the type of requirement and fill shows your progress. Click any class to see what it requires and what it unlocks.
+
+Below it are the 12 sections and lists of courses that are eligible now, eligible after this term, in progress, still required, pick-one groups, open requirements and shared courses.
 
 ### Interacting
 
@@ -184,7 +189,7 @@ The audit doesn't contain prerequisite chains, so those come from the public [UG
 
 ### 3. The degree graph
 
-- **Rendering:** hand-written **SVG**, no charting library. Colors are literal values from a per-theme palette, so the exported PNG looks exactly like the screen. Each visual property has one job: **color** = requirement type (blue / green / gray, with related sections as lighter or darker shades of one hue), **fill** = progress, a thin **red ring** = eligibility, **size** = credit hours, an **inner symbol** (+, ◇, flag) = node kind, and a **trace pair** (yellow = needs, green = unlocks) shown only while a course is selected. The section and trace colors were checked for color-vision deficiency in both themes.
+- **Rendering:** hand-written **SVG**, no charting library. Colors are literal values from a per-theme palette, so the exported PNG looks exactly like the screen. Each visual property has one job: **color** = requirement type (blue / green / gray, with related sections as lighter or darker shades of one hue), **fill** = progress, a thin **red ring** = eligibility, **size** = credit hours, a **symbol** (+, ◇, flag) = special requirement, and a **trace pair** (yellow = needs, green = unlocks) shown only while a course is selected. The section and trace colors were checked for color-vision deficiency in both themes.
 - **Layout:** a custom **force-directed simulation**, modeled on d3-force but written from scratch:
   - **Springs:** degree→section, section→item, choice→option, and weak prerequisite springs. Link strength is split by how many sections an item belongs to, which is what places shared courses between hubs.
   - **Forces:** many-body repulsion, collision with label padding, and weak centering gravity.
@@ -193,7 +198,7 @@ The audit doesn't contain prerequisite chains, so those come from the public [UG
   - **Start:** a seeded random generator gives the same layout every load, and the simulation pre-settles for 380 steps before the first draw.
 - **Clusters:** one translucent group of circles per section, in that section's shade; overlapping groups blend where sections share courses.
 - **Labels:** a greedy declutter pass places labels in priority order (selected/hovered, then needed, in progress, complete). Each tries below, above, right, then left of its node, skipping any spot that overlaps another label, a node, or a highlighted trace arrow; if none is free it stays hidden until hovered. Arrows stop just outside a node's outermost ring (selection, eligibility or hub progress ring). Section and degree labels are always shown.
-- **Legend:** five sections, each named for the visual property it explains: *Color = Requirement type*, *Symbol = Special requirement* (+ and ◇), *Fill = Progress*, *Outer ring = Availability* and *Line style = Relationship*. *Line style* has four entries: section line, prerequisite (solid yellow), pre- or corequisite (dashed yellow) and unlocks (green). Circle size = credit hours is explained in the overview panel and the exported PNG key. Its examples are drawn by the same functions as the graph, so they match exactly. It never grows taller than the graph area: the contents scroll and the header stays pinned, so it can always be closed.
+- **Legend:** five sections, each named for the visual property it explains: *Color = Requirement type*, *Symbol = Special requirement*, *Fill = Progress*, *Outer ring = Availability* and *Line style = Relationship*. The + and ◇ are shown as bare symbols; the ring example shows half solid (completed) and a quarter translucent (in progress). *Line style* has four entries: section line, prerequisite (solid yellow), pre- or corequisite (dashed yellow) and unlocks (green). Every example is drawn by the same code as the graph, so it matches. *Fit to screen* reserves room for the legend (on the left or along the bottom, whichever leaves a bigger graph); it never grows taller than the graph area (contents scroll, header stays pinned so it can always be closed) and starts collapsed on small screens.
 - **Arrows:** shown only for the clicked course. Each is a straight line unless it would pass through another highlighted node; then it bows just enough to go around, trying a shallow bend on either side before a deeper one. A traced pick-one link becomes a green arrow from the course to its group, matching the side panel's *Unlocks* list. *Fit to screen* reserves room for it (on the left or along the bottom, whichever leaves a bigger graph), and it starts collapsed on small screens.
 - **Hover wobble:** a separate damped spring per node, so nodes wobble and always return to where the layout put them. It runs at a fixed ~60 Hz step so motion looks the same on any refresh rate, and turns off under `prefers-reduced-motion`.
 - **Eligibility:** computed with plain logic, no AI. A needed course is *eligible now* if every prerequisite group contains a completed course, and *eligible after this term* if every group has a completed or in-progress one.
