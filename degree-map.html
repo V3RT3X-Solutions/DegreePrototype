@@ -1577,28 +1577,28 @@ function renderLegend() {
   const group = (h, rows, note) => `<div><div class="lg-h">${h}</div>${note ? `<div class="lg-note">${note}</div>` : ""}<div class="grid">${rows.map(([sv, l]) => `<div class="it">${sv}<span>${l}</span></div>`).join("")}</div></div>`;
   const hub = glyph(34, 34, g => progressRing(g, 12, 5, [[2, pal.fam.cs], [1, pal.fam.cs, 0.4], [1, "none"]], pal));
   document.getElementById("legend").innerHTML =
-    group("Color — Requirement type", [
+    group("Color = Requirement type", [
       [node({ cols: blue }), "Major / CS"],
       [node({ cols: green }), "Gen ed / university / college"],
       [node({ cols: [pal.fam.other] }), "Electives / excess"],
       [node({ cols: [pal.fam.cs, pal.fam.gen] }), "Counts toward two types"],
     ])
-    + group("Course symbol — Special requirement", [
+    + group("Symbol = Special requirement", [
       [symbol("M-5 0 H5 M0 -5 V5", pal.fam.gen), "Open requirement (+)"],
       [symbol("M0 -5.5 L5.5 0 L0 5.5 L-5.5 0 Z", pal.fam.cs), "Choose one of the options"],
     ])
-    + group("Fill — Progress", [
+    + group("Fill = Progress", [
       [node({ status: "needed" }), "Needed (empty)"],
       [node({ status: "in_progress" }), "In progress (half)"],
       [node({ status: "complete" }), "Complete (full)"],
       [hub, "Solid: completed<br>Translucent: in-progress"],
     ])
-    + group("Outer ring — Availability", [
+    + group("Outer ring = Availability", [
       [node({ status: "needed", elig: "now" }), "Eligible now"],
       [node({ status: "needed", elig: "next" }), "Eligible after this term"],
       [node({ status: "needed" }), "Blocked (no ring)"],
     ], "Needed courses only")
-    + group("Line style — Relationship", [
+    + group("Line style = Relationship", [
       [edge({ w: 1.3 }, pal.edge, false), "Belongs to a section"],
       [edge({ w: PRE_STYLE.prereq.w + 1.2 }, pal.up), "Prerequisite"],
       [edge({ w: COREQ.w + 1.2, dash: COREQ.dash }, pal.up), "Pre- or corequisite"],
