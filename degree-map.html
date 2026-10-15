@@ -7,15 +7,20 @@
 <style>
 :root{
   --bg:#f5f7fa; --surface:#ffffff; --surface2:#eef2f6; --text:#0f172a; --muted:#526070; --border:#d5dce5;
-  --complete:#15803d; --progress:#b45309; --needed:#1e293b; --eligible:#0284c7; --accent:#7c3aed;
-  --complete-bg:#e3f6ea; --progress-bg:#fff3d6; --needed-bg:#eef2f6;
+  /* Course status is one neutral ramp (done recedes, needed stands out); hue is kept for the trace pair and planner checks. */
+  --complete:#a3aebc; --progress:#526070; --needed:#0f172a; --eligible:#0f172a; --accent:#0f172a;
+  --complete-bg:#eef2f6; --progress-bg:#eef2f6; --needed-bg:transparent;
+  --up:#c98500; --down:#2f9e44; --cs:#2a78d6; --gen:#1a9e6e; --other:#7b8797;
+  --good:#15803d; --warn:#b45309; --warn-bg:#fff3d6; --bad:#e11d48;
   --shadow:0 1px 2px rgba(15,23,42,.06),0 6px 20px rgba(15,23,42,.08);
   color-scheme:light;
 }
 :root[data-theme="dark"]{
   --bg:#0b0f14; --surface:#121820; --surface2:#1a222c; --text:#e8eef5; --muted:#9aa7b6; --border:#2a3441;
-  --complete:#3ccf7a; --progress:#f5b938; --needed:#dbe3ec; --eligible:#38bdf8; --accent:#a78bfa;
-  --complete-bg:#0f2d1d; --progress-bg:#33260a; --needed-bg:#1a222c;
+  --complete:#4b5666; --progress:#9aa7b6; --needed:#e8eef5; --eligible:#e8eef5; --accent:#e8eef5;
+  --complete-bg:#1a222c; --progress-bg:#1a222c; --needed-bg:transparent;
+  --up:#facc15; --down:#4ade80; --cs:#3987e5; --gen:#199e70; --other:#8391a3;
+  --good:#3ccf7a; --warn:#f5b938; --warn-bg:#33260a; --bad:#fb7185;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
   color-scheme:dark;
 }
@@ -36,6 +41,8 @@ header.top{display:flex;gap:24px;align-items:center;justify-content:space-betwee
 .tile{padding:6px 12px;border:1px solid var(--border);border-radius:10px;background:var(--bg);min-width:84px}
 .tile b{display:block;font-size:19px;line-height:1.15}
 .tile small{color:var(--muted);font-size:12px;white-space:nowrap}
+.profile{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.profile>span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .toolbar{display:flex;gap:10px;align-items:center;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap}
 .seg{display:inline-flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg)}
 .seg button{border:0;background:transparent;padding:7px 12px;cursor:pointer;font-size:14px;white-space:nowrap}
@@ -46,7 +53,7 @@ header.top{display:flex;gap:24px;align-items:center;justify-content:space-betwee
 .btn[aria-pressed="true"]{background:var(--text);color:var(--bg)}
 .search{position:relative}
 .search input{border:1px solid var(--border);background:var(--bg);border-radius:10px;padding:7px 12px;width:230px}
-.search input:focus{outline:2px solid var(--eligible);outline-offset:1px}
+.search input:focus{outline:2px solid var(--accent);outline-offset:1px}
 .spacer{flex:1}
 main{flex:1;display:flex;min-height:0}
 #stage{position:relative;flex:1;min-width:0;overflow:hidden}
@@ -57,24 +64,25 @@ main{flex:1;display:flex;min-height:0}
 #tooltip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 11px;box-shadow:var(--shadow);font-size:13px;max-width:300px;opacity:0;transition:opacity .12s;z-index:5}
 #tooltip b{font-size:14px}
 #tooltip .t{color:var(--muted)}
-.legend{position:absolute;left:14px;bottom:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 14px;box-shadow:var(--shadow);font-size:13px;max-width:calc(100% - 28px)}
-.legend summary{cursor:pointer;font-weight:600;list-style:none}
+.legend{position:absolute;left:14px;bottom:14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:0 14px 10px;box-shadow:var(--shadow);font-size:13px;max-width:calc(100% - 84px);max-height:calc(100% - 28px);overflow-y:auto;overscroll-behavior:contain}
+/* Never taller than the graph area: contents scroll and the header stays pinned, so it can always be closed. */
+.legend summary{cursor:pointer;font-weight:600;list-style:none;position:sticky;top:0;z-index:1;background:var(--surface);padding:10px 0 4px}
 .legend summary::-webkit-details-marker{display:none}
 .legend summary::after{content:" ▾";color:var(--muted)}
 .legend:not([open]) summary::after{content:" ▸"}
-.legend .grid{display:grid;grid-template-columns:auto auto;gap:6px 18px;margin-top:8px}
+.legend .grid{display:grid;grid-template-columns:auto auto;gap:6px 18px}
 .legend .secs-grid{display:grid;grid-template-columns:repeat(3,auto);gap:4px 14px}
-.legend .lg-h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:10px 0 6px}
+.legend .lg-h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:8px 0 6px}
+.legend .lg-note{font-size:12px;color:var(--muted);margin:-3px 0 5px}
+.legend .grid{grid-template-columns:auto auto}
 .legend button.sec{border:0;background:none;padding:2px 0;cursor:pointer;font-size:13px;text-align:left}
 .legend button.sec:hover{text-decoration:underline}
-.sw{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none;margin-right:6px;vertical-align:baseline}
-.sw.big{width:16px;height:16px;margin:0}
 #tooltip .secs{margin-top:4px;font-size:12.5px;color:var(--muted)}
-.chip .sw{margin-right:0}
 .legend .it{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.sw{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none;margin-right:6px}
+.chip .sw,.pc-meta .sw{margin-right:0}
 .zoom{position:absolute;right:14px;bottom:14px;display:flex;flex-direction:column;gap:6px}
 .zoom .btn{width:38px;height:38px;padding:0;font-size:18px;box-shadow:var(--shadow);background:var(--surface)}
-.viewnote{position:absolute;left:14px;top:12px;font-size:13px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px 10px;max-width:calc(100% - 28px)}
 aside#panel{width:380px;flex:none;border-left:1px solid var(--border);background:var(--surface);overflow-y:auto;padding:18px 20px 40px}
 #panel h2{margin:4px 0 2px;font-size:24px;letter-spacing:-.01em}
 #panel h3{margin:20px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
@@ -83,12 +91,17 @@ aside#panel{width:380px;flex:none;border-left:1px solid var(--border);background
 #panel ul{margin:0;padding:0;list-style:none}
 #panel li{padding:6px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
 #panel li:last-child{border-bottom:0}
+#panel ul.key{margin:6px 0 4px;font-size:13.5px}
+#panel ul.key li{display:grid;grid-template-columns:62px 1fr;padding:3px 0;border:0}
+#panel ul.key b{font-weight:600}
+#panel ul.key .sw{margin:0 4px 0 0}
+#panel ul.key .sw~.sw{margin-left:8px}
 #panel .req{color:var(--muted);font-size:13px}
 .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid}
-.pill.complete{color:var(--complete);background:var(--complete-bg);border-color:var(--complete)}
-.pill.in_progress{color:var(--progress);background:var(--progress-bg);border-color:var(--progress)}
+.pill.complete{color:var(--muted);background:var(--complete-bg);border-color:var(--border)}
+.pill.in_progress{color:var(--text);background:var(--progress-bg);border-color:var(--progress)}
 .pill.needed{color:var(--needed);background:var(--needed-bg);border-color:var(--needed)}
-.pill.elig{color:var(--eligible);border-color:var(--eligible);background:transparent}
+.pill.elig{color:var(--text);border-color:var(--text);background:transparent}
 .pill.muted{color:var(--muted);border-color:var(--border);background:transparent;font-weight:500}
 .facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 0}
 .facts div{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:7px 10px}
@@ -98,15 +111,15 @@ aside#panel{width:380px;flex:none;border-left:1px solid var(--border);background
 .chip:hover{border-color:var(--text)}
 .chip.ext{cursor:default;color:var(--muted);font-weight:500;border-style:dashed}
 .chip .dot{width:9px;height:9px;border-radius:50%;flex:none}
-.dot.complete{background:var(--complete)} .dot.in_progress{background:var(--progress)} .dot.needed{background:transparent;border:2px solid var(--needed)} .dot.ext{background:transparent;border:2px dashed var(--muted)}
+.dot.complete{background:var(--complete)} .dot.in_progress{background:linear-gradient(to top,var(--progress) 50%,transparent 50%);border:2px solid var(--progress)} .dot.needed{background:transparent;border:2px solid var(--needed)} .dot.ext{background:transparent;border:2px dashed var(--muted)}
 .group{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px}
 .group .ok{margin-left:auto;font-size:12px;font-weight:600}
 .and{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:4px 0 6px 4px}
 .or{font-size:12px;color:var(--muted)}
 .src{font-size:12.5px;color:var(--muted);border-left:3px solid var(--border);padding-left:10px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
-a.ext{color:var(--eligible);font-weight:600;text-decoration:none;font-size:14px}
-a.ext:hover{text-decoration:underline}
+a.ext{color:var(--accent);font-weight:600;text-decoration:underline;text-decoration-color:var(--border);text-underline-offset:3px;font-size:14px}
+a.ext:hover{text-decoration-color:var(--accent)}
 .note{font-size:13px;color:var(--muted)}
 .linkbtn{border:0;background:none;padding:0;color:var(--text);font-weight:600;cursor:pointer;text-decoration:underline;text-decoration-color:var(--border);text-underline-offset:3px}
 .hint{font-size:13px;color:var(--muted);margin-top:22px;border-top:1px solid var(--border);padding-top:12px}
@@ -133,7 +146,7 @@ body.mode-plan #planner{display:flex}
 .chk{display:flex;gap:8px;align-items:center;font-size:13.5px;margin-bottom:5px}
 .bulk{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px;margin-top:8px}
 .btn.sm{padding:4px 10px;font-size:13px;border-radius:8px}
-.warn-dot{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:var(--progress);color:var(--bg);font-size:11px;font-weight:800;margin-left:4px}
+.warn-dot{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:var(--warn);color:var(--bg);font-size:11px;font-weight:800;margin-left:4px}
 .pins{margin:0 0 8px;padding:0;list-style:none;font-size:13.5px}
 .pins li{padding:3px 0}
 .plan-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:12px}
@@ -142,27 +155,27 @@ body.mode-plan #planner{display:flex}
 .checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:6px 16px;margin:6px 0 12px}
 .ck{display:flex;gap:8px;font-size:13.5px;align-items:baseline}
 .ck span{font-weight:800}
-.ck.ok span{color:var(--complete)} .ck.bad span{color:#e11d48}
+.ck.ok span{color:var(--good)} .ck.bad span{color:var(--bad)}
 .alert{border-radius:10px;padding:8px 12px;font-size:13.5px;margin:6px 0;border:1px solid}
-.alert.warn{border-color:var(--progress);background:var(--progress-bg)}
-.alert.bad{border-color:#e11d48;background:color-mix(in srgb,#e11d48 12%,transparent)}
+.alert.warn{border-color:var(--warn);background:var(--warn-bg)}
+.alert.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,transparent)}
 .terms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;margin-top:14px;align-items:start}
 .term{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;box-shadow:var(--shadow)}
 .term-h{display:flex;justify-content:space-between;align-items:baseline;font-size:17px}
 .load{font-weight:800;font-size:15px}
-.load.ok{color:var(--complete)} .load.warn{color:var(--progress)} .load.bad{color:#e11d48}
+.load.ok{color:var(--text)} .load.warn{color:var(--warn)} .load.bad{color:var(--bad)}
 .tbar{position:relative;height:6px;border-radius:4px;background:var(--surface2);margin:8px 0 4px}
 .tbar span{display:block;height:100%;border-radius:4px;background:var(--text);opacity:.7}
 .tbar i{position:absolute;top:-3px;width:2px;height:12px;background:var(--muted)}
+.tbar i.mx{background:var(--text)}
 .tsub{font-size:12px;color:var(--muted);margin-bottom:8px}
-.pcard{border:1px solid var(--border);border-left:5px solid var(--c);border-radius:10px;padding:8px 10px;margin-top:8px;background:var(--bg)}
+.pcard{border:1px solid var(--border);border-left:4px solid var(--c,var(--border));border-radius:10px;padding:8px 10px;margin-top:8px;background:var(--bg)}
 .pc-top{display:flex;justify-content:space-between;font-size:15px}
 .pc-top span{color:var(--muted);font-size:13px;font-weight:600}
 .pc-t{font-size:13px;color:var(--muted);margin-top:1px}
 .pc-meta{font-size:12px;color:var(--muted);margin-top:5px}
-.pc-meta .sw{margin-right:4px}
 .pc-pre{font-size:12px;margin-top:4px}
-.pc-flag{font-size:12px;margin-top:4px;padding:3px 7px;border-radius:6px;background:var(--progress-bg);color:var(--text)}
+.pc-flag{font-size:12px;margin-top:4px;padding:3px 7px;border-radius:6px;background:var(--surface2);color:var(--text)}
 .pc-foot{display:flex;gap:8px;align-items:center;margin-top:7px}
 .pc-foot select{border:1px solid var(--border);background:var(--surface);border-radius:7px;padding:3px 6px;font-size:12.5px;max-width:170px}
 .pc-foot .lock{font-size:12px}
@@ -188,7 +201,7 @@ a.ext.sm{font-size:12.5px;margin-left:auto}
 <header class="top">
   <div class="brand">
     <h1>B.S. Computer Science: Degree Map</h1>
-    <p>University of Georgia · Franklin College of Arts &amp; Sciences · Fall 2026 Bulletin · from DegreeWorks audit dated 10/03/2026</p>
+    <p id="sourceLine">University of Georgia · Sources: DegreeWorks audit (10/03/2026), Fall 2026 UGA Bulletin (retrieved 10/07/2026)</p>
   </div>
   <div class="stats">
     <div class="credit">
@@ -196,6 +209,13 @@ a.ext.sm{font-size:12.5px;margin-left:auto}
       <div class="bar" id="credBar"></div>
     </div>
     <div class="tiles" id="tiles"></div>
+    <div class="profile">
+      <span>Profile</span>
+      <div class="seg" role="group" aria-label="Profile">
+        <button data-profile="vivek" aria-pressed="false">Vivek</button>
+        <button data-profile="hypothetical" aria-pressed="false">Hypothetical</button>
+      </div>
+    </div>
   </div>
 </header>
 <div class="toolbar">
@@ -215,7 +235,6 @@ a.ext.sm{font-size:12.5px;margin-left:auto}
     <datalist id="courseList"></datalist>
   </div>
   <div class="spacer"></div>
-  <button class="btn graph-only" id="arrows" aria-pressed="true" title="Show prerequisite arrows">Prereq arrows</button>
   <button class="btn graph-only" id="relayout" title="Re-run the layout">Reset layout</button>
   <button class="btn" id="redact" aria-pressed="false" title="Show course codes only">Redact titles</button>
   <button class="btn" id="theme">Dark theme</button>
@@ -224,7 +243,6 @@ a.ext.sm{font-size:12.5px;margin-left:auto}
 <main>
   <div id="stage">
     <svg id="svg" xmlns="http://www.w3.org/2000/svg" aria-label="Degree graph"></svg>
-    <div class="viewnote" id="viewnote"></div>
     <div id="tooltip"></div>
     <details class="legend" open>
       <summary>Legend</summary>
@@ -246,16 +264,24 @@ a.ext.sm{font-size:12.5px;margin-left:auto}
 
 /* =====================================================================
    DATA
-   Requirement layer: hand-transcribed from the DegreeWorks audit (PDF).
-   Only course codes, titles, credits, status and requirement names are
-   kept. No name, ID, GPA, grades, terms or transfer sources.
+   Two hard-coded profiles share one degree structure (the same 12 audit
+   sections) and one prerequisite layer (PRE, from the Bulletin):
+   - "Vivek": hand-transcribed from a real DegreeWorks audit (PDF). Only course
+     codes, titles, credits, status and requirement names are kept. No name,
+     ID, GPA, grades, terms or transfer sources.
+   - "Hypothetical": a fictional student, further along, built so every legend
+     case appears at least once.
    Prerequisite layer: UGA Bulletin (bulletin.uga.edu), retrieved 2026-10-07.
+   The selected profile is stored in localStorage; switching reloads the page.
    ===================================================================== */
+const PROFILE_ID = (() => { try { const v = localStorage.getItem("degmap:profile"); return v === "hypothetical" ? v : "vivek"; } catch { return "vivek"; } })();
+
+/* ---------- Profile 1: Vivek (real audit, dated 10/03/2026) ---------- */
 
 // code: [title, credits, status, Bulletin course-detail id | null]
 // Titles are the full Bulletin titles where the course exists in the Bulletin;
 // transfer/test placeholders keep the title shown on the audit.
-const COURSES = {
+const VIVEK_COURSES = {
   "CSCI 1301":  ["Introduction to Computing and Programming", 4, "complete", 4695],
   "CSCI 1302":  ["Software Development", 4, "in_progress", 4726],
   "CSCI 1730":  ["Systems Programming", 4, "needed", 12406],
@@ -305,7 +331,7 @@ const COURSES = {
 };
 
 // Open requirements on the audit that are not tied to one specific course.
-const REQS = {
+const VIVEK_REQS = {
   "REQ:EXP":   { label: "Experiential Learning", sub: "University requirement", credits: null,
                  desc: "Still needed. See the Experiential Learning section of the Bulletin for approved activities." },
   "REQ:PE":    { label: "Physical Education", sub: "1 credit · PEDB", credits: 1,
@@ -324,13 +350,13 @@ const REQS = {
 };
 
 // "Pick one" groups on the audit.
-const CHOICES = {
+const DESIGN_CHOICES = {
   "CHOICE:APP": { label: "Application Design Group", options: ["CSCI 4050", "CSCI 4370"] },
   "CHOICE:SYS": { label: "Systems Design Group", options: ["CSCI 4570", "CSCI 4730", "CSCI 4760"] },
 };
 
 // Requirement blocks, in audit order. items: [id, requirement line on the audit]
-const BLOCKS = [
+const VIVEK_BLOCKS = [
   { id: "BLK:UNIV", short: "University", label: "University Requirements", audit: "INCOMPLETE",
     items: [["HIST 2702","Cultural Diversity"],["GEOG 1101","Environmental Awareness"],
             ["POLS 1101","Federal Constitution; Georgia Constitution"],["HIST 1GHX","U.S. & GA History"],
@@ -374,7 +400,7 @@ const BLOCKS = [
             ["MATH 3TXX","Excess Credits"],["PHYS 1111","Excess Credits"],["PHYS 1211","Excess Credits"],["PHYS 1212","Excess Credits"]] },
 ];
 
-const DEGREE = {
+const VIVEK_DEGREE = {
   id: "DEGREE", label: "B.S. Computer Science", audit: "INCOMPLETE", req: 121, applied: 83,
   checks: [
     ["Minimum credits", "121 required; 83 applied (includes in-progress)."],
@@ -383,6 +409,131 @@ const DEGREE = {
     ["General electives", "7 elective credits required; 7 applied."],
   ],
 };
+
+/* ---------- Profile 2: Hypothetical (fictional student) ----------
+   A junior with Data Structures in progress. Covers every legend case:
+   all three requirement types plus a course split across two (MATH 2250
+   counts for Area III and the CS sections); complete, in-progress and needed
+   items; open requirements (one already complete) and both pick-one groups;
+   needed courses that are eligible now (CSCI 3030, 4720), eligible after this
+   term (CSCI 4470, 4050, 4370, 4760) and blocked (CSCI 4570, 4730); and all
+   three prerequisite edge styles. Courses without a Bulletin id are plausible
+   stand-ins and get no Bulletin link. */
+const HYPO_COURSES = {
+  "CSCI 1301":  ["Introduction to Computing and Programming", 4, "complete", 4695],
+  "CSCI 1302":  ["Software Development", 4, "complete", 4726],
+  "CSCI 2610":  ["Discrete Mathematics for Computer Science", 3, "complete", 4732],
+  "CSCI 2670":  ["Introduction to Theory of Computing", 4, "complete", 4924],
+  "CSCI 1730":  ["Systems Programming", 4, "complete", 12406],
+  "CSCI 2720":  ["Data Structures", 4, "in_progress", 4304],
+  "CSCI 3030":  ["Computing, Ethics, and Society", 3, "needed", 20694],
+  "CSCI 4470":  ["Algorithms", 4, "needed", 4360],
+  "CSCI 4720":  ["Computer Architecture and Organization", 4, "needed", 4922],
+  "CSCI 4050":  ["Software Engineering", 4, "needed", 4181],
+  "CSCI 4370":  ["Database Management", 4, "needed", 4302],
+  "CSCI 4570":  ["Compilers", 4, "needed", 4202],
+  "CSCI 4730":  ["Operating Systems", 4, "needed", 4253],
+  "CSCI 4760":  ["Computer Networks", 4, "needed", 4759],
+  "CSCI 4300":  ["Web Programming", 4, "complete", null],
+  "CSCI 4810":  ["Computer Graphics", 4, "in_progress", null],
+  "MATH 1113":  ["Precalculus", 4, "complete", 859],
+  "MATH 2250":  ["Calculus I for Science and Engineering", 4, "complete", 17372],
+  "MATH 2260":  ["Calculus II for Science and Engineering", 4, "complete", 17373],
+  "MATH 2270":  ["Calculus III for Science and Mathematics", 4, "complete", 26520],
+  "MATH 3300":  ["Applied Linear Algebra", 3, "in_progress", 28109],
+  "MATH 3200":  ["Introduction to Higher Mathematics", 3, "complete", 974],
+  "STAT 2000":  ["Introductory Statistics", 4, "complete", 2514],
+  "ENGL 1101":  ["English Composition I", 3, "complete", 4619],
+  "ENGL 1102":  ["English Composition II", 3, "complete", 4631],
+  "ENGL 2310":  ["English Literature from the Beginnings to 1700", 3, "in_progress", null],
+  "PHYS 1211":  ["Principles of Physics for Scientists and Engineers-Mechanics, Waves, Thermodynamics", 4, "complete", 3908],
+  "PHYS 1212":  ["Principles of Physics for Scientists and Engineers-Electricity and Magnetism, Optics, Modern Physics", 4, "complete", 3911],
+  "CHEM 1211":  ["General Chemistry I", 3, "complete", 5241],
+  "ECOL 1000":  ["Ecological Basis of Environmental Issues", 3, "complete", 2201],
+  "ECOL 1000L": ["Ecological Basis of Environmental Issues Laboratory", 1, "complete", 23782],
+  "SPAN 1002":  ["Elementary Spanish II", 4, "complete", 3211],
+  "PHIL 2010":  ["Introduction to Philosophy", 3, "complete", null],
+  "GEOG 1101":  ["Human Geography: People, Places, and Cultures", 3, "complete", 544],
+  "HIST 2111":  ["American History to 1865", 3, "complete", null],
+  "POLS 1101":  ["American Government", 3, "complete", 5651],
+  "PSYC 1101":  ["Elementary Psychology", 3, "complete", null],
+  "FYOS 1001":  ["First-Year Odyssey Seminar", 1, "complete", 25165],
+  "COMM 1100":  ["Introduction to Public Speaking", 3, "complete", null],
+  "MUSI 2040":  ["History of Popular Music", 3, "complete", 2150],
+  "PSYC 3230":  ["Abnormal Psychology", 3, "in_progress", null],
+};
+const HYPO_REQS = {
+  "REQ:EXP":   { label: "Experiential Learning", sub: "University requirement", credits: null, status: "complete",
+                 desc: "Complete: satisfied by an approved summer internship." },
+  "REQ:PE":    { label: "Physical Education", sub: "1 credit · PEDB", credits: 1,
+                 desc: "Still needed: 1 credit in PEDB." },
+  "REQ:FL":    { label: "Foreign Language", sub: "3rd semester · 3 cr", credits: 3,
+                 desc: "Still needed: the third-semester (3 credit) course in a foreign language. SPAN 1002 is complete, so SPAN 2001 is next." },
+  "REQ:FA2":   { label: "Fine Arts/Phil/Religion", sub: "2nd course · 3 cr", credits: 3,
+                 desc: "Still needed: 1 more class (3 credits) with attribute FAS. PHIL 2010 is the first." },
+  "REQ:MAJEL": { label: "Major Electives", sub: "4 of 12 cr left · CSCI 4000/6000", credits: 4,
+                 desc: "Still needed: 4 more credits in CSCI 4000- or 6000-level courses (CSCI 4300 complete, CSCI 4810 in progress)." },
+  "REQ:ADMIT": { label: "Admission to CS Major", sub: "Entrance milestone", credits: null, milestone: true,
+                 from: ["CSCI 1301", "CSCI 1302", "CSCI 2610", "CSCI 2720", "MATH 2250"],
+                 desc: "Pending: CSCI 2720 is in progress. Admission needs CSCI 1301, 1302, 2610, 2720 and MATH 2250 with a C or higher, and a 2.7 GPA across CSCI 1302/2610/2720." },
+};
+const HYPO_BLOCKS = [
+  { id: "BLK:UNIV", short: "University", label: "University Requirements", audit: "INCOMPLETE",
+    items: [["GEOG 1101","Cultural Diversity"],["ECOL 1000","Environmental Awareness"],["POLS 1101","Federal Constitution; Georgia Constitution"],
+            ["HIST 2111","U.S. & GA History"],["FYOS 1001","First Year Odyssey Seminar"],["REQ:EXP","Experiential Learning"],["REQ:PE","Physical Education"]] },
+  { id: "BLK:FRANK", short: "Franklin College", label: "College: Franklin College of Arts & Sciences", audit: "INCOMPLETE",
+    items: [["REQ:FL","Foreign Language"],["ENGL 2310","Literature"],["PHIL 2010","Fine Arts/Philosophy/Religion"],["REQ:FA2","Fine Arts/Philosophy/Religion"],
+            ["HIST 2111","History"],["PSYC 1101","Social Sciences other than History"],["POLS 1101","Social Sciences other than History"],
+            ["ECOL 1000","Biological Sciences"],["ECOL 1000L","Biological Sciences"],["PHYS 1211","Physical Sciences"]] },
+  { id: "BLK:A1", short: "Area I · Foundation", label: "Area I: Foundation Courses", audit: "COMPLETE", req: 6, applied: 6,
+    items: [["ENGL 1101","English Composition I"],["ENGL 1102","English Composition II"]] },
+  { id: "BLK:A2", short: "Area II · Sciences", label: "Area II: Sciences", audit: "COMPLETE", req: 7, applied: 8,
+    items: [["PHYS 1211","Physical Science"],["ECOL 1000","Life Science"],["ECOL 1000L","Life Science"]] },
+  { id: "BLK:A3", short: "Area III · Quant. Reasoning", label: "Area III: Quantitative Reasoning", audit: "COMPLETE", req: "0 to 4", applied: 4,
+    items: [["MATH 2250","Quantitative Reasoning"]] },
+  { id: "BLK:A4", short: "Area IV · Lang, Hum & Arts", label: "Area IV: World Lang & Culture, Humanities & Art", audit: "IN-PROGRESS", req: 12, applied: 13,
+    items: [["GEOG 1101","World Languages and Culture"],["SPAN 1002","World Languages and Culture"],["PHIL 2010","Humanities and the Arts"],["ENGL 2310","Humanities and the Arts"]] },
+  { id: "BLK:A5", short: "Area V · Social Sciences", label: "Area V: Social Sciences", audit: "COMPLETE", req: 9, applied: 9,
+    items: [["POLS 1101","Social Sciences"],["PSYC 1101","Social Sciences"],["HIST 2111","Social Sciences"]] },
+  { id: "BLK:A6", short: "Area VI · Computer Science", label: "Area F/VI: Computer Science", audit: "IN-PROGRESS", req: 19, applied: 20,
+    items: [["CSCI 1302","Software Development"],["CSCI 1730","Systems Programming"],["CSCI 2670","Intro to Theory of Computing"],
+            ["CSCI 2720","Data Structures"],["MATH 2250","Calculus I for Sci and Eng"]] },
+  { id: "BLK:ENTR", short: "Entrance · BS Degree", label: "Entrance Requirements: BS Degree", audit: "INCOMPLETE",
+    items: [["CSCI 1301","Intro Computing and Program"],["CSCI 1302","Software Development"],["CSCI 2610","Discrete Mathematics for CSCI"],
+            ["CSCI 2720","Data Structures"],["MATH 2250","Calculus I for Sci and Eng"],["REQ:ADMIT","Admission to Computer Science Major Required"]] },
+  { id: "BLK:MAJOR", short: "Major · Computer Science", label: "Major: Intended Computer Science", audit: "INCOMPLETE", req: 42, applied: 19,
+    notes: ["A grade of C (2.0) or better is required in every course counted toward the major.",
+            "Teamwork: one team-based course is required (CSCI 4050, 4300, 4370, 4530 or 4800)."],
+    items: [["CSCI 3030","Computing Ethics and Society"],["CSCI 4470","Algorithms"],["CSCI 4720","Computer Architecture Organiza"],
+            ["CHOICE:APP","Application Design Group"],["CHOICE:SYS","Systems Design Group"],["REQ:MAJEL","Major Electives"],
+            ["CSCI 4300","Major Electives"],["CSCI 4810","Major Electives"],
+            ["MATH 2270","Major Related Electives"],["MATH 3300","Major Related Electives"],["STAT 2000","Major Related Electives"]] },
+  { id: "BLK:GENEL", short: "General Electives", label: "General Electives", audit: null, req: 7, applied: 9,
+    items: [["COMM 1100","General Electives"],["MUSI 2040","General Electives"],["PSYC 3230","General Electives"]] },
+  { id: "BLK:EXCESS", short: "Excess Credits", label: "Excess Credits", audit: null, applied: 18, counts: false,
+    notes: ["Courses here do not count toward the 121 credits required for the degree."],
+    items: [["MATH 1113","Excess Credits"],["MATH 2260","Excess Credits"],["MATH 3200","Excess Credits"],["CHEM 1211","Excess Credits"],["PHYS 1212","Excess Credits"]] },
+];
+const HYPO_DEGREE = {
+  id: "DEGREE", label: "B.S. Computer Science", audit: "INCOMPLETE", req: 121, applied: 92,
+  checks: [
+    ["Minimum credits", "121 required; 92 applied (includes in-progress)."],
+    ["Upper-division credits", "39 required; 17 so far (includes in-progress), 22 more needed."],
+    ["Residency", "45 of your last 60 credits must be UGA credit; 52 so far (includes in-progress)."],
+    ["General electives", "7 elective credits required; 9 applied."],
+  ],
+};
+
+const PROFILES = {
+  vivek: { name: "Vivek", COURSES: VIVEK_COURSES, REQS: VIVEK_REQS, CHOICES: DESIGN_CHOICES, BLOCKS: VIVEK_BLOCKS, DEGREE: VIVEK_DEGREE,
+    source: "Sources: DegreeWorks audit (10/03/2026), Fall 2026 UGA Bulletin (retrieved 10/07/2026)",
+    fl: "SPAN 2001", residencySoFar: 15 },
+  hypothetical: { name: "Hypothetical", COURSES: HYPO_COURSES, REQS: HYPO_REQS, CHOICES: DESIGN_CHOICES, BLOCKS: HYPO_BLOCKS, DEGREE: HYPO_DEGREE,
+    source: "Fictional sample student, not a real audit · Prerequisites: Fall 2026 UGA Bulletin (retrieved 10/07/2026)",
+    fl: "SPAN 2001", residencySoFar: 52 },
+};
+const PROF = PROFILES[PROFILE_ID];
+const { COURSES, REQS, CHOICES, BLOCKS, DEGREE } = PROF;
 
 // Prerequisites, transcribed from the UGA Bulletin. Each `pre` / `preco` is an
 // AND-list of OR-groups. `text` is the Bulletin wording, verbatim.
@@ -401,6 +552,8 @@ const PRE = {
   "CSCI 4570": { pre: [["CSCI 4720"]], text: "CSCI 4720", undergrad: true },
   "CSCI 4730": { pre: [["CSCI 4720","CSCI 4720E","CSEE 4280"],["CSCI 2720"]], text: "(CSCI 4720 or CSCI 4720E or CSEE 4280) and CSCI 2720" },
   "CSCI 4760": { pre: [["CSCI 1730","CSCI 1730E"],["CSCI 2720","CSCI 2720E"],["CSCI 2670","CSCI 2670E","CSEE 2220","CSEE 2220E","CSEE 2220H"]], text: "(CSCI 1730 or CSCI 1730E) and (CSCI 2720 or CSCI 2720E) and (CSCI 2670 or CSCI 2670E or CSEE 2220 or CSEE 2220E or CSEE 2220H))" },
+  "CSCI 4300": { pre: [["CSCI 1302"]], text: "CSCI 1302" },
+  "CSCI 4810": { pre: [["CSCI 1302"]], text: "CSCI 1302" },
   "MATH 2250": { pre: [["MATH 1113"]], text: "MATH 1113 or permission of department" },
   "MATH 2260": { pre: [["MATH 2250","MATH 2300H"]], text: "MATH 2250 or MATH 2300H" },
   "MATH 2270": { pre: [["MATH 2260","MATH 2310H","MATH 2410","MATH 2410H"]], text: "MATH 2260 or MATH 2310H or MATH 2410 or MATH 2410H" },
@@ -427,7 +580,7 @@ const ITEMS = new Map();
 for (const [code, [title, credits, status, bid]] of Object.entries(COURSES))
   ITEMS.set(code, { id: code, type: "course", label: code, title, credits, status, bid });
 for (const [id, r] of Object.entries(REQS))
-  ITEMS.set(id, { id, type: "req", ...r, status: "needed" });
+  ITEMS.set(id, { id, type: "req", ...r, status: r.status || "needed" });
 
 // Block status is derived in code from its children (per project brief).
 function deriveStatus(list) {
@@ -470,9 +623,16 @@ REQS["REQ:ADMIT"].from.forEach(s => EDGES.push({ s, t: "REQ:ADMIT", kind: "fulfi
 for (const [cid, c] of Object.entries(CHOICES)) c.options.forEach(o => EDGES.push({ s: o, t: cid, kind: "fulfills" }));
 
 const IN = new Map(), OUT = new Map();
+const FULFILLS = new Map(EDGES.filter(e => e.kind === "fulfills" && CHOICES[e.t]).map(e => [`${e.s}>${e.t}`, e])); // "option>group"
 for (const e of EDGES) {
   if (!IN.has(e.t)) IN.set(e.t, []); IN.get(e.t).push(e);
   if (!OUT.has(e.s)) OUT.set(e.s, []); OUT.get(e.s).push(e);
+}
+
+// One step only: what a course directly requires (up) or directly unlocks (down).
+function direct(id, dir) {
+  const es = (dir === "up" ? IN : OUT).get(id) || [];
+  return { nodes: new Set(es.map(e => dir === "up" ? e.s : e.t)), edges: new Set(es) };
 }
 
 function closure(id, dir) {
@@ -522,19 +682,42 @@ counted.forEach(id => { const c = ITEMS.get(id); if (c.status === "complete") cr
 if (credComplete + credIP !== DEGREE.applied)
   console.warn(`Computed applied credits ${credComplete + credIP} differ from audit (${DEGREE.applied}).`);
 
+// Degree-check inputs, computed from the profile (the planner adds planned credits to these).
+// Course level from the first digit, so transfer codes like MATH 3TXX count as 3000-level.
+const level = code => { const m = /\d/.exec(code.split(" ")[1] || ""); return m ? +m[0] * 1000 : 0; };
+const takenCr = ids => ids.reduce((s, id) => { const c = ITEMS.get(id); return s + (c.type === "course" && c.status !== "needed" ? c.credits : 0); }, 0);
+const UPPER_SO_FAR = takenCr([...ITEMS.values()].filter(i => i.type === "course" && level(i.id) >= 3000).map(i => i.id)); // all blocks, as the audit counts it
+const blockItemIds = b => BLOCKS.find(x => x.id === b).items.map(i => i[0]);
+const MAJOR_APPLIED = takenCr(blockItemIds("BLK:MAJOR")), A6_APPLIED = takenCr(blockItemIds("BLK:A6"));
+const MAJOR_REQ = ITEMS.get("BLK:MAJOR").req, A6_REQ = ITEMS.get("BLK:A6").req;
+
 /* =====================================================================
    THEME (SVG uses literal colors so PNG export is self-contained)
-   Each audit section gets its own hue; the three CS sections share a blue family.
+   Color does one job per mark, from a small validated palette:
+   - Section group (qualitative): Major/CS = blue, Gen-ed = teal, Electives &
+     excess = gray (background). Related sections share their group's hue and
+     differ only in lightness, so adjacent clouds stay distinguishable.
+   - Status is fill level (filled / half / empty), not hue; complete is a paler
+     fill so what's still needed stands out.
+   - Trace pair (only while a course is selected): yellow = what it requires,
+     green = what it unlocks. Every other edge is white (dark ink in light mode).
+   All hues checked for color-vision deficiency on both surfaces.
    ===================================================================== */
+const FAMILY = { "BLK:MAJOR": "cs", "BLK:A6": "cs", "BLK:ENTR": "cs", "BLK:A1": "gen", "BLK:A2": "gen", "BLK:A3": "gen", "BLK:A4": "gen", "BLK:A5": "gen",
+  "BLK:UNIV": "gen", "BLK:FRANK": "gen", "BLK:GENEL": "other", "BLK:EXCESS": "other" };
+const FAMILY_ORDER = ["cs", "gen", "other"];
+const FAMILY_LABEL = { cs: "Major / CS", gen: "Gen ed / university / college", other: "Electives / excess" };
 const PALETTES = {
-  light: { bg: "#f5f7fa", dot: "#dde3ea", surface: "#ffffff", text: "#0f172a", muted: "#526070", faint: "#9aa6b5", border: "#d5dce5",
-    edge: "#6b7889", up: "#0284c7", down: "#db2777", blob: 0.11,
-    blocks: { "BLK:UNIV": "#db2777", "BLK:FRANK": "#9333ea", "BLK:A1": "#ea580c", "BLK:A2": "#16a34a", "BLK:A3": "#ca8a04", "BLK:A4": "#dc2626",
-              "BLK:A5": "#0d9488", "BLK:A6": "#2563eb", "BLK:ENTR": "#0891b2", "BLK:MAJOR": "#4f46e5", "BLK:GENEL": "#65a30d", "BLK:EXCESS": "#64748b" } },
-  dark: { bg: "#0b0f14", dot: "#18202a", surface: "#121820", text: "#e8eef5", muted: "#9aa7b6", faint: "#4b5563", border: "#2a3441",
-    edge: "#8391a3", up: "#38bdf8", down: "#fb7185", blob: 0.10,
-    blocks: { "BLK:UNIV": "#f472b6", "BLK:FRANK": "#c084fc", "BLK:A1": "#fb923c", "BLK:A2": "#4ade80", "BLK:A3": "#facc15", "BLK:A4": "#f87171",
-              "BLK:A5": "#2dd4bf", "BLK:A6": "#60a5fa", "BLK:ENTR": "#22d3ee", "BLK:MAJOR": "#a5b4fc", "BLK:GENEL": "#a3e635", "BLK:EXCESS": "#94a3b8" } },
+  light: { bg: "#f5f7fa", surface: "#ffffff", text: "#0f172a", muted: "#526070", faint: "#9aa6b5", border: "#d5dce5",
+    edge: "#0f172a", up: "#c98500", down: "#2f9e44", elig: "#d03b3b", blob: 0.10,
+    fam: { cs: "#2a78d6", gen: "#1a9e6e", other: "#7b8797" },
+    sec: { "BLK:MAJOR": "#1c5cab", "BLK:A6": "#2a78d6", "BLK:ENTR": "#5598e7", "BLK:A1": "#1a9e6e", "BLK:A2": "#1a9e6e", "BLK:A3": "#1a9e6e", "BLK:A4": "#1a9e6e",
+           "BLK:A5": "#1a9e6e", "BLK:UNIV": "#0f7a54", "BLK:FRANK": "#0f7a54", "BLK:GENEL": "#7b8797", "BLK:EXCESS": "#a3aebc" } },
+  dark: { bg: "#0b0f14", surface: "#121820", text: "#e8eef5", muted: "#9aa7b6", faint: "#4b5563", border: "#2a3441",
+    edge: "#ffffff", up: "#facc15", down: "#4ade80", elig: "#f0605d", blob: 0.11,
+    fam: { cs: "#3987e5", gen: "#199e70", other: "#8391a3" },
+    sec: { "BLK:MAJOR": "#86b6ef", "BLK:A6": "#3987e5", "BLK:ENTR": "#256abf", "BLK:A1": "#199e70", "BLK:A2": "#199e70", "BLK:A3": "#199e70", "BLK:A4": "#199e70",
+           "BLK:A5": "#199e70", "BLK:UNIV": "#4cc596", "BLK:FRANK": "#4cc596", "BLK:GENEL": "#8391a3", "BLK:EXCESS": "#4b5666" } },
 };
 const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif';
 const store = {
@@ -543,11 +726,13 @@ const store = {
 };
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const state = {
-  filter: "all", sel: null, hover: null, arrows: store.get("arrows") !== "0", redact: store.get("redact") === "1",
+  filter: "all", sel: null, hover: null, redact: store.get("redact") === "1",
   theme: store.get("theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"),
 };
 const P = () => PALETTES[state.theme];
-const colorOf = b => P().blocks[b];
+const secColor = b => P().sec[b];
+// Section groups an item counts toward, in fixed order (an item can span two groups).
+const famsOf = id => { const f = new Set(blocksOf(id).map(b => FAMILY[b])); return FAMILY_ORDER.filter(x => f.has(x)); };
 const BLOCK_IDS = BLOCKS.map(b => b.id);
 function blocksOf(id) {
   const it = ITEMS.get(id);
@@ -561,7 +746,8 @@ function radius(it) {
   if (it.type === "block") return 22 + Math.sqrt(it.childIds.length) * 5;
   if (it.type === "choice") return 15;
   if (it.type === "req") return 13;
-  return 8 + it.credits * 1.7;
+  // Area is proportional to credit hours (a 4-cr course has 4x the area of a 1-cr one); 0-cr items get a minimum size.
+  return Math.max(7, 7.4 * Math.sqrt(it.credits));
 }
 
 /* =====================================================================
@@ -580,8 +766,8 @@ function buildSim() {
   const add = id => {
     const it = ITEMS.get(id);
     const n = { id, it, r: radius(it), x: 0, y: 0, vx: 0, vy: 0, fx: null, fy: null, jx: 0, jy: 0, jvx: 0, jvy: 0,
-      charge: it.type === "degree" ? -1600 : it.type === "block" ? -800 : -240,
-      pad: it.type === "degree" ? 44 : it.type === "block" ? 34 : 14 };
+      charge: it.type === "degree" ? -1600 : it.type === "block" ? -800 : -420, // courses push apart harder
+      pad: it.type === "degree" ? 44 : it.type === "block" ? 34 : 22 };
     SIM.nodes.push(n); SIM.byId.set(id, n);
   };
   add("DEGREE"); BLOCKS.forEach(b => add(b.id));
@@ -599,8 +785,8 @@ function buildSim() {
     const m = l.kind === "pre" ? all : struct, ds = m.get(l.s), dt = m.get(l.t);
     l.bias = ds / (ds + dt);
     if (l.kind === "spine") { l.dist = 280; l.str = 0.5; }
-    else if (l.kind === "member") { l.dist = l.s.r + l.t.r + 58; l.str = 0.8 / dt; }
-    else if (l.kind === "option") { l.dist = l.s.r + l.t.r + 40; l.str = 0.8; }
+    else if (l.kind === "member") { l.dist = l.dist0 = l.s.r + l.t.r + 80; l.str = 0.8 / dt; }
+    else if (l.kind === "option") { l.dist = l.s.r + l.t.r + 55; l.str = 0.8; }
     else { l.dist = l.s.r + l.t.r + 80; l.str = 0.035; }
   });
   ADJ.clear();
@@ -624,7 +810,28 @@ function seedPositions() {
     Object.assign(n, { x: hx * 1.15 + (r0() - 0.5) * 90, y: hy * 1.15 + (r0() - 0.5) * 90, vx: 0, vy: 0, fx: null, fy: null });
   });
   SIM.alpha = 1; SIM.alphaTarget = 0;
-  for (let i = 0; i < 380; i++) tick();
+  SIM.links.forEach(l => { if (l.dist0) l.dist = l.dist0; });
+  for (let i = 0; i < 200; i++) tick();
+  stagger();
+  for (let i = 0; i < 180; i++) tick();
+}
+
+/* Stagger: around each section hub, courses that belong only to that hub alternate
+   between a nearer and a farther ring (in angular order), so a cluster reads as a
+   gentle zig-zag instead of a crowded column or arc. */
+function stagger() {
+  const byHub = new Map();
+  for (const l of SIM.links) {
+    if (l.kind !== "member") continue;
+    if (!byHub.has(l.s)) byHub.set(l.s, []);
+    byHub.get(l.s).push(l);
+  }
+  byHub.forEach((ls, hub) => {
+    if (ls.length < 3) return;
+    ls.sort((a, b) => Math.atan2(a.t.y - hub.y, a.t.x - hub.x) - Math.atan2(b.t.y - hub.y, b.t.x - hub.x));
+    ls.forEach((l, i) => { l.dist = l.dist0 + (i % 2 ? 32 : -12); });
+  });
+  SIM.alpha = Math.max(SIM.alpha, 0.5);
 }
 
 function tick() {
@@ -698,12 +905,14 @@ function frame(now) {
   const steps = Math.max(1, Math.min(4, Math.round((now - lastT) / 16.67)));
   lastT = now;
   let active = false;
+  let ticked = false;
   for (let i = 0; i < steps; i++) {
-    if (SIM.alpha > SIM.alphaMin || SIM.alphaTarget > 0) { tick(); active = true; }
+    if (SIM.alpha > SIM.alphaMin || SIM.alphaTarget > 0) { tick(); active = ticked = true; }
     if (stepJiggle() > 0) active = true;
   }
   draw();
-  if (active) requestLoop(); else lastT = 0;
+  if (ticked && SIM.alpha <= SIM.alphaMin && !SIM.alphaTarget) applyVisual();
+  if (active) requestLoop(); else { lastT = 0; planBends(); draw(); } // re-route once the layout settles
 }
 function heat(a) { SIM.alpha = Math.max(SIM.alpha, a); requestLoop(); }
 
@@ -728,38 +937,47 @@ const arc = (r, a0, a1) => `M${pt(r, a0)} A${r},${r} 0 ${a1 - a0 > Math.PI ? 1 :
 
 let R = {};
 
-function drawItem(g, n) {
-  const it = n.it, pal = P(), r = n.r, cols = blocksOf(it.id).map(colorOf), N = cols.length, seg = 2 * Math.PI / N, a0 = -Math.PI / 2;
-  const e = elig(it.id);
-  if (e === "now") {
-    el("circle", { r: r + 6, fill: "none", stroke: pal.text, "stroke-width": 2 }, g);
-    if (!reduced) {
-      const c = el("circle", { r: r + 6, fill: "none", stroke: pal.text, "stroke-width": 2 }, g);
-      el("animate", { attributeName: "r", values: `${r + 6};${r + 17}`, dur: "1.8s", repeatCount: "indefinite" }, c);
-      el("animate", { attributeName: "opacity", values: "0.8;0", dur: "1.8s", repeatCount: "indefinite" }, c);
-    }
-  } else if (e === "next") {
-    el("circle", { r: r + 6, fill: "none", stroke: pal.text, "stroke-width": 1.6, "stroke-dasharray": "3 3" }, g);
-  }
-  el("circle", { r: r + 11, fill: "none", stroke: pal.text, "stroke-width": 3.5, class: "selring", style: "opacity:0" }, g);
+/* One visual property, one meaning:
+     color      → requirement type (section group; split if an item spans two)
+     fill       → progress (empty = needed, bottom half = in progress, full = complete)
+     outer ring → eligibility, needed courses only (solid = now, dashed = after this term)
+     size       → credit hours (area)
+     inner glyph → node kind (none = course, + = open requirement,
+                  ◇ = pick one, flag = milestone); outlines are always solid
+   nodeMarks/hubMarks are shared with the legend so its examples match exactly. */
+function nodeMarks(g, o) {
+  const pal = P(), r = o.r, cols = o.cols, N = cols.length, seg = 2 * Math.PI / N, a0 = -Math.PI / 2, c = cols[0];
+  if (o.elig === "now" || o.elig === "next")
+    el("circle", { r: r + 5, fill: "none", stroke: pal.elig, "stroke-width": 1.6, "stroke-dasharray": o.elig === "next" ? "3 3" : null, class: "eligring" }, g);
   el("circle", { r, fill: pal.bg }, g);
-  // Fill level = status: full = complete, bottom half = in progress, empty = needed.
-  if (it.status !== "needed") {
-    const fg = el("g", { "clip-path": it.status === "in_progress" ? "url(#lowerHalf)" : null }, g);
-    if (N === 1) el("circle", { r, fill: cols[0] }, fg);
-    else cols.forEach((c, i) => el("path", { d: pie(r, a0 + i * seg, a0 + (i + 1) * seg), fill: c }, fg));
+  if (o.status !== "needed") {
+    const fg = el("g", { "clip-path": o.status === "in_progress" ? "url(#lowerHalf)" : null }, g);
+    if (N === 1) el("circle", { r, fill: c }, fg);
+    else cols.forEach((col, i) => el("path", { d: pie(r, a0 + i * seg, a0 + (i + 1) * seg), fill: col }, fg));
   }
-  // Ring split into one arc per section the item counts toward.
-  const w = it.type === "course" && it.status === "needed" ? 3.4 : 2.6, dash = it.type === "course" ? null : "4 3";
-  if (N === 1) el("circle", { r, fill: "none", stroke: cols[0], "stroke-width": w, "stroke-dasharray": dash }, g);
-  else cols.forEach((c, i) => el("path", { d: arc(r, a0 + i * seg, a0 + (i + 1) * seg), fill: "none", stroke: c, "stroke-width": w, "stroke-dasharray": dash }, g));
-  if (it.type === "req") {
-    el("path", { d: it.milestone ? "M-4 6 L-4 -6 L6 -3 L-4 0" : "M-5 0 H5 M0 -5 V5", fill: "none", stroke: cols[0], "stroke-width": 2.2, "stroke-linecap": "round", "stroke-linejoin": "round" }, g);
-  } else if (it.type === "choice") {
-    el("path", { d: "M0 -6.5 L6.5 0 L0 6.5 L-6.5 0 Z", fill: "none", stroke: cols[0], "stroke-width": 2 }, g);
-  }
+  // Outline is always solid; node kind is told by the inner glyph alone.
+  const w = 2.6;
+  if (N === 1) el("circle", { r, fill: "none", stroke: c, "stroke-width": w }, g);
+  else cols.forEach((col, i) => el("path", { d: arc(r, a0 + i * seg, a0 + (i + 1) * seg), fill: "none", stroke: col, "stroke-width": w }, g));
+  const ink = o.status === "needed" ? c : o.status === "complete" ? pal.bg : pal.text;
+  if (o.kind === "req")
+    el("path", { d: o.milestone ? "M-4 6 L-4 -6 L6 -3 L-4 0" : "M-5 0 H5 M0 -5 V5", fill: "none", stroke: ink, "stroke-width": 2.2, "stroke-linecap": "round", "stroke-linejoin": "round" }, g);
+  else if (o.kind === "choice")
+    el("path", { d: "M0 -5.5 L5.5 0 L0 5.5 L-5.5 0 Z", fill: "none", stroke: ink, "stroke-width": 2 }, g);
+}
+
+function drawItem(g, n) {
+  const it = n.it, pal = P(), r = n.r;
+  const cols = famsOf(it.id).map(f => pal.fam[f]);
+  if (!cols.length) cols.push(pal.fam.other);
+  el("circle", { r: r + 11, fill: "none", stroke: pal.text, "stroke-width": 3.5, class: "selring", style: "opacity:0" }, g);
+  const e = it.type === "course" ? elig(it.id) : null;
+  n.selR = r + 11 + 1.75; n.eligR = e === "now" || e === "next" ? r + 5 + 0.7 : 0; // outer edges, so arrows stop outside them
+  nodeMarks(g, { r, cols, status: it.status, kind: it.type, elig: e,
+    options: CHOICES[it.id] ? CHOICES[it.id].options.length : 0, milestone: it.milestone });
   const label = it.type === "course" ? it.id : it.label;
-  n.lbl = txt(g, 0, r + 17, label, it.type === "course" ? 13.5 : 12.5, 650, pal.text, "middle");
+  n.lblFs = it.type === "course" ? 13.5 : 12.5; n.lblY = r + 17; n.secondary = it.type !== "course";
+  n.lbl = txt(g, 0, n.lblY, label, n.lblFs, 650, pal.text, "middle");
   n.lbl.setAttribute("paint-order", "stroke"); n.lbl.setAttribute("stroke", pal.bg); n.lbl.setAttribute("stroke-width", 4); n.lbl.setAttribute("stroke-linejoin", "round");
 }
 
@@ -767,64 +985,77 @@ function progressRing(g, r, w, parts, pal) {
   el("circle", { r, fill: "none", stroke: pal.border, "stroke-width": w }, g);
   const total = parts.reduce((s, p) => s + p[0], 0) || 1;
   let a = -Math.PI / 2;
-  for (const [v, color, op] of parts) {
+  for (const [v, color] of parts) {
     if (!v) continue;
     const b = a + v / total * 2 * Math.PI;
-    if (v === total) el("circle", { r, fill: "none", stroke: color, "stroke-width": w, opacity: op ?? 1 }, g);
-    else el("path", { d: arc(r, a, b), fill: "none", stroke: color, "stroke-width": w, opacity: op ?? 1 }, g);
+    if (v === total) el("circle", { r, fill: "none", stroke: color, "stroke-width": w }, g);
+    else el("path", { d: arc(r, a, b), fill: "none", stroke: color, "stroke-width": w }, g);
     a = b;
   }
 }
 
+// Hub: tinted disc + thick progress ring that shows exactly the number inside (items complete / total).
+function hubMarks(g, o) {
+  const pal = P(), r = o.r, c = o.c;
+  el("circle", { r, fill: pal.surface }, g);
+  el("circle", { r, fill: c, "fill-opacity": 0.14, stroke: c, "stroke-width": 2, "stroke-dasharray": o.dashed ? "6 4" : null }, g);
+  progressRing(g, r + 6, 5, [[o.done, c], [o.total - o.done, "none"]], pal);
+  txt(g, 0, o.fs * 0.36, `${o.done}/${o.total}`, o.fs, 750, pal.text, "middle");
+}
+
 function drawHub(g, n) {
-  const it = n.it, pal = P(), r = n.r, c = colorOf(it.id);
+  const it = n.it, pal = P(), r = n.r;
   el("circle", { r: r + 14, fill: "none", stroke: pal.text, "stroke-width": 3.5, class: "selring", style: "opacity:0" }, g);
-  el("circle", { r, fill: c, "fill-opacity": 0.2, stroke: c, "stroke-width": 2.5, "stroke-dasharray": it.counts === false ? "6 4" : null }, g);
-  const kids = it.childIds.map(id => ITEMS.get(id)), cnt = s => kids.filter(k => k.status === s).length;
-  progressRing(g, r + 6, 4, [[cnt("complete"), c], [cnt("in_progress"), c, 0.45], [cnt("needed"), "none"]], pal);
-  txt(g, 0, 5, `${cnt("complete")}/${kids.length}`, 14, 750, pal.text, "middle");
-  const l = txt(g, 0, r + 28, it.short, 15, 750, pal.text, "middle");
-  const s = txt(g, 0, r + 45, it.audit ? `Audit: ${it.audit.toLowerCase().replace("-", " ")}` : it.counts === false ? "Not counted" : `${it.applied} cr applied`, 12, 500, pal.muted, "middle");
+  n.selR = r + 14 + 1.75; n.eligR = r + 6 + 2.5; // progress ring
+  const kids = it.childIds.map(id => ITEMS.get(id));
+  hubMarks(g, { r, c: secColor(it.id), done: kids.filter(k => k.status === "complete").length, total: kids.length, dashed: it.counts === false, fs: 14 });
+  const l = txt(g, 0, r + 30, it.short, 15, 750, pal.text, "middle");
+  const s = txt(g, 0, r + 47, it.audit ? `Audit: ${it.audit.toLowerCase().replace("-", " ")}` : it.counts === false ? "Not counted" : `${it.applied} cr applied`, 12, 500, pal.muted, "middle");
   for (const t of [l, s]) { t.setAttribute("paint-order", "stroke"); t.setAttribute("stroke", pal.bg); t.setAttribute("stroke-width", 5); t.setAttribute("stroke-linejoin", "round"); }
+  n.sub = s; // audit text: secondary, shown on hover, selection or zoom
+  n.fixed = [[l, r + 30, 15], [s, r + 47, 12]];
 }
 
 function drawDegree(g, n) {
-  const pal = P(), r = n.r;
+  const pal = P(), r = n.r, applied = credComplete + credIP;
   el("circle", { r: r + 16, fill: "none", stroke: pal.text, "stroke-width": 3.5, class: "selring", style: "opacity:0" }, g);
+  n.selR = r + 16 + 1.75; n.eligR = r + 8 + 3; // progress ring
   el("circle", { r, fill: pal.surface, stroke: pal.text, "stroke-width": 2.5 }, g);
-  progressRing(g, r + 8, 6, [[credComplete, pal.text], [credIP, pal.text, 0.4], [DEGREE.req - credComplete - credIP, "none"]], pal);
-  txt(g, 0, 4, String(credComplete + credIP), 24, 800, pal.text, "middle");
+  progressRing(g, r + 8, 6, [[applied, pal.text], [DEGREE.req - applied, "none"]], pal); // ring = the number shown
+  txt(g, 0, 4, String(applied), 24, 800, pal.text, "middle");
   txt(g, 0, 21, `of ${DEGREE.req} cr`, 11.5, 500, pal.muted, "middle");
   const l = txt(g, 0, r + 36, DEGREE.label, 18, 800, pal.text, "middle");
+  n.fixed = [[l, r + 36, 18]];
   l.setAttribute("paint-order", "stroke"); l.setAttribute("stroke", pal.bg); l.setAttribute("stroke-width", 5); l.setAttribute("stroke-linejoin", "round");
 }
 
-const PRE_STYLE = { prereq: { dash: null, w: 1.8 }, alt: { dash: "7 5", w: 1.8 }, preco: { dash: "1.5 5", w: 2.2, cap: "round" }, fulfills: { dash: null, w: 1.6 } };
+// Every dependency (prerequisite, "one of" alternative, pre-/corequisite) draws as the same solid arrow;
+// the side panel spells out which kind it is.
+const ARROW = { dash: null, w: 2 };
+const PRE_STYLE = { prereq: ARROW, alt: ARROW, preco: ARROW, fulfills: ARROW };
 
 function render() {
   const pal = P();
   svg.innerHTML = "";
   svg.style.background = pal.bg;
   const d = el("defs", {}, svg);
-  const marker = (id, color) => {
-    const m = el("marker", { id, viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 10, markerHeight: 10, markerUnits: "userSpaceOnUse", orient: "auto" }, d);
+  const marker = (id, color, rev) => {
+    const m = el("marker", { id, viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 10, markerHeight: 10, markerUnits: "userSpaceOnUse", orient: rev ? "auto-start-reverse" : "auto" }, d);
     el("path", { d: "M0,0.5 L10,5 L0,9.5 Z", fill: color }, m);
   };
   marker("a-edge", pal.edge); marker("a-up", pal.up); marker("a-down", pal.down);
+  marker("a-up-s", pal.up, true); marker("a-down-s", pal.down, true);
   const cp = el("clipPath", { id: "lowerHalf" }, d);
   el("rect", { x: -60, y: 0, width: 120, height: 60 }, cp);
-  const pat = el("pattern", { id: "dots", width: 24, height: 24, patternUnits: "userSpaceOnUse" }, d);
-  el("circle", { cx: 2, cy: 2, r: 1.3, fill: pal.dot }, pat);
   el("rect", { width: "100%", height: "100%", fill: pal.bg }, svg);
-  el("rect", { width: "100%", height: "100%", fill: "url(#dots)" }, svg);
   const vp = el("g", { "font-family": FONT }, svg);
-  R = { pat, vp, lines: [], blobs: new Map() };
+  R = { vp, lines: [], blobs: new Map() };
 
-  // Cluster clouds: one translucent group per section, so overlaps blend.
+  // Cluster clouds: one translucent group per section in its group's shade, so overlaps blend.
   const gB = el("g", {}, vp);
   SIM.nodes.forEach(n => { n.blobEls = []; });
   BLOCKS.forEach(b => {
-    const g = el("g", { opacity: pal.blob, fill: colorOf(b.id) }, gB);
+    const g = el("g", { opacity: pal.blob, fill: secColor(b.id) }, gB);
     R.blobs.set(b.id, g);
     const hub = SIM.byId.get(b.id);
     hub.blobEls.push(el("circle", { r: hub.r + 54 }, g));
@@ -838,10 +1069,11 @@ function render() {
     let line;
     if (l.kind === "pre") {
       const st = PRE_STYLE[l.e.kind];
-      line = el("line", { stroke: pal.edge, "stroke-width": st.w, "stroke-dasharray": st.dash, "stroke-linecap": st.cap || "butt", "marker-end": "url(#a-edge)", class: "edge" }, gP);
+      line = el("path", { fill: "none", stroke: pal.edge, "stroke-width": st.w, "stroke-dasharray": st.dash, "stroke-linecap": st.cap || "butt", "marker-end": "url(#a-edge)", class: "edge" }, gP);
     } else {
-      const c = l.kind === "spine" ? colorOf(l.t.id) : l.kind === "option" ? colorOf("BLK:MAJOR") : colorOf(l.s.id);
-      line = el("line", { stroke: c, "stroke-width": l.kind === "spine" ? 2.2 : 1.5, "stroke-dasharray": l.kind === "spine" && l.t.it.counts === false ? "5 5" : null, class: "edge" }, gL);
+      const c = pal.edge; // only the selected-course trace (requires / unlocks) gets color
+      l.w0 = l.kind === "spine" ? 2 : 1.3;
+      line = el("line", { stroke: c, "stroke-width": l.w0, "stroke-dasharray": l.kind === "spine" && l.t.it.counts === false ? "5 5" : null, class: "edge" }, gL);
     }
     R.lines.push({ el: line, l });
   }
@@ -866,14 +1098,53 @@ function draw() {
     n.g.setAttribute("transform", `translate(${n.px.toFixed(1)},${n.py.toFixed(1)})${s !== 1 ? ` scale(${s})` : ""}`);
     for (const c of n.blobEls) { c.setAttribute("cx", n.px.toFixed(1)); c.setAttribute("cy", n.py.toFixed(1)); }
   }
+  // Edges end just outside a node's outermost visible ring (selection or eligibility/progress ring).
+  const reach = n => Math.max(n.r, n.eligR || 0, state.sel === n.id ? n.selR || 0 : 0) * (state.hover === n.id && n.it.type !== "degree" ? 1.14 : 1);
   for (const { el: line, l } of R.lines) {
     const a = l.s, b = l.t, dx = b.px - a.px, dy = b.py - a.py, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
     const arrow = l.kind === "pre";
-    const sa = a.r + (arrow ? 3 : 1), sb = b.r + (arrow ? 4 : 1);
+    const sa = reach(a) + (l.arrowStart ? 4 : arrow ? 3 : 1), sb = reach(b) + (arrow ? 4 : 1);
     if (d < sa + sb) { line.setAttribute("visibility", "hidden"); continue; }
     line.removeAttribute("visibility");
+    if (arrow) {
+      const k = (l.k || 0) * d;
+      if (!k) { line.setAttribute("d", `M${(a.px + ux * sa).toFixed(1)},${(a.py + uy * sa).toFixed(1)} L${(b.px - ux * sb).toFixed(1)},${(b.py - uy * sb).toFixed(1)}`); continue; }
+      // Bowed around an active node (see planBends): ends sit on the curve's tangent.
+      const cx = (a.px + b.px) / 2 - uy * k, cy = (a.py + b.py) / 2 + ux * k;
+      const h1 = Math.hypot(cx - a.px, cy - a.py) || 1, h2 = Math.hypot(cx - b.px, cy - b.py) || 1;
+      const x1 = a.px + (cx - a.px) / h1 * sa, y1 = a.py + (cy - a.py) / h1 * sa, x2 = b.px + (cx - b.px) / h2 * sb, y2 = b.py + (cy - b.py) / h2 * sb;
+      line.setAttribute("d", `M${x1.toFixed(1)},${y1.toFixed(1)} Q${cx.toFixed(1)},${cy.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`);
+      continue;
+    }
     line.setAttribute("x1", (a.px + ux * sa).toFixed(1)); line.setAttribute("y1", (a.py + uy * sa).toFixed(1));
     line.setAttribute("x2", (b.px - ux * sb).toFixed(1)); line.setAttribute("y2", (b.py - uy * sb).toFixed(1));
+  }
+}
+
+/* Arrows are straight, except one whose straight line would pass through an active
+   (not faded) node other than its own ends: it bows just enough to go around, trying a
+   shallow bend on either side, then a deeper one. Faded background nodes are ignored. */
+const BENDS = [0.14, -0.14, 0.26, -0.26, 0.4, -0.4];
+function planBends() {
+  const T = [0.12, 0.2, 0.28, 0.36, 0.44, 0.52, 0.6, 0.68, 0.76, 0.84, 0.9];
+  const active = SIM.nodes.filter(n => n.op === 1);
+  const hits = (l, k) => {
+    const a = l.s, b = l.t, dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1, kk = k * d;
+    const cx = (a.x + b.x) / 2 - dy / d * kk, cy = (a.y + b.y) / 2 + dx / d * kk;
+    let c = 0;
+    for (const t of T) {
+      const x = (1 - t) ** 2 * a.x + 2 * (1 - t) * t * cx + t * t * b.x, y = (1 - t) ** 2 * a.y + 2 * (1 - t) * t * cy + t * t * b.y;
+      for (const n of active) if (n !== a && n !== b && Math.hypot(n.x - x, n.y - y) < Math.max(n.r, n.eligR || 0) + 5) c++;
+    }
+    return c;
+  };
+  for (const { l } of R.lines) {
+    if (l.kind !== "pre") continue;
+    l.k = 0;
+    if (!l.traced || l.s.op !== 1 || l.t.op !== 1) continue; // only shown (traced) arrows are routed
+    let best = hits(l, 0);
+    if (!best) continue;
+    for (const k of BENDS) { const h = hits(l, k); if (h < best) { best = h; l.k = k; if (!h) break; } }
   }
 }
 
@@ -897,7 +1168,7 @@ function computeFocus() {
     focus = new Set([sel.id, "DEGREE"]);
     if (sel.type === "block") sel.childIds.forEach(i => { focus.add(i); if (CHOICES[i]) CHOICES[i].options.forEach(o => focus.add(o)); });
     else {
-      const u = closure(sel.id, "up"), d = closure(sel.id, "down");
+      const u = direct(sel.id, "up"), d = direct(sel.id, "down");
       u.nodes.forEach(n => focus.add(n)); d.nodes.forEach(n => focus.add(n));
       upE = u.edges; dnE = d.edges;
       if (CHOICES[sel.id]) CHOICES[sel.id].options.forEach(o => focus.add(o));
@@ -910,17 +1181,27 @@ function applyVisual() {
   const pal = P(), { focus, upE, dnE } = computeFocus();
   const hov = !focus && state.hover ? new Set([state.hover, ...ADJ.get(state.hover)]) : null;
   const op = new Map();
+  // Progressive disclosure: at overview zoom, secondary detail (audit text, eligibility
+  // rings, open-requirement labels, prerequisite edges) stays quiet until hover, selection or zoom.
+  const detail = view.k >= 1.1;
+  const near = n => state.sel === n.id || state.hover === n.id || (focus && focus.has(n.id)) || (hov && hov.has(n.id));
   for (const n of SIM.nodes) {
     const inF = passFilter(n.it), inS = !focus || focus.has(n.id), inH = !hov || hov.has(n.id);
     const o = !inF || !inS ? 0.12 : inH ? 1 : 0.28;
-    op.set(n.id, o);
+    op.set(n.id, o); n.op = o;
     n.g.style.opacity = o;
     n.g.querySelector(".selring").style.opacity = state.sel === n.id ? 1 : 0;
-    if (n.lbl) {
-      const show = view.k >= 0.6 || state.sel === n.id || (focus && focus.has(n.id)) || (hov && hov.has(n.id));
-      n.lbl.style.opacity = show ? 1 : 0;
-    }
+    const er = n.g.querySelector(".eligring");
+    if (er) er.style.opacity = detail || near(n) || state.filter === "eligible" ? 1 : 0.45;
+    if (n.sub) n.sub.style.opacity = detail || near(n) ? 1 : 0;
   }
+  const placed = declutter(op, [...upE, ...dnE]);
+  for (const n of SIM.nodes) {
+    if (!n.lbl) continue;
+    const show = placed.has(n.id) && (view.k >= 0.45 || near(n));
+    n.lbl.style.opacity = !show ? 0 : n.secondary && !detail && !near(n) ? 0.6 : 1;
+  }
+  const raiseUp = [], raiseDn = [];
   for (const { el: line, l } of R.lines) {
     const ends = Math.min(op.get(l.s.id), op.get(l.t.id));
     const touchesHover = state.hover && (l.s.id === state.hover || l.t.id === state.hover);
@@ -928,14 +1209,24 @@ function applyVisual() {
       let color = pal.edge, marker = "a-edge", w = PRE_STYLE[l.e.kind].w, o;
       if (upE.has(l.e)) { color = pal.up; marker = "a-up"; w += 1.2; o = 1; }
       else if (dnE.has(l.e)) { color = pal.down; marker = "a-down"; w += 1.2; o = 1; }
-      else if (!state.arrows) o = hov && touchesHover ? 0.9 : 0;
-      else if (focus) o = 0.04;
-      else if (hov) o = touchesHover ? 0.95 : 0.06;
-      else o = ends < 1 ? 0.06 : 0.55;
+      else o = 0; // prerequisite arrows only appear for the clicked course
       line.setAttribute("stroke", color); line.setAttribute("marker-end", `url(#${marker})`); line.setAttribute("stroke-width", w);
       line.style.opacity = o;
+      l.traced = color !== pal.edge;
+      if (l.traced) (color === pal.up ? raiseUp : raiseDn).push(line);
     } else {
-      let o = l.kind === "spine" ? 0.4 : 0.5;
+      // A pick-one link (group - option) is the "option fulfills group" dependency: while it is
+      // traced it becomes a colored arrow from the course to the group, matching the side panel.
+      const fe = l.kind === "option" ? FULFILLS.get(`${l.t.id}>${l.s.id}`) : null;
+      const tr = fe && (upE.has(fe) ? "up" : dnE.has(fe) ? "down" : null);
+      l.arrowStart = !!tr;
+      if (tr) {
+        line.setAttribute("stroke", pal[tr]); line.setAttribute("stroke-width", PRE_STYLE.prereq.w + 1.2);
+        line.setAttribute("marker-start", `url(#a-${tr}-s)`); line.style.opacity = 1;
+        continue;
+      }
+      line.setAttribute("stroke", pal.edge); line.setAttribute("stroke-width", l.w0); line.removeAttribute("marker-start");
+      let o = l.kind === "spine" ? 0.35 : 0.3;
       if (focus) o = focus.has(l.s.id) && focus.has(l.t.id) && ends === 1 ? 0.75 : 0.04;
       else if (hov) o = touchesHover ? 0.95 : 0.1;
       else if (ends < 1) o = 0.05;
@@ -945,8 +1236,60 @@ function applyVisual() {
   const sel = state.sel && ITEMS.get(state.sel);
   const lit = sel && sel.type === "block" ? new Set([sel.id]) : sel && sel.type !== "degree" ? new Set(blocksOf(sel.id)) : null;
   R.blobs.forEach((g, b) => g.setAttribute("opacity", !lit ? pal.blob : lit.has(b) ? pal.blob * 1.8 : pal.blob * 0.3));
+  // Traced arrows on top of the rest, "requires" above "unlocks".
+  for (const line of [...raiseDn, ...raiseUp]) line.parentNode.appendChild(line);
+  planBends();
+  draw(); // edge ends depend on the selection, hover and trace arrows set above
 }
 function applyState() { applyVisual(); renderPanel(); }
+
+/* Label declutter: labels claim space greedily, selected/hovered first, then
+   needed > in progress > complete. Each label tries below, above, right, then
+   left of its node; a spot must not overlap another label, a node, or a
+   highlighted trace arrow. If no spot is free, the label is hidden until its
+   node is hovered or selected. */
+function textW(t, fs) {
+  if (!t._w) { const w = t.getComputedTextLength ? t.getComputedTextLength() : 0; if (w > 0) t._w = w; }
+  return t._w || t.textContent.length * fs * 0.6;
+}
+function declutter(op, traced = []) {
+  const boxes = [], visible = SIM.nodes.filter(n => op.get(n.id) > 0.12);
+  // Label box for a spot: dx/dy from the node center, anchored middle/start/end.
+  const box = (n, t, fs, sp) => {
+    const w = textW(t, fs) + 4, x0 = sp.a === "middle" ? n.x + sp.x - w / 2 : sp.a === "start" ? n.x + sp.x - 2 : n.x + sp.x - w + 2;
+    return { x0, x1: x0 + w, y0: n.y + sp.y - fs * 0.8, y1: n.y + sp.y + fs * 0.25 };
+  };
+  const hitsLabel = b => boxes.some(o => b.x0 < o.x1 && b.x1 > o.x0 && b.y0 < o.y1 && b.y1 > o.y0);
+  const hitsNode = (b, self) => visible.some(c => c !== self && Math.max(b.x0 - c.x, 0, c.x - b.x1) ** 2 + Math.max(b.y0 - c.y, 0, c.y - b.y1) ** 2 < (c.r + 2) ** 2);
+  // Highlighted trace arrows are obstacles too, so labels never sit on top of them (Liang–Barsky clip test).
+  const segs = traced.map(e => [SIM.byId.get(e.s), SIM.byId.get(e.t)]).filter(([a, b]) => a && b);
+  const hitsSeg = b => segs.some(([p, q]) => {
+    let t0 = 0, t1 = 1; const dx = q.x - p.x, dy = q.y - p.y;
+    for (const [pp, qq] of [[-dx, p.x - b.x0], [dx, b.x1 - p.x], [-dy, p.y - b.y0], [dy, b.y1 - p.y]]) {
+      if (pp === 0) { if (qq < 0) return false; continue; }
+      const t = qq / pp;
+      if (pp < 0) { if (t > t1) return false; if (t > t0) t0 = t; } else { if (t < t0) return false; if (t < t1) t1 = t; }
+    }
+    return true;
+  });
+  for (const n of visible) for (const [t, y, fs] of n.fixed || []) boxes.push(box(n, t, fs, { x: 0, y, a: "middle" }));
+  const forced = n => n.id === state.sel || n.id === state.hover;
+  const rank = n => (forced(n) ? 0 : 10) + (op.get(n.id) === 1 ? 0 : 5) + ({ needed: 0, in_progress: 1, complete: 2 }[n.it.status] ?? 1);
+  const placed = new Set();
+  for (const n of visible.filter(n => n.lbl).sort((a, b) => rank(a) - rank(b) || b.r - a.r)) {
+    // Try below, above, right, then left of the node.
+    const side = Math.max(n.r, n.eligR || 0, state.sel === n.id ? n.selR : 0) + 5, mid = n.lblFs * 0.35;
+    const spots = [{ x: 0, y: Math.max(n.lblY, side + n.lblFs * 0.8), a: "middle" }, { x: 0, y: -side, a: "middle" }, { x: side, y: mid, a: "start" }, { x: -side, y: mid, a: "end" }];
+    const tests = spots.map(sp => { const b = box(n, n.lbl, n.lblFs, sp); return { sp, seg: hitsSeg(b), clear: !hitsLabel(b) && !hitsNode(b, n) }; });
+    let pick = tests.find(t => t.clear && !t.seg);
+    if (!pick && forced(n)) pick = tests.find(t => !t.seg) || tests[0];
+    if (!pick) continue;
+    const sp = pick.sp, key = `${sp.x},${sp.y},${sp.a}`;
+    if (n.lbl._k !== key) { n.lbl.setAttribute("x", sp.x); n.lbl.setAttribute("y", sp.y); n.lbl.setAttribute("text-anchor", sp.a); n.lbl._k = key; }
+    boxes.push(box(n, n.lbl, n.lblFs, sp)); placed.add(n.id);
+  }
+  return placed;
+}
 
 function select(id, center) {
   state.sel = id && ITEMS.has(id) ? id : null;
@@ -961,14 +1304,13 @@ const view = { k: 1, x: 0, y: 0 };
 function applyView() {
   const t = `translate(${view.x},${view.y}) scale(${view.k})`;
   if (R.vp) R.vp.setAttribute("transform", t);
-  if (R.pat) R.pat.setAttribute("patternTransform", t);
 }
 let anim = null;
 function animateTo(k, x, y) {
   cancelAnimationFrame(anim);
   const from = { ...view }, t0 = performance.now(), D = reduced ? 1 : 420;
   const step = now => {
-    const t = Math.min(1, (now - t0) / D), e = 1 - Math.pow(1 - t, 3);
+    const t = Math.min(1, Math.max(0, (now - t0) / D)), e = 1 - Math.pow(1 - t, 3); // rAF time can precede t0
     view.k = from.k + (k - from.k) * e; view.x = from.x + (x - from.x) * e; view.y = from.y + (y - from.y) * e;
     applyView();
     if (t < 1) anim = requestAnimationFrame(step); else applyVisual();
@@ -985,8 +1327,13 @@ function bounds() {
 }
 function fit(animate = true) {
   const b = bounds(), r = svg.getBoundingClientRect(), pad = 20;
-  const k = Math.min((r.width - pad * 2) / b.w, (r.height - pad * 2 - 40) / b.h, 1.2);
-  const x = (r.width - b.w * k) / 2 - b.x * k, y = (r.height - b.h * k) / 2 - b.y * k + 20;
+  if (r.width < 100 || r.height < 100) return; // hidden (planner view) or not laid out yet
+  // Keep the legend clear of the graph: reserve its width on the left or its height at the bottom, whichever leaves the bigger graph.
+  const lg = document.querySelector(".legend"), shown = lg && lg.offsetParent;
+  const lw = shown ? lg.offsetWidth + 14 : 0, lh = shown ? lg.offsetHeight + 14 : 0;
+  const opts = [[lw, r.width - lw, r.height], [0, r.width, r.height - lh]].map(([x0, w, h]) => ({ x0, w: w - pad * 2, h: h - pad * 2, k: Math.min((w - pad * 2) / b.w, (h - pad * 2) / b.h, 1.2) }));
+  const o = opts[0].k >= opts[1].k ? opts[0] : opts[1], k = Math.max(0.15, o.k);
+  const x = o.x0 + pad + (o.w - b.w * k) / 2 - b.x * k, y = pad + (o.h - b.h * k) / 2 - b.y * k;
   animate ? animateTo(k, x, y) : (Object.assign(view, { k, x, y }), applyView(), applyVisual());
 }
 function centerOn(id) {
@@ -995,6 +1342,7 @@ function centerOn(id) {
   animateTo(k, r.width / 2 - n.x * k, r.height / 2 - n.y * k);
 }
 function zoomBy(f, mx, my) {
+  cancelAnimationFrame(anim); // a running fit/center animation would otherwise undo this zoom
   const r = svg.getBoundingClientRect();
   if (mx == null) { mx = r.width / 2; my = r.height / 2; }
   const k2 = Math.min(3, Math.max(0.15, view.k * f));
@@ -1054,7 +1402,7 @@ svg.addEventListener("pointerleave", () => { hideTip(); if (state.hover && !drag
 const tip = document.getElementById("tooltip");
 function showTip(id, e) {
   const it = ITEMS.get(id), r = document.getElementById("stage").getBoundingClientRect();
-  const sections = blocksOf(id).map(b => `<span class="sw" style="background:${colorOf(b)}"></span>${esc(ITEMS.get(b).short)}`).join("<br>");
+  const bs = blocksOf(id), sections = (bs.length > 1 ? `Counts toward ${bs.length} sections:<br>` : "") + bs.map(b => swatch(b) + esc(ITEMS.get(b).short)).join("<br>");
   let html = "";
   if (it.type === "course") {
     const e2 = elig(id);
@@ -1074,8 +1422,8 @@ function hideTip() { tip.style.opacity = 0; }
    SIDE PANEL
    ===================================================================== */
 const panel = document.getElementById("panel");
+const swatch = b => `<span class="sw" style="background:${secColor(b)}"></span>`;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const swatch = b => `<span class="sw" style="background:${colorOf(b)}"></span>`;
 function chip(id) {
   const it = ITEMS.get(id);
   if (!it) return `<span class="chip ext" title="Not in your audit"><span class="dot ext"></span>${esc(id)}</span>`;
@@ -1092,7 +1440,7 @@ const membersHTML = id => `<ul>${(MEMBER.get(id) || []).map(m => `<li>${swatch(m
 function groupsHTML(groups) {
   return groups.map((g, i) => {
     const sts = g.filter(c => ITEMS.has(c)).map(c => ITEMS.get(c).status);
-    const ok = sts.includes("complete") ? ["complete", "Met"] : sts.includes("in_progress") ? ["progress", "In progress"] : ["muted", "Not met"];
+    const ok = sts.includes("complete") ? ["good", "✓ Met"] : sts.includes("in_progress") ? ["text", "In progress"] : ["muted", "Not met"];
     const chips = g.map(chip).join(`<span class="or">or</span>`);
     return (i ? `<div class="and">and</div>` : "") + `<div class="group">${chips}<span class="ok" style="color:var(--${ok[0]})">${ok[1]}</span></div>`;
   }).join("");
@@ -1117,7 +1465,7 @@ function renderPanel() {
     if (p && p.coText) h += `<h3>Corequisite</h3><div class="chips">${chip(p.coText)}</div>`;
     const outs = OUT.get(id) || [], down = closure(id, "down").nodes;
     h += `<h3>Unlocks</h3>`;
-    h += outs.length ? `<div class="chips">${outs.map(o => chip(o.t)).join("")}</div><p class="note">${down.size} item${down.size === 1 ? "" : "s"} downstream in total (pink arrows).</p>` : `<p class="note">Nothing in this audit lists ${esc(id)} as a prerequisite.</p>`;
+    h += outs.length ? `<div class="chips">${outs.map(o => chip(o.t)).join("")}</div><p class="note">Green arrows show these direct unlocks${down.size > outs.length ? `; ${down.size} item${down.size === 1 ? "" : "s"} depend on it further down the chain` : ""}.</p>` : `<p class="note">Nothing in this audit lists ${esc(id)} as a prerequisite.</p>`;
     if (it.bid) h += `<p style="margin-top:16px"><a class="ext" href="https://bulletin.uga.edu/Course/Details/${it.bid}" target="_blank" rel="noopener">View in UGA Bulletin ↗</a></p>`;
   } else if (it.type === "req") {
     h += `<div>${pill(it.status)}</div><h2>${esc(it.label)}</h2><p class="title">${esc(it.sub)}</p>`;
@@ -1135,7 +1483,7 @@ function renderPanel() {
     if (id === "CHOICE:APP") h += `<p class="note">Both options also satisfy the major's Teamwork requirement.</p>`;
   } else if (it.type === "block") {
     const shared = it.childIds.filter(c => blocksOf(c).length > 1);
-    h += `<div>${pill(it.status)} <span class="pill muted">Audit: ${esc(it.audit || (it.counts === false ? "not counted" : "—"))}</span></div><h2 style="display:flex;align-items:center;gap:10px">${swatch(it.id).replace('class="sw"', 'class="sw big"')}${esc(it.short)}</h2><p class="title">${esc(it.label)}</p>`;
+    h += `<div>${pill(it.status)} <span class="pill muted">Audit: ${esc(it.audit || (it.counts === false ? "not counted" : "—"))}</span></div><h2>${swatch(it.id)}${esc(it.short)}</h2><p class="title">${esc(it.label)} · ${esc(FAMILY_LABEL[FAMILY[it.id]])}</p>`;
     if (it.applied != null) h += `<dl class="facts"><div><dt>Required</dt><dd>${it.req != null ? esc(it.req) + " cr" : "—"}</dd></div><div><dt>Applied</dt><dd>${it.applied} cr</dd></div><div><dt>Items</dt><dd>${it.childIds.length}</dd></div></dl>`;
     h += `<h3>Requirements</h3><ul>${it.items.map(([cid, req]) => `<li>${chip(cid)}${state.redact && ITEMS.get(cid).type === "course" ? "" : `<span class="req">${esc(req)}</span>`}</li>`).join("")}</ul>`;
     if (shared.length) h += `<h3>Shared with other sections</h3><ul>${shared.map(c => `<li>${chip(c)}<span class="req">${blocksOf(c).filter(b => b !== it.id).map(b => swatch(b) + esc(ITEMS.get(b).short)).join(", ")}</span></li>`).join("")}</ul>`;
@@ -1157,7 +1505,15 @@ function overviewHTML() {
   const open = required.filter(id => ITEMS.get(id).type === "req");
   const inProg = all.filter(i => i.type === "course" && i.status === "in_progress").map(i => i.id);
   const shared = all.filter(i => i.type !== "block" && i.type !== "degree" && blocksOf(i.id).length > 1).map(i => i.id);
-  let h = `<h2 style="font-size:20px">Overview</h2><p class="note">Each colored cloud is an audit section. Courses that count toward more than one section sit between those hubs and wear every section's color. Click any node for details; blue arrows lead into it, pink arrows lead out.</p>`;
+  const sw = v => `<span class="sw" style="background:var(--${v})"></span>`;
+  let h = `<h2 style="font-size:20px">Overview</h2><ul class="key">
+    <li><b>Color</b><span>${sw("cs")}Major ${sw("gen")}Gen ed ${sw("other")}Electives</span></li>
+    <li><b>Cloud</b><span>one audit section</span></li>
+    <li><b>Size</b><span>credit hours</span></li>
+    <li><b>Fill</b><span>empty needed · half in progress · full done</span></li>
+    <li><b>Ring</b><span>solid take now · dashed next term</span></li>
+    <li><b>Click</b><span><span style="color:var(--up);font-weight:700">yellow</span> needs · <span style="color:var(--down);font-weight:700">green</span> unlocks</span></li>
+  </ul>`;
   h += `<h3>Sections (${BLOCKS.length})</h3><div class="chips">${BLOCKS.map(b => chip(b.id)).join("")}</div>`;
   h += `<h3>Eligible now (${now.length})</h3>` + (now.length ? `<div class="chips">${now.map(chip).join("")}</div><p class="note">Needed, and every prerequisite is complete.</p>` : `<p class="note">None.</p>`);
   h += `<h3>Eligible after this term (${next.length})</h3>` + (next.length ? `<div class="chips">${next.map(chip).join("")}</div><p class="note">Unlocks once your in-progress courses finish.</p>` : `<p class="note">None.</p>`);
@@ -1167,13 +1523,13 @@ function overviewHTML() {
   h += `<h3>Open requirements (${open.length})</h3><div class="chips">${open.map(chip).join("")}</div>`;
   h += `<h3>Counted in more than one section (${shared.length})</h3><div class="chips">${shared.map(chip).join("")}</div>`;
   h += `<h3>Degree checks from the audit</h3><ul>${DEGREE.checks.map(([a, b]) => `<li><b>${esc(a)}</b><span class="req">${esc(b)}</span></li>`).join("")}</ul>`;
-  h += `<p class="hint">Requirements: DegreeWorks audit (10/03/2026). Prerequisites: UGA Bulletin, checked 10/07/2026. Arrows are drawn only between courses in this audit; other accepted alternatives appear as dashed chips in each course's details.<br><br>Hover to nudge · drag nodes to rearrange · scroll to zoom<br>Shortcuts: <kbd>/</kbd> search · <kbd>F</kbd> fit · <kbd>Esc</kbd> clear</p>`;
+  h += `<p class="hint">${esc(PROF.source)}. Arrows are drawn only between courses in this audit; other accepted alternatives appear as dashed chips in each course's details.<br><br>Hover to nudge · drag nodes to rearrange · scroll to zoom<br>Shortcuts: <kbd>/</kbd> search · <kbd>F</kbd> fit · <kbd>Esc</kbd> clear</p>`;
   return h;
 }
 function plannedHTML(id) {
   if (typeof PLANNED_TERM === "undefined" || !PLANNED_TERM.size) return "";
   let list = [];
-  if (id === "REQ:FL") list = PLANNED_TERM.has("SPAN 2001") ? [["SPAN 2001", PLANNED_TERM.get("SPAN 2001")]] : [];
+  if (id === "REQ:FL") list = PLANNED_TERM.has(FL_COURSE) ? [[FL_COURSE, PLANNED_TERM.get(FL_COURSE)]] : [];
   else if (id === "REQ:MAJEL") list = PLAN.items.filter(it => it.role === "elective").map(it => [it.id, PLANNED_TERM.get(it.id)]);
   else if (CHOICES[id]) list = CHOICES[id].options.filter(o => PLANNED_TERM.has(o) && PLAN.items.find(it => it.id === o).role !== "elective").map(o => [o, PLANNED_TERM.get(o)]);
   else if (PLANNED_TERM.has(id)) list = [[null, PLANNED_TERM.get(id)]];
@@ -1193,36 +1549,54 @@ panel.addEventListener("click", e => {
 function renderHeader() {
   document.getElementById("credApplied").textContent = credComplete + credIP;
   document.getElementById("credReq").textContent = DEGREE.req;
-  document.getElementById("credBar").innerHTML = `<span style="width:${credComplete / DEGREE.req * 100}%;background:var(--complete)" title="${credComplete} complete"></span><span style="width:${credIP / DEGREE.req * 100}%;background:var(--progress)" title="${credIP} in progress"></span>`;
+  document.getElementById("credBar").innerHTML = `<span style="width:${credComplete / DEGREE.req * 100}%;background:var(--text)" title="${credComplete} complete"></span><span style="width:${credIP / DEGREE.req * 100}%;background:var(--text);opacity:.4" title="${credIP} in progress"></span>`;
   const nowN = [...ELIG].filter(([id, e]) => e === "now" && ITEMS.get(id).type === "course").length;
   const tiles = [
-    [credComplete, "credits complete", "var(--complete)"],
-    [credIP, "credits in progress", "var(--progress)"],
+    [credComplete, "credits complete", "var(--text)"],
+    [credIP, "credits in progress", "var(--text)"],
     [DEGREE.req - credComplete - credIP, "credits remaining", "var(--text)"],
-    ["10 / 39", "upper-division cr", "var(--text)"],
-    [nowN, "eligible now", "var(--eligible)"],
+    [`${UPPER_SO_FAR} / 39`, "upper-division cr", "var(--text)"],
+    [nowN, "eligible now", "var(--text)"],
   ];
   document.getElementById("tiles").innerHTML = tiles.map(([v, l, c]) => `<div class="tile"><b style="color:${c}">${v}</b><small>${l}</small></div>`).join("");
 }
 
 function renderLegend() {
-  const pal = P(), c = pal.edge;
-  const dot = (inner) => `<svg width="22" height="22" viewBox="-11 -11 22 22">${inner}</svg>`;
-  const ring = `stroke="${pal.text}" stroke-width="2.2"`;
-  const line = (dash, cap) => `<svg width="34" height="12"><line x1="1" y1="6" x2="25" y2="6" stroke="${c}" stroke-width="2.2" ${dash ? `stroke-dasharray="${dash}"` : ""} stroke-linecap="${cap || "butt"}"/><path d="M24,1.5 L33,6 L24,10.5 Z" fill="${c}"/></svg>`;
-  const enc = [
-    [dot(`<circle r="8" fill="${pal.text}" ${ring}/>`), "Complete (filled)"],
-    [dot(`<circle r="8" fill="none" ${ring}/><path d="M-8,0 A8,8 0 0 0 8,0 Z" fill="${pal.text}"/>`), "In progress (half)"],
-    [dot(`<circle r="8" fill="none" stroke="${pal.text}" stroke-width="3"/>`), "Needed (empty)"],
-    [dot(`<circle r="8" fill="none" ${ring} stroke-dasharray="3 2.5"/>`), "Open req / pick-one"],
-    [dot(`<circle r="4" fill="${pal.text}"/><circle r="8.5" fill="none" ${ring}/>`), "Eligible now (pulses)"],
-    [dot(`<circle r="4" fill="none" ${ring}/><circle r="8.5" fill="none" stroke="${pal.text}" stroke-width="1.5" stroke-dasharray="2.5 2.5"/>`), "Eligible after this term"],
-    [dot(`<path d="M0,-8 A8,8 0 0 1 0,8" fill="none" stroke="${pal.blocks["BLK:A6"]}" stroke-width="3"/><path d="M0,8 A8,8 0 0 1 0,-8" fill="none" stroke="${pal.blocks["BLK:ENTR"]}" stroke-width="3"/>`), "Split ring = shared"],
-    [line(), "Prerequisite"],
-    [line("6 4"), "One of several options"],
-    [line("1.5 4", "round"), "Pre- or corequisite"],
-  ].map(([s, l]) => `<div class="it">${s}<span>${l}</span></div>`).join("");
-  document.getElementById("legend").innerHTML = `<div class="grid">${enc}</div>`;
+  const pal = P(), blue = [pal.fam.cs], green = [pal.fam.gen];
+  // Every example is drawn by the same functions as the graph, so it matches exactly.
+  const glyph = (w, h, draw) => { const sv = document.createElementNS(NS, "svg"); sv.setAttribute("width", w); sv.setAttribute("height", h); sv.setAttribute("viewBox", `${-w / 2} ${-h / 2} ${w} ${h}`); sv.setAttribute("font-family", FONT); draw(sv); return sv.outerHTML; };
+  const node = (o, size = 30) => glyph(size, size, g => nodeMarks(g, { r: 9, kind: "course", status: "complete", cols: blue, ...o }));
+  const edge = (st, col = pal.edge, arrow = true) => glyph(40, 14, g => {
+    el("line", { x1: -18, y1: 0, x2: arrow ? 9 : 18, y2: 0, stroke: col, "stroke-width": st.w, "stroke-dasharray": st.dash, "stroke-linecap": st.cap || "butt" }, g);
+    if (arrow) el("path", { d: "M8,-4.5 L18,0 L8,4.5 Z", fill: col }, g);
+  });
+  const group = (h, rows, note) => `<div><div class="lg-h">${h}</div>${note ? `<div class="lg-note">${note}</div>` : ""}<div class="grid">${rows.map(([sv, l]) => `<div class="it">${sv}<span>${l}</span></div>`).join("")}</div></div>`;
+  const hub = glyph(42, 42, g => hubMarks(g, { r: 11, c: pal.fam.cs, done: 3, total: 4, fs: 9 }));
+  document.getElementById("legend").innerHTML =
+    group("Requirement type", [
+      [node({ cols: blue }), "Major / CS"],
+      [node({ cols: green }), "Gen ed / university / college"],
+      [node({ cols: [pal.fam.other] }), "Electives / excess"],
+      [node({ cols: [pal.fam.cs, pal.fam.gen] }), "Counts toward two types"],
+      [node({ kind: "req", status: "needed", cols: green }), "Open requirement (+)"],
+      [node({ kind: "choice", status: "needed", options: 2 }), "Choose one of the options"],
+    ])
+    + group("Progress", [
+      [node({ status: "needed" }), "Needed (empty)"],
+      [node({ status: "in_progress" }), "In progress (half)"],
+      [node({ status: "complete" }), "Complete (full)"],
+      [hub, "Section hub: items complete / total"],
+    ])
+    + group("Availability", [
+      [node({ status: "needed", elig: "now" }), "Eligible now"],
+      [node({ status: "needed", elig: "next" }), "Eligible after this term"],
+      [node({ status: "needed" }), "Blocked (no ring)"],
+    ], "Needed courses only")
+    + group("Lines", [
+      [edge({ w: 1.3 }, pal.edge, false), "Belongs to a section"],
+      [edge({ w: PRE_STYLE.prereq.w + 1.2 }, pal.up), "Prerequisite"],
+      [edge({ w: PRE_STYLE.prereq.w + 1.2 }, pal.down), "Unlocks"],
+    ]);
 }
 
 document.querySelectorAll("[data-filter]").forEach(b => b.addEventListener("click", () => {
@@ -1231,9 +1605,6 @@ document.querySelectorAll("[data-filter]").forEach(b => b.addEventListener("clic
   applyVisual();
 }));
 
-const arrowsBtn = document.getElementById("arrows");
-function syncArrows() { arrowsBtn.setAttribute("aria-pressed", state.arrows); }
-arrowsBtn.addEventListener("click", () => { state.arrows = !state.arrows; store.set("arrows", state.arrows ? "1" : "0"); syncArrows(); applyVisual(); });
 
 const redactBtn = document.getElementById("redact");
 function syncRedact() { redactBtn.setAttribute("aria-pressed", state.redact); redactBtn.textContent = state.redact ? "Titles hidden" : "Redact titles"; }
@@ -1295,11 +1666,19 @@ document.getElementById("export").addEventListener("click", () => {
   const data = new XMLSerializer().serializeToString(clone);
   const img = new Image();
   img.onload = () => {
+    // A shared image carries its own title, key and sources, since the page around it is gone.
+    const pal = P(), top = 64, bottom = 40, H = r.height + top + bottom;
     const c = document.createElement("canvas");
-    c.width = r.width * scale; c.height = r.height * scale;
+    c.width = r.width * scale; c.height = H * scale;
     const ctx = c.getContext("2d");
-    ctx.scale(scale, scale); ctx.fillStyle = P().bg; ctx.fillRect(0, 0, r.width, r.height);
-    ctx.drawImage(img, 0, 0, r.width, r.height);
+    ctx.scale(scale, scale); ctx.fillStyle = pal.bg; ctx.fillRect(0, 0, r.width, H);
+    ctx.drawImage(img, 0, top, r.width, r.height);
+    ctx.fillStyle = pal.text; ctx.font = `700 20px ${FONT}`;
+    ctx.fillText(`${DEGREE.label}: Degree Map`, 20, 30);
+    ctx.fillStyle = pal.muted; ctx.font = `13px ${FONT}`;
+    ctx.fillText(`${credComplete + credIP} of ${DEGREE.req} credits applied · Blue = major (CS), green = gen ed, gray = electives & excess · Full = complete, half = in progress, empty = needed · Outer ring = eligible (solid now, dashed next term) · Circle area = credit hours`
+      + (state.sel ? ` · Tracing ${state.sel}: yellow = requires, green = unlocks` : ""), 20, 52);
+    ctx.fillText(`Profile: ${PROF.name} · ${PROF.source}. Planning aid, not an official audit.`, 20, H - 16);
     c.toBlob(b => {
       const a = document.createElement("a");
       a.href = URL.createObjectURL(b);
@@ -1312,6 +1691,7 @@ document.getElementById("export").addEventListener("click", () => {
 });
 
 let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => fit(false), 150); });
+document.querySelector(".legend").addEventListener("toggle", () => fit());
 
 /* =====================================================================
    SEMESTER PLANNER
@@ -1399,16 +1779,19 @@ const PLACEHOLDERS = {
   "REQ:PE":  { cr: 1, blocks: ["BLK:UNIV"],  req: "Physical Education" },
   "REQ:EXP": { cr: 0, blocks: ["BLK:UNIV"],  req: "Experiential Learning" },
 };
-const GENED_IDS = ["SPAN 2001", "REQ:LIT", "REQ:FA2", "REQ:PE", "REQ:EXP"];
+const FL_COURSE = PROF.fl; // the course that satisfies the open Foreign Language requirement
+const openReq = id => REQS[id] && (REQS[id].status || "needed") === "needed";
+// Only requirements this profile still has open get scheduled.
+const GENED_IDS = [...(openReq("REQ:FL") ? [FL_COURSE] : []), ...["REQ:LIT", "REQ:FA2", "REQ:PE", "REQ:EXP"].filter(openReq)];
 const APP_OPTS = CHOICES["CHOICE:APP"].options, SYS_OPTS = CHOICES["CHOICE:SYS"].options;
 const isRegular = id => ["FSU", "FS", "F", "S", "Y"].includes(PLAN_CATALOG[id].off);
 const courseNum = id => parseInt(id.split(" ")[1], 10);
 
 // Elective catalog: every CSCI 4000-level course (plus cross-listed MATH/CBIO
 // ones) except CSCI 4150 and those already required or in a design group.
-const ELECTIVE_IDS = Object.keys(PLAN_CATALOG).filter(id => courseNum(id) >= 4000 && !BASE_IDS.includes(id));
+const ELECTIVE_IDS = Object.keys(PLAN_CATALOG).filter(id => courseNum(id) >= 4000 && !BASE_IDS.includes(id) && !DONE.has(id));
 const CROSS_LISTED = id => !id.startsWith("CSCI");
-const PLANNABLE = new Set([...BASE_IDS, ...ELECTIVE_IDS, "SPAN 2001"]);
+const PLANNABLE = new Set([...BASE_IDS, ...ELECTIVE_IDS, FL_COURSE]);
 // A course whose prerequisites can never be met inside this plan (needs a course
 // outside the catalog, e.g. CSCI 4140 needs CSCI 2150) cannot be chosen.
 function blockedReason(id) {
@@ -1430,10 +1813,11 @@ function planDefaults() {
     geneds: Object.fromEntries(GENED_IDS.map(id => [id, true])),
   };
 }
+const PLAN_KEY = PROFILE_ID === "vivek" ? "plan" : "plan:" + PROFILE_ID;
 function loadPlanCfg() {
   const d = planDefaults();
   try {
-    const s = JSON.parse(store.get("plan") || "null");
+    const s = JSON.parse(store.get(PLAN_KEY) || "null");
     if (!s) return d;
     for (const k of Object.keys(d.terms)) if (s.terms && s.terms[k]) {
       const t = s.terms[k];
@@ -1450,7 +1834,7 @@ function loadPlanCfg() {
 }
 function clampInt(v, lo, hi, dflt) { const n = Math.round(Number(v)); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : dflt; }
 let PLAN_CFG = loadPlanCfg();
-const savePlanCfg = () => store.set("plan", JSON.stringify(PLAN_CFG));
+const savePlanCfg = () => store.set(PLAN_KEY, JSON.stringify(PLAN_CFG));
 
 /* ---------- plan items ---------- */
 function planItem(id, role) {
@@ -1459,8 +1843,8 @@ function planItem(id, role) {
     return { id, role, cr: p.cr, title: r.label, sub: r.sub, display: r.label, seasons: new Set("FSU"), off: "FSU", pre: [], preco: [], cs: false, blocks: p.blocks, req: p.req, placeholder: true };
   }
   const c = PLAN_CATALOG[id];
-  const blocks = role === "elective" ? ["BLK:MAJOR"] : id === "SPAN 2001" ? ["BLK:FRANK"] : blocksOf(id);
-  const req = role === "elective" ? "Major Electives" : id === "SPAN 2001" ? "Foreign Language (3rd semester)"
+  const blocks = role === "elective" ? ["BLK:MAJOR"] : id === FL_COURSE ? ["BLK:FRANK"] : blocksOf(id);
+  const req = role === "elective" ? "Major Electives" : id === FL_COURSE ? "Foreign Language (3rd semester)"
     : role === "app" ? "Application Design Group" : role === "sys" ? "Systems Design Group" : [...new Set((MEMBER.get(id) || []).map(m => m.req))].join("; ");
   return { id, role, cr: c.cr, title: c.title, display: c.display, seasons: new Set(OFF_SEASONS[c.off]), off: c.off, offText: c.offText,
     pre: c.pre || [], preco: c.preco || [], preText: c.preText, precoText: c.precoText, cs: id.startsWith("CSCI") || c.display.includes("(CSCI)"),
@@ -1767,7 +2151,7 @@ function renderPlanner() {
     <p class="note">Auto picks only regularly offered CSCI 4000-level courses (not CSCI 4150). Picking a course from any dropdown locks it in; the planner fills the remaining credits.</p>
   </section>
   <section><h3>Gen-ed requirements</h3>
-    ${GENED_IDS.map(id => { const lbl = id === "SPAN 2001" ? `SPAN 2001${state.redact ? "" : " Intermediate Spanish I"} (Foreign Language, 3 cr)` : `${REQS[id].label} (${PLACEHOLDERS[id].cr} cr placeholder)`;
+    ${GENED_IDS.map(id => { const lbl = id === FL_COURSE ? `${FL_COURSE}${state.redact ? "" : " " + PLAN_CATALOG[FL_COURSE].title} (Foreign Language, ${PLAN_CATALOG[FL_COURSE].cr} cr)` : `${REQS[id].label} (${PLACEHOLDERS[id].cr} cr placeholder)`;
       return `<label class="chk"><input type="checkbox" data-gened="${id}" ${cfg.geneds[id] ? "checked" : ""}> ${esc(lbl)}</label>`; }).join("")}
   </section>
   <section><h3>Locked semesters</h3>
@@ -1796,10 +2180,10 @@ function renderPlanner() {
     const i2720 = idxOf("CSCI 2720");
     const checks = [
       [applied + plannedCr >= DEGREE.req, `Total credits: ${applied} applied + ${plannedCr} planned = ${applied + plannedCr} of ${DEGREE.req}`],
-      [10 + upper >= 39, `Upper-division: 10 so far + ${upper} planned = ${10 + upper} of 39 (placeholders not counted)`],
-      [11 + major >= 42, `Major credits: 11 applied + ${major} planned = ${11 + major} of 42`],
-      [12 + areaVI >= 19, `Area VI: 12 applied + ${areaVI} planned = ${12 + areaVI} of 19`],
-      [Math.min(60, 15 + plannedCr) >= 45, `Residency: ${Math.min(60, 15 + plannedCr)} UGA credits in your last 60 (45 required; assumes every planned course is taken at UGA)`],
+      [UPPER_SO_FAR + upper >= 39, `Upper-division: ${UPPER_SO_FAR} so far + ${upper} planned = ${UPPER_SO_FAR + upper} of 39 (placeholders not counted)`],
+      [MAJOR_APPLIED + major >= MAJOR_REQ, `Major credits: ${MAJOR_APPLIED} applied + ${major} planned = ${MAJOR_APPLIED + major} of ${MAJOR_REQ}`],
+      [A6_APPLIED + areaVI >= A6_REQ, `Area VI: ${A6_APPLIED} applied + ${areaVI} planned = ${A6_APPLIED + areaVI} of ${A6_REQ}`],
+      [Math.min(60, PROF.residencySoFar + plannedCr) >= 45, `Residency: ${Math.min(60, PROF.residencySoFar + plannedCr)} UGA credits in your last 60 (45 required; assumes every planned course is taken at UGA)`],
       [major >= 15, `Major residency: ${major} major credits planned at UGA (15 required)`],
       [true, `Teamwork: ${P0.app} (Application Design) is a team-based course`],
     ];
@@ -1816,13 +2200,15 @@ function renderPlanner() {
       <div class="plan-actions"><button class="btn" id="planCsv">Download CSV</button></div></div>${errs}`;
     main += `<div class="checks">${checks.map(([ok, t]) => `<div class="ck ${ok ? "ok" : "bad"}"><span>${ok ? "✓" : "✕"}</span>${esc(t)}</div>`).join("")}</div>`;
     main += warns.map(w => `<div class="alert warn">${esc(w)}</div>`).join("");
-    main += `<div class="terms-grid">`;
+    // Every semester bar uses the same 0–scaleCr scale, so a 9-cr summer never looks as full as an 18-cr fall.
+    const scaleCr = Math.max(1, ...terms.slice(0, T).map((tm, t) => Math.max(tm.max, loads[t])));
+    main += `<p class="note">Bars share one scale, 0–${scaleCr} cr. Gray tick = your minimum, dark tick = your maximum.</p><div class="terms-grid">`;
     for (let t = 0; t < T; t++) {
       const list = items.map((it, i) => [it, i]).filter(([, i]) => assign[i] === t).sort((a, b) => (b[0].cs - a[0].cs) || a[0].id.localeCompare(b[0].id));
-      const tm = terms[t], x = loads[t], pct = Math.min(100, x / Math.max(tm.max, 1) * 100);
+      const tm = terms[t], x = loads[t], pct = Math.min(100, x / scaleCr * 100);
       const cls = x > 18 ? "bad" : t < T - 1 && x < tm.min ? "warn" : "ok";
       main += `<div class="term"><div class="term-h"><b>${tm.label}</b><span class="load ${cls}">${x} cr</span></div>
-        <div class="tbar"><span style="width:${pct}%"></span><i style="left:${Math.min(100, tm.min / Math.max(tm.max, 1) * 100)}%" title="Minimum ${tm.min}"></i></div>
+        <div class="tbar"><span style="width:${pct}%"></span><i style="left:${tm.min / scaleCr * 100}%" title="Minimum ${tm.min}"></i><i class="mx" style="left:calc(${tm.max / scaleCr * 100}% - 2px)" title="Maximum ${tm.max}"></i></div>
         <div class="tsub">${tm.min}–${tm.max} cr allowed${list.some(([it]) => it.cs) ? ` · ${list.filter(([it]) => it.cs).length} CSCI` : ""}</div>`;
       for (const [it, i] of list) main += cardHTML(it, i, P0);
       main += `</div>`;
@@ -1842,7 +2228,6 @@ function renderPlanner() {
 
 function cardHTML(it, i, P0) {
   const { items, terms, assign } = P0, t = assign[i];
-  const color = colorOf(it.blocks[0] || "BLK:MAJOR");
   const flags = [];
   if (OFF_FLAG[it.off]) flags.push(OFF_FLAG[it.off]);
   if (it.id.startsWith("MATH") || it.id.startsWith("CBIO")) flags.push("Cross-listed with CSCI: confirm with your advisor that it counts as a CSCI elective");
@@ -1854,10 +2239,11 @@ function cardHTML(it, i, P0) {
   const role = it.autoElective ? "Auto-picked elective" : it.pinnedElective ? "Your elective" : it.role === "app" ? (PLAN_CFG.app === "auto" ? "Auto-picked: Application Design" : "Application Design") : it.role === "sys" ? (PLAN_CFG.sys === "auto" ? "Auto-picked: Systems Design" : "Systems Design") : it.placeholder ? "Placeholder: choose a course" : it.role === "gened" ? "Gen-ed" : "Required";
   const pinOpts = `<option value="">${PLAN_CFG.pins[it.id] ? "Unlock" : "Auto term"}</option>` + HORIZON.filter(h => PLAN_CFG.terms[h.key].on).map(h => `<option value="${h.key}"${PLAN_CFG.pins[it.id] === h.key ? " selected" : ""}>Lock to ${h.label}</option>`).join("");
   const title = it.placeholder ? it.sub : state.redact ? "" : it.title;
-  return `<div class="pcard" style="--c:${color}">
+  const fam = FAMILY[it.blocks[0]] || "cs";
+  return `<div class="pcard" style="--c:var(--${fam})">
     <div class="pc-top"><b>${esc(it.placeholder ? it.title : it.id)}</b><span>${it.cr} cr</span></div>
     ${title ? `<div class="pc-t">${esc(title)}</div>` : ""}
-    <div class="pc-meta">${it.blocks.map(b => `<span class="sw" style="background:${colorOf(b)}"></span>`).join("")}${esc(state.redact ? it.blocks.map(b => ITEMS.get(b).short).join(", ") : it.req || "")} · <i>${esc(role)}</i></div>
+    <div class="pc-meta">${it.blocks.map(swatch).join("")} ${esc(state.redact ? it.blocks.map(b => ITEMS.get(b).short).join(", ") : it.req || "")} · <i>${esc(role)}</i></div>
     ${prereqs.length ? `<div class="pc-pre">After: ${esc(prereqs.join(", "))}</div>` : ""}
     ${flags.map(f => `<div class="pc-flag">${esc(f)}</div>`).join("")}
     <div class="pc-foot"><select data-pin="${esc(it.id)}" aria-label="Lock ${esc(it.id)} to a semester">${pinOpts}</select>${PLAN_CFG.pins[it.id] ? `<span class="lock" title="Locked">🔒</span>` : ""}${it.bid ? `<a class="ext sm" href="https://bulletin.uga.edu/Course/Details/${it.bid}" target="_blank" rel="noopener">Bulletin ↗</a>` : ""}</div>
@@ -1923,10 +2309,18 @@ document.querySelectorAll("[data-mode]").forEach(b => b.addEventListener("click"
 
 
 /* Boot */
-syncTheme(); syncRedact(); syncArrows(); fillDatalist(); renderHeader(); renderLegend();
-document.getElementById("viewnote").textContent = "Each colored cloud is one audit section. Shared courses sit where clouds overlap and wear both colors. Hover to nudge, drag to move, click for details.";
+// Profile switcher: everything derives from the profile's data at load, so switching saves the choice and reloads.
+document.querySelectorAll("[data-profile]").forEach(b => {
+  b.setAttribute("aria-pressed", b.dataset.profile === PROFILE_ID);
+  b.addEventListener("click", () => { if (b.dataset.profile === PROFILE_ID) return; store.set("profile", b.dataset.profile); location.reload(); });
+});
+document.getElementById("sourceLine").textContent = `University of Georgia · ${PROF.source}`;
+document.title = `Degree Map · ${PROF.name}`;
+syncTheme(); syncRedact(); fillDatalist(); renderHeader(); renderLegend();
 buildSim();
 render();
+// On a small graph area the open legend would crowd the graph, so it starts collapsed there.
+{ const st = document.getElementById("stage").getBoundingClientRect(); if (st.height < 640 || st.width < 1000) document.querySelector(".legend").open = false; }
 fit(false);
 requestAnimationFrame(() => fit(false));
 runPlanner();

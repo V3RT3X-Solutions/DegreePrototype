@@ -2,7 +2,7 @@
 
 An interactive, single-file web page that turns a DegreeWorks audit into two things:
 
-1. **Degree graph:** an Obsidian-style knowledge graph of the whole degree. Every course and requirement is a node, every audit section is a color-coded cluster, and arrows show prerequisite progression.
+1. **Degree graph:** an Obsidian-style knowledge graph of the whole degree. Every course and requirement is a node, every audit section is a cluster colored by group (major, gen-ed, electives), and arrows show prerequisite progression.
 2. **Semester plan:** a scheduler that finds the earliest possible graduation given your credit limits, then lays out every remaining course semester by semester.
 
 Everything runs locally in the browser from one HTML file. No install, no server, no build step, and no data leaves your machine.
@@ -36,37 +36,54 @@ That's it. The page has no dependencies and works offline. The only network link
 
 Use the toggle at the top left to switch between **Degree graph** and **Semester plan**. Your theme, redaction, view and planner settings are remembered in the browser (`localStorage`).
 
+### Profiles
+
+The **Profile** switch at the top right picks whose data is shown. Both profiles are hard-coded in the page and share the same degree structure and Bulletin prerequisites:
+
+- **Vivek:** the real DegreeWorks audit dated 10/03/2026 (personal identifiers removed).
+- **Hypothetical:** a fictional junior with Data Structures in progress, built so every legend case appears at least once: all three requirement types plus a course split across two, complete/in-progress/needed items, open requirements (one complete), both pick-one groups, courses eligible now / after this term / blocked, and all three prerequisite edge styles.
+
+Switching saves the choice and reloads the page. Planner settings are saved separately for each profile. The planner's degree checks (upper-division, major and Area VI credits) are computed from the selected profile's data.
+
 ---
 
 ## Using the degree graph
 
 ### Reading the graph
 
+Each visual property has exactly one meaning:
+
+| Property | Meaning |
+|---|---|
+| **Color** | Requirement type: **blue** = major / CS (Major, Area VI, Entrance), **green** = gen ed / university / college (Areas I–V, University, Franklin College), **gray** = electives / excess. Sections of the same type use lighter or darker shades of one hue. An item that counts toward two types is split between both colors. |
+| **Fill** | Progress: **empty** = needed, **half** = in progress, **full** = complete. |
+| **Thin outer ring** | Eligibility, shown only on needed courses: **solid** = eligible now, **dashed** = eligible after this term, **none** = blocked. |
+| **Size** | Credit hours: circle area is proportional to credits (a 4-cr course has 4× the area of a 1-cr course). |
+| **Inner symbol** | Node kind: **none** = course, **+** = open requirement (e.g. Literature, Major Electives), **◇** = pick one (Application Design, Systems Design), **flag** = milestone (Admission to CS Major). Outlines are always solid. |
+| **Edge style** | Dependency: one **solid white arrow** for every prerequisite, including "one of several" alternatives and pre-/corequisites (the side panel says which kind). Thin colored lines without arrows link a node to its section. All other edges are white (dark ink in light mode). While a course is selected, **yellow** marks what it requires and **green** what it unlocks. |
+
 | Element | Meaning |
 |---|---|
-| **Center node** | The degree. Its ring shows credits applied (83 of 121). |
-| **Hub nodes** | The 12 audit sections (University, Franklin College, Areas I–VI, Entrance, Major, General Electives, Excess Credits). Each has its own color and a soft colored cloud. The hub shows items done / total and the audit's status. |
-| **Course nodes** | Circles sized by credit hours. **Filled** = complete, **half-filled** = in progress, **empty ring** = still needed. |
-| **Split ring** | A course that counts toward more than one section wears each section's color, and the layout pulls it between those hubs, so overlapping clouds show shared courses. |
-| **Dashed ring** | An open requirement (e.g. Literature, Major Electives) or a "pick one" group (Application Design, Systems Design). |
-| **Pulsing ring** | Eligible now: needed, and every prerequisite is complete. |
-| **Dashed outer ring** | Eligible after this term: unlocks once your in-progress courses finish. |
-| **Arrows** | Prerequisites (solid), "one of several" alternatives (dashed), pre- or corequisites (dotted). |
+| **Center node** | The degree. Its ring and number both show credits applied (83 of 121, including this term's in-progress courses). |
+| **Hub nodes** | The 12 audit sections, larger than courses, each in a soft cloud of its section color. The thick ring and the number inside both show items complete / total. |
+| **Shared courses** | A course that counts toward more than one section is pulled between those hubs, so it sits where their clouds overlap. Its tooltip lists every section. |
+
+**Progressive disclosure:** at overview zoom, the graph emphasizes requirement type, progress, hubs and course codes. Audit text, eligibility rings and open-requirement labels stay quiet until you hover, select or zoom in (about 110%+). Prerequisite arrows are hidden entirely until you click a course; then only its own arrows appear (yellow = prerequisite, green = unlocks).
 
 ### Interacting
 
-- **Hover** a node: nearby nodes wobble and settle back, its direct connections light up and everything else fades. A tooltip shows code, credits, status and sections.
-- **Click** a course to trace it. Everything it requires turns **blue**, everything it unlocks turns **pink**, and the side panel shows:
+- **Hover** a node: nearby nodes wobble and settle back, its direct connections light up and everything else fades. A tooltip shows code, credits, status and sections. Its label appears too if it was hidden to avoid overlap.
+- **Click** a course to trace it. Only direct links are highlighted: the courses it directly requires turn **yellow**, the courses it directly unlocks turn **green**. Click one of those to follow the chain a step further. The side panel shows:
   - credits, status and whether you can take it now
   - which sections and requirement lines it counts toward
   - its prerequisites as AND/OR groups, each marked *Met / In progress / Not met*, plus the exact Bulletin wording
-  - what it unlocks, and how many items are downstream in total
+  - what it directly unlocks, and how many more items depend on it further down the chain
   - its planned semester (from the planner) and a link to its Bulletin page
 - **Click** a section hub to see its requirements, the audit's notes, and which of its courses are shared with other sections.
 - **Drag** nodes to rearrange; **Reset layout** restores the original arrangement.
 - **Scroll** to zoom, drag the background to pan, or use the **+ / − / ⤢** buttons.
 
-![Tracing CSCI 2720: prerequisites in blue, everything it unlocks in pink](docs/screenshots/graph-trace.png)
+![Tracing CSCI 2720: prerequisites in yellow, everything it unlocks in green](docs/screenshots/graph-trace.png)
 
 ### Toolbar
 
@@ -74,11 +91,10 @@ Use the toggle at the top left to switch between **Degree graph** and **Semester
 |---|---|
 | **All / Needed / In progress / Complete / Eligible now** | Fades everything that doesn't match. |
 | **Search** | Type a code (e.g. `CSCI 2720`) or a requirement name and press Enter to jump to it. |
-| **Prereq arrows** | Show or hide prerequisite arrows (they still appear when tracing a course). |
 | **Reset layout** | Re-runs the force layout from its starting positions. |
 | **Redact titles** | Hides course titles and audit requirement-line names everywhere (graph, panel, planner, CSV), for screenshots and demos. |
 | **Light / Dark theme** | Switches theme. |
-| **Export PNG** | Saves exactly what's on screen as a 2× PNG. |
+| **Export PNG** | Saves what's on screen as a 2× PNG, with a title, a one-line key and the data sources added so the image makes sense on its own. |
 
 **Keyboard:** `/` search · `F` fit to screen · `+` / `-` zoom · `Esc` clear selection.
 
@@ -117,8 +133,8 @@ It assumes your Fall 2026 in-progress courses are passed and starts planning in 
 - **Earliest graduation** plus semester count and credits planned.
 - **Degree checks:** total credits (121), upper-division (39), major credits (42), Area VI (19), residency (45 of the last 60 at UGA), major residency (15), teamwork course, and when the major-admission courses will be done.
 - **Warnings:** semesters under your minimum, over 18 hours, or a search that hit its time limit.
-- **Semester columns**, each with a credit bar against its min/max, and a card per course showing:
-  - section color(s) and role (required, auto-picked, your elective, placeholder)
+- **Semester columns**, each with a credit bar (every bar uses the same scale, with ticks at that term's min and max), and a card per course showing:
+  - the sections it counts toward and its role (required, auto-picked, your elective, placeholder); CSCI courses have a dark left edge
   - the in-plan prerequisites it waits on ("After: …")
   - offering flags: *fall only*, *spring only*, *"Offered every year" (no term given): confirm in Athena*, *not offered on a regular basis*, *cross-listed*
   - a lock menu and a Bulletin link
@@ -160,12 +176,14 @@ The audit doesn't contain prerequisite chains, so those come from the public [UG
 
 ### 3. The degree graph
 
-- **Rendering:** hand-written **SVG**, no charting library. Colors are literal values from a per-theme palette, so the exported PNG looks exactly like the screen.
+- **Rendering:** hand-written **SVG**, no charting library. Colors are literal values from a per-theme palette, so the exported PNG looks exactly like the screen. Each color has one job: **section group** (blue / teal / gray, with related sections as lighter or darker shades of one hue), **status** as fill level rather than hue, and a **trace pair** (yellow = requires, green = unlocks) shown only while a course is selected. The palette was checked for color-vision deficiency in both themes.
 - **Layout:** a custom **force-directed simulation**, modeled on d3-force but written from scratch:
   - **Springs:** degree→section, section→item, choice→option, and weak prerequisite springs. Link strength is split by how many sections an item belongs to, which is what places shared courses between hubs.
   - **Forces:** many-body repulsion, collision with label padding, and weak centering gravity.
   - **Start:** a seeded random generator gives the same layout every load, and the simulation pre-settles for 380 steps before the first draw.
-- **Clusters:** one translucent group of circles per section; overlapping groups blend into the overlap regions.
+- **Clusters:** one translucent group of circles per section, in that section's shade; overlapping groups blend where sections share courses.
+- **Labels:** a greedy declutter pass places labels in priority order (selected/hovered, then needed, in progress, complete). Each tries below, above, right, then left of its node, skipping any spot that overlaps another label, a node, or a highlighted trace arrow; if none is free it stays hidden until hovered. Arrows stop just outside a node's outermost ring (selection, eligibility or hub progress ring). Section and degree labels are always shown.
+- **Legend:** four sections (requirement type, progress, availability, relationships). Circle size = credit hours is explained in the overview panel and the exported PNG key. Its examples are drawn by the same functions as the graph, so they match exactly. *Fit to screen* reserves room for it (on the left or along the bottom, whichever leaves a bigger graph), and it starts collapsed on small screens.
 - **Hover wobble:** a separate damped spring per node, so nodes wobble and always return to where the layout put them. It runs at a fixed ~60 Hz step so motion looks the same on any refresh rate, and turns off under `prefers-reduced-motion`.
 - **Eligibility:** computed with plain logic, no AI. A needed course is *eligible now* if every prerequisite group contains a completed course, and *eligible after this term* if every group has a completed or in-progress one.
 
@@ -247,7 +265,7 @@ The script inside `degree-map.html` is organized top to bottom:
 - **Cross-listed electives** (e.g. MATH(CSCI) 4670) are flagged: confirm with your advisor that they count as CSCI electives.
 - **Admission to the major** requires grades (C or better, 2.7 GPA across CSCI 1302/2610/2720) that the planner can't predict; it only reports when the courses will be done.
 - **Bulletin wording is shown as written.** For example, CSCI 4760's prerequisite text ends with a stray `))`, and CSCI 4280's text requires both CSCI 2720 *and* 2720E. Because of that literal wording, CSCI 4280 shows as unavailable.
-- **Label crowding:** the CS clusters are dense when fully zoomed out; zoom in or hover to separate labels.
+- **Label crowding:** in dense clusters some labels (mostly completed courses) are hidden to avoid overlap; hover a node or zoom in to see them.
 
 ---
 
