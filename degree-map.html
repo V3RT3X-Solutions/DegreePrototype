@@ -1032,7 +1032,8 @@ function drawDegree(g, n) {
 // Every dependency (prerequisite, "one of" alternative, pre-/corequisite) draws as the same solid arrow;
 // the side panel spells out which kind it is.
 const ARROW = { dash: null, w: 2 };
-const PRE_STYLE = { prereq: ARROW, alt: ARROW, preco: ARROW, fulfills: ARROW };
+const COREQ = { dash: "6 4", w: 2 }; // pre- or corequisite: may be taken in the same term
+const PRE_STYLE = { prereq: ARROW, alt: ARROW, preco: COREQ, fulfills: ARROW };
 
 function render() {
   const pal = P();
@@ -1211,6 +1212,7 @@ function applyVisual() {
       else if (dnE.has(l.e)) { color = pal.down; marker = "a-down"; w += 1.2; o = 1; }
       else o = 0; // prerequisite arrows only appear for the clicked course
       line.setAttribute("stroke", color); line.setAttribute("marker-end", `url(#${marker})`); line.setAttribute("stroke-width", w);
+      if (PRE_STYLE[l.e.kind].dash) line.setAttribute("stroke-dasharray", PRE_STYLE[l.e.kind].dash); else line.removeAttribute("stroke-dasharray");
       line.style.opacity = o;
       l.traced = color !== pal.edge;
       if (l.traced) (color === pal.up ? raiseUp : raiseDn).push(line);
@@ -1595,6 +1597,7 @@ function renderLegend() {
     + group("Lines", [
       [edge({ w: 1.3 }, pal.edge, false), "Belongs to a section"],
       [edge({ w: PRE_STYLE.prereq.w + 1.2 }, pal.up), "Prerequisite"],
+      [edge({ w: COREQ.w + 1.2, dash: COREQ.dash }, pal.up), "Pre- or corequisite"],
       [edge({ w: PRE_STYLE.prereq.w + 1.2 }, pal.down), "Unlocks"],
     ]);
 }
