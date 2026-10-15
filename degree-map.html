@@ -985,11 +985,11 @@ function progressRing(g, r, w, parts, pal) {
   el("circle", { r, fill: "none", stroke: pal.border, "stroke-width": w }, g);
   const total = parts.reduce((s, p) => s + p[0], 0) || 1;
   let a = -Math.PI / 2;
-  for (const [v, color] of parts) {
+  for (const [v, color, op] of parts) {
     if (!v) continue;
     const b = a + v / total * 2 * Math.PI;
-    if (v === total) el("circle", { r, fill: "none", stroke: color, "stroke-width": w }, g);
-    else el("path", { d: arc(r, a, b), fill: "none", stroke: color, "stroke-width": w }, g);
+    if (v === total) el("circle", { r, fill: "none", stroke: color, "stroke-width": w, opacity: op ?? null }, g);
+    else el("path", { d: arc(r, a, b), fill: "none", stroke: color, "stroke-width": w, opacity: op ?? null }, g);
     a = b;
   }
 }
@@ -999,7 +999,7 @@ function hubMarks(g, o) {
   const pal = P(), r = o.r, c = o.c;
   el("circle", { r, fill: pal.surface }, g);
   el("circle", { r, fill: c, "fill-opacity": 0.14, stroke: c, "stroke-width": 2, "stroke-dasharray": o.dashed ? "6 4" : null }, g);
-  progressRing(g, r + 6, 5, [[o.done, c], [o.total - o.done, "none"]], pal);
+  progressRing(g, r + 6, 5, [[o.done, c], [o.ip || 0, c, 0.4], [o.total - o.done - (o.ip || 0), "none"]], pal); // solid = complete, translucent = in progress
   txt(g, 0, o.fs * 0.36, `${o.done}/${o.total}`, o.fs, 750, pal.text, "middle");
 }
 
@@ -1008,7 +1008,7 @@ function drawHub(g, n) {
   el("circle", { r: r + 14, fill: "none", stroke: pal.text, "stroke-width": 3.5, class: "selring", style: "opacity:0" }, g);
   n.selR = r + 14 + 1.75; n.eligR = r + 6 + 2.5; // progress ring
   const kids = it.childIds.map(id => ITEMS.get(id));
-  hubMarks(g, { r, c: secColor(it.id), done: kids.filter(k => k.status === "complete").length, total: kids.length, dashed: it.counts === false, fs: 14 });
+  hubMarks(g, { r, c: secColor(it.id), done: kids.filter(k => k.status === "complete").length, ip: kids.filter(k => k.status === "in_progress").length, total: kids.length, dashed: it.counts === false, fs: 14 });
   const l = txt(g, 0, r + 30, it.short, 15, 750, pal.text, "middle");
   const s = txt(g, 0, r + 47, it.audit ? `Audit: ${it.audit.toLowerCase().replace("-", " ")}` : it.counts === false ? "Not counted" : `${it.applied} cr applied`, 12, 500, pal.muted, "middle");
   for (const t of [l, s]) { t.setAttribute("paint-order", "stroke"); t.setAttribute("stroke", pal.bg); t.setAttribute("stroke-width", 5); t.setAttribute("stroke-linejoin", "round"); }
@@ -1021,7 +1021,7 @@ function drawDegree(g, n) {
   el("circle", { r: r + 16, fill: "none", stroke: pal.text, "stroke-width": 3.5, class: "selring", style: "opacity:0" }, g);
   n.selR = r + 16 + 1.75; n.eligR = r + 8 + 3; // progress ring
   el("circle", { r, fill: pal.surface, stroke: pal.text, "stroke-width": 2.5 }, g);
-  progressRing(g, r + 8, 6, [[applied, pal.text], [DEGREE.req - applied, "none"]], pal); // ring = the number shown
+  progressRing(g, r + 8, 6, [[credComplete, pal.text], [credIP, pal.text, 0.4], [DEGREE.req - applied, "none"]], pal); // solid = complete, translucent = in progress
   txt(g, 0, 4, String(applied), 24, 800, pal.text, "middle");
   txt(g, 0, 21, `of ${DEGREE.req} cr`, 11.5, 500, pal.muted, "middle");
   const l = txt(g, 0, r + 36, DEGREE.label, 18, 800, pal.text, "middle");
@@ -1573,7 +1573,7 @@ function renderLegend() {
     if (arrow) el("path", { d: "M8,-4.5 L18,0 L8,4.5 Z", fill: col }, g);
   });
   const group = (h, rows, note) => `<div><div class="lg-h">${h}</div>${note ? `<div class="lg-note">${note}</div>` : ""}<div class="grid">${rows.map(([sv, l]) => `<div class="it">${sv}<span>${l}</span></div>`).join("")}</div></div>`;
-  const hub = glyph(42, 42, g => hubMarks(g, { r: 11, c: pal.fam.cs, done: 3, total: 4, fs: 9 }));
+  const hub = glyph(34, 34, g => progressRing(g, 12, 5, [[2, pal.fam.cs], [1, pal.fam.cs, 0.4], [1, "none"]], pal));
   document.getElementById("legend").innerHTML =
     group("Requirement type", [
       [node({ cols: blue }), "Major / CS"],
@@ -1587,7 +1587,7 @@ function renderLegend() {
       [node({ status: "needed" }), "Needed (empty)"],
       [node({ status: "in_progress" }), "In progress (half)"],
       [node({ status: "complete" }), "Complete (full)"],
-      [hub, "Section hub: items complete / total"],
+      [hub, "Solid: completed<br>Translucent: in-progress"],
     ])
     + group("Availability", [
       [node({ status: "needed", elig: "now" }), "Eligible now"],
