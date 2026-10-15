@@ -70,7 +70,7 @@ Each visual property has exactly one meaning:
 
 **Progressive disclosure:** at overview zoom, the graph emphasizes requirement type, progress, hubs and course codes. Audit text, eligibility rings and open-requirement labels stay faint until you hover, select or zoom in (about 110%+). Prerequisite arrows are hidden entirely until you click a course; then only that course's arrows appear.
 
-The **Overview** panel on the right opens with a six-line key (color, cloud, size, fill, ring, click) for reading the graph at a glance.
+The **Overview** panel on the right opens with a four-sentence intro: the degree at the center, its audit sections, then the classes in each, plus what color, fill and clicking do.
 
 ### Interacting
 

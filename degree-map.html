@@ -91,11 +91,7 @@ aside#panel{width:380px;flex:none;border-left:1px solid var(--border);background
 #panel ul{margin:0;padding:0;list-style:none}
 #panel li{padding:6px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
 #panel li:last-child{border-bottom:0}
-#panel ul.key{margin:6px 0 4px;font-size:13.5px}
-#panel ul.key li{display:grid;grid-template-columns:62px 1fr;padding:3px 0;border:0}
-#panel ul.key b{font-weight:600}
-#panel ul.key .sw{margin:0 4px 0 0}
-#panel ul.key .sw~.sw{margin-left:8px}
+#panel .intro{margin:6px 0 4px;font-size:14px;line-height:1.55}
 #panel .req{color:var(--muted);font-size:13px}
 .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid}
 .pill.complete{color:var(--muted);background:var(--complete-bg);border-color:var(--border)}
@@ -1507,15 +1503,7 @@ function overviewHTML() {
   const open = required.filter(id => ITEMS.get(id).type === "req");
   const inProg = all.filter(i => i.type === "course" && i.status === "in_progress").map(i => i.id);
   const shared = all.filter(i => i.type !== "block" && i.type !== "degree" && blocksOf(i.id).length > 1).map(i => i.id);
-  const sw = v => `<span class="sw" style="background:var(--${v})"></span>`;
-  let h = `<h2 style="font-size:20px">Overview</h2><ul class="key">
-    <li><b>Color</b><span>${sw("cs")}Major ${sw("gen")}Gen ed ${sw("other")}Electives</span></li>
-    <li><b>Cloud</b><span>one audit section</span></li>
-    <li><b>Size</b><span>credit hours</span></li>
-    <li><b>Fill</b><span>empty needed · half in progress · full done</span></li>
-    <li><b>Ring</b><span>solid take now · dashed next term</span></li>
-    <li><b>Click</b><span><span style="color:var(--up);font-weight:700">yellow</span> needs · <span style="color:var(--down);font-weight:700">green</span> unlocks</span></li>
-  </ul>`;
+  let h = `<h2 style="font-size:20px">Overview</h2><p class="intro">A graph of your college curriculum. Your degree sits at the center, linked to each section of your degree audit, and each section is linked to the classes that count toward it. Color shows the type of requirement and fill shows your progress. Click any class to see what it requires and what it unlocks.</p>`;
   h += `<h3>Sections (${BLOCKS.length})</h3><div class="chips">${BLOCKS.map(b => chip(b.id)).join("")}</div>`;
   h += `<h3>Eligible now (${now.length})</h3>` + (now.length ? `<div class="chips">${now.map(chip).join("")}</div><p class="note">Needed, and every prerequisite is complete.</p>` : `<p class="note">None.</p>`);
   h += `<h3>Eligible after this term (${next.length})</h3>` + (next.length ? `<div class="chips">${next.map(chip).join("")}</div><p class="note">Unlocks once your in-progress courses finish.</p>` : `<p class="note">None.</p>`);
