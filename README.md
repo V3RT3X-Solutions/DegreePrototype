@@ -56,10 +56,10 @@ Each visual property has exactly one meaning. The table follows the legend's sec
 | Legend section | Meaning |
 |---|---|
 | **Color = Requirement type** | **Blue** = major / CS (Major, Area VI, Entrance), **green** = gen ed / university / college (Areas I–V, University, Franklin College), **gray** = electives / excess. Sections of the same type use lighter or darker shades of one hue. An item that counts toward two types is split between both colors. |
-| **Symbol = Special requirement** | A symbol inside the circle marks a requirement that isn't one specific course: **+** = open requirement filled by any qualifying course (e.g. Literature, Major Electives), **◇** = pick one of a few listed courses (Application Design, Systems Design). A **flag** marks a milestone (Admission to CS Major). Plain courses have no symbol, and every outline is solid. |
-| **Fill = Progress** | **Empty** = needed, **half** = in progress, **full** = complete. On section hubs and the center node, the ring does the same job: **solid** = completed, **translucent** = in progress. |
-| **Outer ring = Availability** | A thin red ring, shown only on courses you still need: **solid** = eligible now, **dashed** = eligible after this term, **no ring** = blocked. |
 | **Line style = Relationship** | A thin **white line** (dark in light mode) means "belongs to": a course to its section, a section to the degree, a pick-one group to its options. Prerequisite arrows are hidden until you click a course; then **solid yellow** = prerequisite (finish it in an earlier term), **dashed yellow** = pre- or corequisite (before or in the same term), **green** = what it unlocks. The side panel lists the full AND/OR groups. |
+| **Fill = Progress** | **Empty** = needed, **half** = in progress, **full** = complete. On section hubs and the center node, the ring does the same job: **solid** = completed, **translucent** = in progress. |
+| **Outer ring = Availability** | A thin red ring, shown only on courses you still need: **solid** = eligible now, **dashed** = eligible after this term. |
+| **Symbol = Special requirement** | A symbol inside the circle marks a requirement that isn't one specific course: **+** = open requirement filled by any qualifying course (e.g. Literature, Major Electives), **◇** = pick one of a few listed courses (Application Design, Systems Design). A **flag** marks a milestone (Admission to CS Major). Plain courses have no symbol, and every outline is solid. |
 
 **Size** isn't in the legend: circle area is proportional to credit hours (a 4-cr course has 4× the area of a 1-cr course). The Overview panel mentions it.
 
