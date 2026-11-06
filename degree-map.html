@@ -207,6 +207,27 @@ table.adm select{border:1px solid var(--border);background:var(--bg);border-radi
   .search{flex:1;min-width:180px}
   .credit{min-width:0;width:100%}
 }
+.print-only{display:none}
+.advisor{margin-top:20px}
+.advisor h3{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.advisor ol{margin:0;padding-left:22px;font-size:13.5px}
+.advisor li{padding:3px 0}
+/* Print: plan only, always light, one clean handout for an advisor meeting. */
+@media print{
+  :root,:root[data-theme="dark"]{--bg:#fff;--surface:#fff;--surface2:#f1f3f6;--text:#000;--muted:#444;--border:#bbb;--up:#c98500;--down:#2f9e44;--cs:#2a78d6;--gen:#1a9e6e;--other:#7b8797;--good:#15803d;--warn:#b45309;--warn-bg:#fff3d6;--bad:#e11d48;--shadow:none;color-scheme:light}
+  html,body{height:auto;overflow:visible;display:block;background:#fff;font-size:12px}
+  header.top,.toolbar,.pl-side,.plan-actions,.pc-foot,#stage,#panel,.zoom,.legend,.assume{display:none!important}
+  main,#planner,body.mode-plan #planner{display:block!important}
+  .pl-main{overflow:visible;padding:0}
+  .print-only{display:block}
+  .print-meta{margin:0 0 10px;font-size:11px;color:var(--muted)}
+  .plan-head h2{font-size:24px}
+  .checks{grid-template-columns:1fr;gap:3px}
+  .terms-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .term,.pcard,.crit,.advisor li{break-inside:avoid;box-shadow:none}
+  .advisor{break-inside:avoid}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
 </style>
 </head>
 <body>
@@ -2301,9 +2322,10 @@ function renderPlanner() {
     });
     if (P0.incomplete) warns.push("The search hit its time limit for a shorter plan, so this one may not be the absolute shortest.");
     const grad = terms[T - 1].label;
+    main += `<p class="print-only print-meta">${esc(PROF.name)} · ${esc(DEGREE.label)} · printed ${esc(new Date().toLocaleDateString())} · Planning aid, not an official audit. Confirm with your advisor before registering.</p>`;
     main += `<div class="plan-head"><div><div class="eyebrow">Earliest graduation with these settings</div><h2>${grad}</h2>
       <p class="note">${T} semester${T > 1 ? "s" : ""} · ${plannedCr} credits planned · ${items.filter(i => i.cr > 0 || i.placeholder).length} items</p></div>
-      <div class="plan-actions"><button class="btn" id="planCsv">Download CSV</button></div></div>${errs}`;
+      <div class="plan-actions"><button class="btn" id="planPrint" title="Print, or choose Save as PDF in the print dialog">Print / Save PDF</button> <button class="btn" id="planCsv">Download CSV</button></div></div>${errs}`;
     main += `<div class="checks">${checks.map(([ok, t]) => `<div class="ck ${ok ? "ok" : "bad"}"><span>${ok ? "✓" : "✕"}</span>${esc(t)}</div>`).join("")}</div>`;
     main += warns.map(w => `<div class="alert warn">${esc(w)}</div>`).join("");
     // Every semester bar uses the same 0–scaleCr scale, so a 9-cr summer never looks as full as an 18-cr fall.
@@ -2328,6 +2350,7 @@ function renderPlanner() {
       main += `</div>`;
     }
     main += `</div>`;
+    main += `<section class="advisor"><h3>Questions for your advisor</h3><ol>${advisorQuestions(P0).map(s => `<li>${esc(s)}</li>`).join("")}</ol></section>`;
     main += `<details class="assume"><summary>How this plan is built</summary><ul>
       <li>Prerequisites must be finished in an earlier semester; pre- or corequisites may be taken in the same semester. Data: UGA Bulletin, retrieved 10/13/2026.</li>
       <li>Courses only go in seasons the Bulletin lists. “Offered every year” and irregular courses are placed in fall or spring and flagged; confirm actual sections in Athena.</li>
@@ -2338,6 +2361,27 @@ function renderPlanner() {
     </ul></details>`;
   }
   plannerEl.innerHTML = `<div class="pl-side">${side}</div><div class="pl-main">${main}</div>`;
+}
+
+/* Questions for the advisor, generated from what the plan could not decide on its own. */
+function advisorQuestions(P0) {
+  const { items, terms, assign } = P0, q = [], tl = i => terms[assign[i]].label;
+  const ip = [...ITEMS.values()].filter(i => i.type === "course" && i.status === "in_progress").map(i => i.id);
+  if (ip.length) q.push(`This plan assumes ${ip.join(", ")} (in progress) finish with a passing grade. Are they on track to meet the C-or-better rules?`);
+  items.forEach((it, i) => {
+    const name = it.placeholder ? it.title : it.id;
+    if (it.id === "REQ:EXP") q.push(`Which approved experience will satisfy Experiential Learning (planned by ${tl(i)})?`);
+    else if (it.placeholder) q.push(`Which course should satisfy ${it.title} (${it.cr} cr, planned for ${tl(i)})?`);
+    else if (it.off === "Y") q.push(`Will ${name} run in ${tl(i)}? The Bulletin says "offered every year" with no term.`);
+    else if (it.off === "I") q.push(`Will ${name} actually be offered in ${tl(i)}? The Bulletin says "not offered on a regular basis".`);
+    else if (it.off === "N") q.push(`Is ${name} offered in ${tl(i)}? The Bulletin gives no offering information.`);
+    if (it.id.startsWith("MATH") || it.id.startsWith("CBIO")) q.push(`Does cross-listed ${name} count as a CSCI major elective?`);
+  });
+  const i2720 = items.findIndex(it => it.id === "CSCI 2720"), adm = admissionState();
+  if (i2720 >= 0) q.push(`Major admission opens after ${tl(i2720)} (CSCI 2720). ${adm.short ? `My grades so far: ${adm.short}. ` : ""}What is the timeline, and what are the retake options?`);
+  [...P0.crit].filter(([, c]) => c.to).forEach(([id]) => { const k = items.findIndex(it => it.id === id); q.push(`If ${items[k].placeholder ? items[k].title : id} is full or not offered in ${tl(k)}, graduation moves to ${P0.crit.get(id).to}. What is the backup?`); });
+  q.push("Is my residency count (45 of the last 60 credits at UGA) correct?");
+  return q;
 }
 
 function cardHTML(it, i, P0) {
@@ -2408,6 +2452,7 @@ plannerEl.addEventListener("click", e => {
   else if (el.id === "clearPins") cfg.pins = {};
   else if (el.id === "planReset") PLAN_CFG = planDefaults();
   else if (el.id === "planCsv") return planCsv();
+  else if (el.id === "planPrint") return window.print();
   else return;
   for (const [id, k] of Object.entries(PLAN_CFG.pins)) if (!PLAN_CFG.terms[k].on) delete PLAN_CFG.pins[id];
   planChanged();
