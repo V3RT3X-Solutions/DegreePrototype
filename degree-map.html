@@ -208,6 +208,12 @@ table.adm select{border:1px solid var(--border);background:var(--bg);border-radi
   .credit{min-width:0;width:100%}
 }
 .print-only{display:none}
+.timeline{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:10px;padding:3px 12px 3px 4px;background:var(--bg)}
+.timeline[hidden]{display:none}
+.timeline input[type=range]{width:150px;accent-color:var(--text)}
+.timeline .tl-txt{display:flex;flex-direction:column;line-height:1.15;min-width:150px}
+.timeline .tl-txt small{color:var(--muted);font-size:11.5px}
+.timeline.projecting{border-color:var(--text);box-shadow:inset 0 0 0 1px var(--text)}
 .scen-save{display:flex;gap:6px;margin:8px 0 4px}
 .scen-save input{flex:1;min-width:0;border:1px solid var(--border);background:var(--bg);border-radius:8px;padding:5px 8px;font-size:13.5px}
 .btn:disabled{opacity:.5;cursor:not-allowed}
@@ -277,6 +283,11 @@ table.adm select{border:1px solid var(--border);background:var(--bg);border-radi
   <div class="search graph-only">
     <input id="search" type="search" list="courseList" placeholder="Jump to course, e.g. CSCI 2720" autocomplete="off" aria-label="Search courses">
     <datalist id="courseList"></datalist>
+  </div>
+  <div class="timeline graph-only" id="tlBox" hidden>
+    <button class="btn sm" id="tlPlay" title="Play the plan semester by semester">▶ Play</button>
+    <input type="range" id="tlRange" min="0" max="1" step="1" value="0" aria-label="Plan timeline: project the graph forward by semester">
+    <div class="tl-txt"><b id="tlLabel">Today</b><small id="tlSub"></small></div>
   </div>
   <div class="spacer"></div>
   <button class="btn graph-only" id="relayout" title="Re-run the layout">Reset layout</button>
@@ -708,14 +719,19 @@ function prereqGroupsState(code) {
   return now ? "now" : next ? "next" : "blocked";
 }
 const ELIG = new Map();
-for (const it of ITEMS.values()) {
-  if (it.type === "course" && it.status === "needed") ELIG.set(it.id, prereqGroupsState(it.id));
+function computeElig() { // also re-run by the plan timeline, which changes statuses
+  ELIG.clear();
+  const satisfied = id => Object.entries(CHOICES).some(([cid, c]) => c.options.includes(id) && ITEMS.get(cid).status === "complete"); // another option already filled the pick-one group
+  for (const it of ITEMS.values()) {
+    if (it.type === "course" && it.status === "needed" && !satisfied(it.id)) ELIG.set(it.id, prereqGroupsState(it.id));
+  }
+  for (const [cid, c] of Object.entries(CHOICES)) {
+    if (ITEMS.get(cid).status !== "needed") continue;
+    const es = c.options.map(o => ELIG.get(o));
+    ELIG.set(cid, es.includes("now") ? "now" : es.includes("next") ? "next" : "blocked");
+  }
 }
-for (const [cid, c] of Object.entries(CHOICES)) {
-  if (ITEMS.get(cid).status !== "needed") continue;
-  const es = c.options.map(o => ELIG.get(o));
-  ELIG.set(cid, es.includes("now") ? "now" : es.includes("next") ? "next" : "blocked");
-}
+computeElig();
 const elig = id => ELIG.get(id) || null;
 
 // Credits applied to the degree: distinct courses in counting blocks.
@@ -730,7 +746,9 @@ if (credComplete + credIP !== DEGREE.applied)
 // Course level from the first digit, so transfer codes like MATH 3TXX count as 3000-level.
 const level = code => { const m = /\d/.exec(code.split(" ")[1] || ""); return m ? +m[0] * 1000 : 0; };
 const takenCr = ids => ids.reduce((s, id) => { const c = ITEMS.get(id); return s + (c.type === "course" && c.status !== "needed" ? c.credits : 0); }, 0);
-const UPPER_SO_FAR = takenCr([...ITEMS.values()].filter(i => i.type === "course" && level(i.id) >= 3000).map(i => i.id)); // all blocks, as the audit counts it
+const UPPER_IDS = [...ITEMS.values()].filter(i => i.type === "course" && level(i.id) >= 3000).map(i => i.id);
+const UPPER_SO_FAR = takenCr(UPPER_IDS); // all blocks, as the audit counts it
+let UPPER_NOW = UPPER_SO_FAR; // the header tile; the plan timeline projects it forward
 const blockItemIds = b => BLOCKS.find(x => x.id === b).items.map(i => i[0]);
 const MAJOR_APPLIED = takenCr(blockItemIds("BLK:MAJOR")), A6_APPLIED = takenCr(blockItemIds("BLK:A6"));
 const MAJOR_REQ = ITEMS.get("BLK:MAJOR").req, A6_REQ = ITEMS.get("BLK:A6").req;
@@ -1655,13 +1673,14 @@ panel.addEventListener("click", e => {
 function renderHeader() {
   document.getElementById("credApplied").textContent = credComplete + credIP;
   document.getElementById("credReq").textContent = DEGREE.req;
-  document.getElementById("credBar").innerHTML = `<span style="width:${credComplete / DEGREE.req * 100}%;background:var(--text)" title="${credComplete} complete"></span><span style="width:${credIP / DEGREE.req * 100}%;background:var(--text);opacity:.4" title="${credIP} in progress"></span>`;
+  const pct = v => Math.min(100, v / DEGREE.req * 100);
+  document.getElementById("credBar").innerHTML = `<span style="width:${pct(credComplete)}%;background:var(--text)" title="${credComplete} complete"></span><span style="width:${pct(Math.min(credIP, Math.max(0, DEGREE.req - credComplete)))}%;background:var(--text);opacity:.4" title="${credIP} in progress"></span>`;
   const nowN = [...ELIG].filter(([id, e]) => e === "now" && ITEMS.get(id).type === "course").length;
   const tiles = [
     [credComplete, "credits complete", "var(--text)"],
     [credIP, "credits in progress", "var(--text)"],
-    [DEGREE.req - credComplete - credIP, "credits remaining", "var(--text)"],
-    [`${UPPER_SO_FAR} / 39`, "upper-division cr", "var(--text)"],
+    [Math.max(0, DEGREE.req - credComplete - credIP), "credits remaining", "var(--text)"],
+    [`${UPPER_NOW} / 39`, "upper-division cr", "var(--text)"],
     [nowN, "eligible now", "var(--text)"],
   ];
   document.getElementById("tiles").innerHTML = tiles.map(([v, l, c]) => `<div class="tile"><b style="color:${c}">${v}</b><small>${l}</small></div>`).join("");
@@ -1792,7 +1811,7 @@ document.getElementById("export").addEventListener("click", () => {
     ctx.fillStyle = pal.text; ctx.font = `700 20px ${FONT}`;
     ctx.fillText(`${DEGREE.label}: Degree Map`, 20, 30);
     ctx.fillStyle = pal.muted; ctx.font = `13px ${FONT}`;
-    ctx.fillText(`${credComplete + credIP} of ${DEGREE.req} credits applied · Blue = major (CS), green = gen ed, gray = electives & excess · Full = complete, half = in progress, empty = needed · Outer ring = eligible (solid now, dashed next term) · Circle area = credit hours`
+    ctx.fillText(`${state.tl ? `PROJECTION after ${PLAN.terms[state.tl - 1].label}: ` : ""}${credComplete + credIP} of ${DEGREE.req} credits applied · Blue = major (CS), green = gen ed, gray = electives & excess · Full = complete, half = in progress, empty = needed · Outer ring = eligible (solid now, dashed next term) · Circle area = credit hours`
       + (state.sel ? ` · Tracing ${state.sel}: yellow = requires, green = unlocks` : ""), 20, 52);
     ctx.fillText(`Profile: ${PROF.name} · ${PROF.source}. Planning aid, not an official audit.`, 20, H - 16);
     c.toBlob(b => {
@@ -2284,6 +2303,7 @@ function runPlanner() {
   PLANNED_TERM.clear();
   if (PLAN.items) PLAN.items.forEach((it, i) => PLANNED_TERM.set(it.id, PLAN.terms[PLAN.assign[i]].label));
   renderPlanner();
+  syncTimeline();
   if (state.mode !== "plan") renderPanel();
 }
 
@@ -2543,10 +2563,76 @@ plannerEl.addEventListener("click", e => {
   planChanged();
 });
 
+/* ---------- Plan timeline ----------
+   Step 0 is today. Step k projects the graph to the END of plan semester k: today's in-progress courses are
+   done (unless failed in a what-if), and every planned course in terms 1..k is complete. Statuses, block
+   statuses, eligibility and credits are re-derived from the statuses, then the graph is redrawn.
+   Only the graph changes; the planner itself always shows today's data. */
+const BASE_STATUS = new Map([...ITEMS.values()].filter(i => i.type === "course" || i.type === "req").map(i => [i.id, i.status]));
+function applyTimeline(s) {
+  state.tl = s;
+  BASE_STATUS.forEach((st, id) => { ITEMS.get(id).status = st; });
+  for (const [cid, c] of Object.entries(CHOICES)) ITEMS.get(cid).status = deriveStatus(c.options.map(o => ITEMS.get(o).status));
+  let extra = 0, extraUp = 0;
+  const done = [];
+  if (s > 0 && PLAN && PLAN.items) {
+    const failed = PLAN_CFG.failed || [];
+    for (const it of ITEMS.values()) if (it.type === "course" && BASE_STATUS.get(it.id) === "in_progress") it.status = failed.includes(it.id) ? "needed" : "complete";
+    PLAN.items.forEach((pi, i) => {
+      const t = PLAN.assign[i] + 1;
+      if (t > s) return;
+      if (t === s) done.push(pi.placeholder ? pi.title : pi.id);
+      const node = ITEMS.get(pi.id === FL_COURSE ? "REQ:FL" : pi.id);
+      if (node && (node.type === "course" || node.type === "req")) node.status = "complete";
+      if (!(node && node.type === "course" && counted.has(node.id))) extra += pi.cr; // electives and placeholders are not nodes
+      if (!(node && node.type === "course") && !pi.placeholder && courseNum(pi.id) >= 3000) extraUp += pi.cr;
+    });
+    const els = PLAN.items.map((pi, i) => [pi, PLAN.assign[i] + 1]).filter(([pi]) => pi.role === "elective");
+    if (els.length && ITEMS.has("REQ:MAJEL")) { const n = els.filter(([, t]) => t <= s).length; ITEMS.get("REQ:MAJEL").status = n === els.length ? "complete" : n ? "in_progress" : ITEMS.get("REQ:MAJEL").status; }
+    for (const [cid, pick] of [["CHOICE:APP", PLAN.app], ["CHOICE:SYS", PLAN.sys]]) if (ITEMS.get(pick).status === "complete") ITEMS.get(cid).status = "complete";
+    const adm = ITEMS.get("REQ:ADMIT");
+    if (adm && adm.status === "needed" && adm.from.every(c => ITEMS.get(c).status === "complete")) adm.status = "in_progress"; // applying; admission itself is never assumed
+  }
+  for (const b of BLOCKS) ITEMS.get(b.id).status = deriveStatus(b.items.map(([id]) => ITEMS.get(id).status));
+  ITEMS.get("DEGREE").status = deriveStatus(BLOCKS.filter(b => b.counts !== false).map(b => ITEMS.get(b.id).status));
+  credComplete = credIP = 0;
+  counted.forEach(id => { const c = ITEMS.get(id); if (c.status === "complete") credComplete += c.credits; else if (c.status === "in_progress") credIP += c.credits; });
+  credComplete += extra;
+  UPPER_NOW = takenCr(UPPER_IDS) + extraUp;
+  computeElig();
+  renderHeader(); render();
+  updateTimelineUI(done);
+}
+const tlBox = document.getElementById("tlBox"), tlRange = document.getElementById("tlRange"), tlLabel = document.getElementById("tlLabel"), tlSub = document.getElementById("tlSub"), tlPlay = document.getElementById("tlPlay");
+let tlTimer = null;
+function stopTimeline() { clearInterval(tlTimer); tlTimer = null; tlPlay.textContent = "▶ Play"; }
+function updateTimelineUI(done = []) {
+  const s = state.tl || 0;
+  tlRange.value = s;
+  tlLabel.textContent = s === 0 ? "Today" : `After ${PLAN.terms[s - 1].label}`;
+  tlSub.textContent = s === 0 ? "Drag to project your plan" : `${credComplete + credIP}/${DEGREE.req} cr${s === PLAN.T ? " · plan complete" : ""}${done.length ? " · done: " + done.slice(0, 3).join(", ") + (done.length > 3 ? ` +${done.length - 3}` : "") : ""}`;
+  tlBox.classList.toggle("projecting", s > 0);
+}
+function syncTimeline() { // after the plan changes: range follows its length
+  const ok = !!(PLAN && PLAN.items);
+  tlBox.hidden = !ok;
+  if (!ok) return;
+  tlRange.max = PLAN.T;
+  if ((state.tl || 0) > PLAN.T) applyTimeline(0); else updateTimelineUI();
+}
+tlRange.addEventListener("input", () => { stopTimeline(); applyTimeline(Number(tlRange.value)); });
+tlPlay.addEventListener("click", () => {
+  if (tlTimer) return stopTimeline();
+  if ((state.tl || 0) >= PLAN.T) applyTimeline(0);
+  tlPlay.textContent = "⏸ Pause";
+  tlTimer = setInterval(() => { if ((state.tl || 0) >= PLAN.T) return stopTimeline(); applyTimeline((state.tl || 0) + 1); }, reduced ? 1800 : 1100);
+});
+
 /* ---------- mode switch ---------- */
 state.mode = store.get("mode") === "plan" ? "plan" : "graph";
 function setMode(m) {
   state.mode = m; store.set("mode", m);
+  if (m === "plan" && state.tl) { stopTimeline(); applyTimeline(0); renderPlanner(); } // the planner always works from today's data
   document.body.classList.toggle("mode-plan", m === "plan");
   document.querySelectorAll("[data-mode]").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === m));
   if (m === "graph") { renderPanel(); requestAnimationFrame(() => fit(false)); }
