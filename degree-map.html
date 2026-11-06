@@ -208,6 +208,17 @@ table.adm select{border:1px solid var(--border);background:var(--bg);border-radi
   .credit{min-width:0;width:100%}
 }
 .print-only{display:none}
+.scen-save{display:flex;gap:6px;margin:8px 0 4px}
+.scen-save input{flex:1;min-width:0;border:1px solid var(--border);background:var(--bg);border-radius:8px;padding:5px 8px;font-size:13.5px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.cmp{margin:12px 0}
+.cmp-wrap{overflow-x:auto}
+.cmp-t{border-collapse:collapse;font-size:13.5px;min-width:100%;margin-top:6px}
+.cmp-t th,.cmp-t td{padding:6px 10px;border-top:1px solid var(--border);text-align:left;vertical-align:top}
+.cmp-t thead th{border-top:0;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.cmp-t tbody th{font-weight:600;color:var(--muted);white-space:nowrap}
+.cmp-t td:nth-child(2){background:var(--surface2)}
+.cmp .req{color:var(--muted);font-size:12px}
 .advisor{margin-top:20px}
 .advisor h3{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
 .advisor ol{margin:0;padding-left:22px;font-size:13.5px}
@@ -1809,6 +1820,8 @@ document.querySelector(".legend").addEventListener("toggle", () => fit());
    ===================================================================== */
 const PLAN_CATALOG = {
   "CBIO 4835": {"display": "CBIO(CSCI) 4835/6835", "title": "Introduction to Computational Biology", "id": 31322, "offText": null, "off": "N", "cr": 3, "perm": false},
+  "CSCI 1302": {"display": "CSCI 1302", "title": "Software Development", "id": 4726, "offText": "Offered fall, spring and summer", "off": "FSU", "cr": 4, "preText": "CSCI 1301-1301L or CSCI 1301E", "pre": [["CSCI 1301", "CSCI 1301E"]], "perm": false},
+  "CSCI 2670": {"display": "CSCI 2670", "title": "Introduction to Theory of Computing", "id": 4924, "offText": "Offered fall and spring", "off": "FS", "cr": 4, "preText": "CSCI 2610 or CSCI 2611", "pre": [["CSCI 2610", "CSCI 2611"]], "perm": false},
   "CSCI 1730": {"display": "CSCI 1730", "title": "Systems Programming", "id": 12406, "offText": "Offered fall, spring and summer", "off": "FSU", "cr": 4, "preText": "CSCI 1302", "pre": [["CSCI 1302"]], "perm": false},
   "CSCI 2720": {"display": "CSCI 2720", "title": "Data Structures", "id": 4304, "offText": "Offered fall, spring and summer", "off": "FSU", "cr": 4, "preText": "(CSCI 1302 or CSCI 1302H) and (CSCI 2610 or CSCI 2610E or CSCI 2611)", "pre": [["CSCI 1302", "CSCI 1302H"], ["CSCI 2610", "CSCI 2610E", "CSCI 2611"]], "perm": false},
   "CSCI 3030": {"display": "CSCI 3030", "title": "Computing, Ethics, and Society", "id": 20694, "offText": "Offered spring", "off": "S", "cr": 3, "preText": "ENGL 1050H or ENGL 1102 or ENGL 1102E", "pre": [["ENGL 1050H", "ENGL 1102", "ENGL 1102E"]], "perm": false},
@@ -1897,6 +1910,10 @@ const courseNum = id => parseInt(id.split(" ")[1], 10);
 const ELECTIVE_IDS = Object.keys(PLAN_CATALOG).filter(id => courseNum(id) >= 4000 && !BASE_IDS.includes(id) && !DONE.has(id));
 const CROSS_LISTED = id => !id.startsWith("CSCI");
 const PLANNABLE = new Set([...BASE_IDS, ...ELECTIVE_IDS, FL_COURSE]);
+// In-progress courses a what-if can fail or withdraw from: they need a Bulletin catalog entry (so the retake can be
+// scheduled) and must not already sit in the Major Electives bucket (failing one would also change the elective total).
+const FAILABLE = [...ITEMS.values()].filter(i => i.type === "course" && i.status === "in_progress" && PLAN_CATALOG[i.id]
+  && !(MEMBER.get(i.id) || []).some(m => m.req === "Major Electives")).map(i => i.id);
 // A course whose prerequisites can never be met inside this plan (needs a course
 // outside the catalog, e.g. CSCI 4140 needs CSCI 2150) cannot be chosen.
 function blockedReason(id) {
@@ -1914,16 +1931,18 @@ const AUTO_POOL = ELECTIVE_IDS.filter(id => isRegular(id) && !CROSS_LISTED(id) &
 function planDefaults() {
   return {
     terms: Object.fromEntries(HORIZON.map(t => [t.key, { on: t.season !== "U", min: t.season === "U" ? 0 : 12, max: t.season === "U" ? 9 : 18 }])),
-    app: "auto", sys: "auto", electives: [], maxCS: 0, pins: {},
+    app: "auto", sys: "auto", electives: [], maxCS: 0, pins: {}, failed: [],
     geneds: Object.fromEntries(GENED_IDS.map(id => [id, true])),
   };
 }
 const PLAN_KEY = PROFILE_ID === "vivek" ? "plan" : "plan:" + PROFILE_ID;
-function loadPlanCfg() {
+const loadPlanCfg = () => { let s = null; try { s = JSON.parse(store.get(PLAN_KEY) || "null"); } catch {} return normalizeCfg(s); };
+// Validates a saved settings object (current plan or a saved scenario) against this profile's data.
+function normalizeCfg(s) {
   const d = planDefaults();
   try {
-    const s = JSON.parse(store.get(PLAN_KEY) || "null");
     if (!s) return d;
+    if (Array.isArray(s.failed)) d.failed = s.failed.filter(id => FAILABLE.includes(id)).filter((v, i, a) => a.indexOf(v) === i);
     for (const k of Object.keys(d.terms)) if (s.terms && s.terms[k]) {
       const t = s.terms[k];
       d.terms[k] = { on: !!t.on, min: clampInt(t.min, 0, 24, d.terms[k].min), max: clampInt(t.max, 0, 24, d.terms[k].max) };
@@ -2124,7 +2143,13 @@ function kSubsets(arr, k) {
 /* Builds every candidate (design-group choices × auto electives), solves each,
    and keeps the best: fewest semesters → fewest credits under minimum →
    most even loads → fewest single-season electives. */
-function buildPlan(cfg) {
+// A failed or withdrawn course is no longer done: courses that need it wait for its retake.
+function withFailed(cfg, fn) {
+  const failed = (cfg.failed || []).filter(id => FAILABLE.includes(id)), removed = failed.filter(id => DONE.delete(id));
+  try { return fn(failed); } finally { removed.forEach(id => DONE.add(id)); }
+}
+const buildPlan = cfg => withFailed(cfg, failed => buildPlanCore(cfg, failed));
+function buildPlanCore(cfg, failed) {
   const terms = HORIZON.filter(t => cfg.terms[t.key].on).map(t => ({ ...t, min: Math.min(cfg.terms[t.key].min, cfg.terms[t.key].max), max: cfg.terms[t.key].max }));
   const errors = [], notes = [];
   if (!terms.length) return { errors: ["No semesters are enabled. Turn on at least one term."] };
@@ -2152,6 +2177,7 @@ function buildPlan(cfg) {
         ...pinnedE.map(id => Object.assign(planItem(id, "elective"), { pinnedElective: true })),
         ...autos.map(id => Object.assign(planItem(id, "elective"), { autoElective: true })),
         ...GENED_IDS.filter(id => cfg.geneds[id]).map(id => planItem(id, "gened")),
+        ...failed.map(id => planItem(id, "retake")),
       ];
       items.forEach(it => { if (cfg.pins[it.id]) it.pin = cfg.pins[it.id]; });
       if (performance.now() - started > 2500) { timedOut = true; break; }
@@ -2192,6 +2218,44 @@ function pinConflicts(items, terms) {
 }
 const cmpKey = (a, b) => { for (let i = 0; i < a.length; i++) { if (a[i] < b[i]) return -1; if (a[i] > b[i]) return 1; } return 0; };
 
+/* ---------- scenarios: named snapshots of the plan settings (including what-if failures), compared side by side ---------- */
+const SCEN_KEY = "scenarios:" + PROFILE_ID, MAX_SCEN = 3;
+let SCENARIOS = (() => { try { return JSON.parse(store.get(SCEN_KEY) || "[]").slice(0, MAX_SCEN).map(s => ({ name: String(s.name || "Scenario").slice(0, 40), cfg: normalizeCfg(s.cfg) })); } catch { return []; } })();
+const saveScen = () => store.set(SCEN_KEY, JSON.stringify(SCENARIOS));
+const SCEN_CACHE = new Map(); // settings JSON -> stats (solving is deterministic)
+function planStats(P, cfg) {
+  if (!P.items) return null;
+  const used = P.terms.slice(0, P.T), loads = P.loads;
+  return { grad: used[P.T - 1].label, at: HORIZON.findIndex(h => h.key === used[P.T - 1].key), T: P.T, credits: loads.reduce((s, x) => s + x, 0),
+    summers: used.filter(t => t.season === "U").length, peak: Math.max(...loads),
+    under: loads.filter((x, t) => t < P.T - 1 && x < used[t].min).length, retakes: (cfg.failed || []).join(", ") || "None" };
+}
+function scenarioStats(cfg) {
+  const key = JSON.stringify(cfg);
+  if (!SCEN_CACHE.has(key)) SCEN_CACHE.set(key, planStats(buildPlan(cfg), cfg));
+  return SCEN_CACHE.get(key);
+}
+function compareHTML(P0) {
+  if (!SCENARIOS.length) return "";
+  const cur = planStats(P0, PLAN_CFG), cols = [["Current plan", cur], ...SCENARIOS.map(s => [s.name, scenarioStats(s.cfg)])];
+  const cell = (st, f) => st ? f(st) : `<span class="req">No plan fits</span>`;
+  const gradCell = (st, i) => {
+    if (!st) return `<span class="req">No plan fits</span>`;
+    // Distance in fall/spring semesters (a summer counts as half), so a skipped summer slot is not counted as a term.
+    const sem = at => HORIZON.slice(0, at + 1).filter(h => h.season !== "U").length + (HORIZON[at].season === "U" ? 0.5 : 0);
+    const d = cur && i ? sem(st.at) - sem(cur.at) : 0, n = Math.abs(d), unit = n === 1 ? "semester" : "semesters";
+    return `<b>${esc(st.grad)}</b>${i && cur ? `<div class="req">${d === 0 ? "same as current" : `${n === 0.5 ? "a summer" : n + " " + unit} ${d > 0 ? "later" : "earlier"}`}</div>` : ""}`;
+  };
+  const rows = [
+    ["Graduation", (st, i) => gradCell(st, i)],
+    ["Semesters", st => cell(st, s => s.T)], ["Credits planned", st => cell(st, s => s.credits)],
+    ["Summers used", st => cell(st, s => s.summers)], ["Heaviest semester", st => cell(st, s => s.peak + " cr")],
+    ["Semesters under minimum", st => cell(st, s => s.under)], ["Retaken courses", st => cell(st, s => esc(s.retakes))],
+  ];
+  return `<section class="cmp"><div class="eyebrow">Scenario comparison</div><div class="cmp-wrap"><table class="cmp-t"><thead><tr><th></th>${cols.map(([n], i) => `<th>${esc(n)}</th>`).join("")}</tr></thead>
+    <tbody>${rows.map(([l, f]) => `<tr><th scope="row">${l}</th>${cols.map(([, st], i) => `<td>${f(st, i)}</td>`).join("")}</tr>`).join("")}</tbody></table></div></section>`;
+}
+
 /* ---------- planner UI ---------- */
 let PLAN = null;
 const PLANNED_TERM = new Map(); // id -> term label, for the graph panel
@@ -2202,14 +2266,14 @@ const plannerEl = document.getElementById("planner");
    Locked courses are skipped (the lock already decides their term). */
 function slipAnalysis(P0, cfg) {
   const crit = new Map(), started = performance.now();
-  P0.items.forEach((it, i) => {
+  withFailed(cfg, () => P0.items.forEach((it, i) => {
     if (!it.cr || it.pin || performance.now() - started > 1500) return;
     const items = P0.items.map(x => ({ ...x }));
     items[i].ban = new Set([P0.terms[P0.assign[i]].key]);
     const r = solvePlan(items, P0.terms, cfg.maxCS);
     if (r.error) crit.set(it.id, { delay: Infinity, to: null });
     else if (r.T > P0.T) crit.set(it.id, { delay: r.T - P0.T, to: P0.terms[r.T - 1].label });
-  });
+  }));
   return crit;
 }
 const critText = (c, term) => c.to ? `Bottleneck: if this can't happen in ${term}, graduation moves to ${c.to}` : `Bottleneck: no other enabled semester fits if it misses ${term}`;
@@ -2257,7 +2321,7 @@ function renderPlanner() {
   const sysOpts = [["auto", P0 && P0.sys && cfg.sys === "auto" ? `Auto → ${P0.sys}` : "Auto (best fit)"], ...SYS_OPTS.map(id => [id, catLabel(id)])];
 
   let side = `<h2 class="pl-h">Plan settings</h2>
-  <p class="note">Plans start <b>Spring 2027</b> and assume your Fall 2026 in-progress courses (${[...ITEMS.values()].filter(i => i.type === "course" && i.status === "in_progress").map(i => i.id).join(", ")}) are passed.</p>
+  <p class="note">Plans start <b>Spring 2027</b> and assume your Fall 2026 in-progress courses (${[...ITEMS.values()].filter(i => i.type === "course" && i.status === "in_progress" && !cfg.failed.includes(i.id)).map(i => i.id).join(", ")}) are passed${cfg.failed.length ? `, except ${cfg.failed.join(", ")} (retaken below)` : ""}.</p>
   <section><h3>Semesters &amp; credit hours</h3>
     <table class="terms-tbl"><thead><tr><th></th><th>Term</th><th>Min</th><th>Max</th></tr></thead><tbody>${termRows}</tbody></table>
     <div class="bulk">All fall/spring: min <input type="number" id="bulkMin" min="0" max="24" value="12"> max <input type="number" id="bulkMax" min="0" max="24" value="18"> <button class="btn sm" id="bulkApply">Apply</button></div>
@@ -2266,6 +2330,13 @@ function renderPlanner() {
   </section>
   <section><h3>Workload</h3>
     <label class="fld">Max CSCI courses per semester ${sel("maxCS", String(cfg.maxCS), [["0", "No limit"], ["2", "2"], ["3", "3"], ["4", "4"]])}</label>
+  </section>
+  <section><h3>What if…</h3>
+    ${FAILABLE.length ? FAILABLE.map(id => `<label class="chk"><input type="checkbox" data-failed="${esc(id)}" ${cfg.failed.includes(id) ? "checked" : ""}> I fail or withdraw from ${esc(id)}${state.redact ? "" : " " + esc(ITEMS.get(id).title)}</label>`).join("")
+      + `<p class="note">The course loses its credit, comes back in the plan as a retake, and everything that needs it moves. Other in-progress courses are not modeled.</p>` : `<p class="note">None of your in-progress courses can be modeled as a retake.</p>`}
+    <div class="scen-save"><input type="text" id="scenName" maxlength="40" placeholder="Name this scenario" aria-label="Scenario name"> <button class="btn sm" id="scenSave"${SCENARIOS.length >= MAX_SCEN ? " disabled" : ""}>Save</button></div>
+    <p class="note">${SCENARIOS.length >= MAX_SCEN ? `You have ${MAX_SCEN} saved scenarios; delete one to save another.` : "Saves all your settings so you can compare plans side by side."}</p>
+    ${SCENARIOS.length ? `<ul class="pins">${SCENARIOS.map((s, i) => `<li><b>${esc(s.name)}</b> <button class="linkbtn" data-scen-load="${i}">load</button> · <button class="linkbtn" data-scen-del="${i}">delete</button></li>`).join("")}</ul>` : ""}
   </section>
   <section><h3>Design groups (pick 1 each)</h3>
     <label class="fld">Application Design ${sel("app", cfg.app, appOpts)}</label>
@@ -2298,18 +2369,22 @@ function renderPlanner() {
   } else {
     const { items, terms, T, assign, loads } = P0;
     const plannedCr = loads.reduce((s, x) => s + x, 0);
-    const applied = credComplete + credIP;
+    // A failed course's credit is lost until its retake (which is counted as planned credit), so take it out of "so far".
+    const lost = pred => (cfg.failed || []).filter(id => FAILABLE.includes(id) && pred(id)).reduce((s, id) => s + ITEMS.get(id).credits, 0);
+    const inBlock = b => id => blockItemIds(b).includes(id);
+    const applied = credComplete + credIP - lost(id => counted.has(id));
+    const UP0 = UPPER_SO_FAR - lost(id => level(id) >= 3000), MAJ0 = MAJOR_APPLIED - lost(inBlock("BLK:MAJOR")), A60 = A6_APPLIED - lost(inBlock("BLK:A6")), RES0 = PROF.residencySoFar - lost(() => true);
     const upper = items.filter(it => !it.placeholder && courseNum(it.id) >= 3000).reduce((s, it) => s + it.cr, 0);
-    const major = items.filter(it => ["app", "sys", "elective"].includes(it.role) || (it.role === "required" && MEMBER.get(it.id).some(m => m.block === "BLK:MAJOR"))).reduce((s, it) => s + it.cr, 0);
+    const major = items.filter(it => ["app", "sys", "elective"].includes(it.role) || (["required", "retake"].includes(it.role) && MEMBER.get(it.id).some(m => m.block === "BLK:MAJOR"))).reduce((s, it) => s + it.cr, 0);
     const areaVI = items.filter(it => MEMBER.get(it.id) && MEMBER.get(it.id).some(m => m.block === "BLK:A6")).reduce((s, it) => s + it.cr, 0);
     const idxOf = id => items.findIndex(it => it.id === id);
     const i2720 = idxOf("CSCI 2720");
     const checks = [
       [applied + plannedCr >= DEGREE.req, `Total credits: ${applied} applied + ${plannedCr} planned = ${applied + plannedCr} of ${DEGREE.req}`],
-      [UPPER_SO_FAR + upper >= 39, `Upper-division: ${UPPER_SO_FAR} so far + ${upper} planned = ${UPPER_SO_FAR + upper} of 39 (placeholders not counted)`],
-      [MAJOR_APPLIED + major >= MAJOR_REQ, `Major credits: ${MAJOR_APPLIED} applied + ${major} planned = ${MAJOR_APPLIED + major} of ${MAJOR_REQ}`],
-      [A6_APPLIED + areaVI >= A6_REQ, `Area VI: ${A6_APPLIED} applied + ${areaVI} planned = ${A6_APPLIED + areaVI} of ${A6_REQ}`],
-      [Math.min(60, PROF.residencySoFar + plannedCr) >= 45, `Residency: ${Math.min(60, PROF.residencySoFar + plannedCr)} UGA credits in your last 60 (45 required; assumes every planned course is taken at UGA)`],
+      [UP0 + upper >= 39, `Upper-division: ${UP0} so far + ${upper} planned = ${UP0 + upper} of 39 (placeholders not counted)`],
+      [MAJ0 + major >= MAJOR_REQ, `Major credits: ${MAJ0} applied + ${major} planned = ${MAJ0 + major} of ${MAJOR_REQ}`],
+      [A60 + areaVI >= A6_REQ, `Area VI: ${A60} applied + ${areaVI} planned = ${A60 + areaVI} of ${A6_REQ}`],
+      [Math.min(60, RES0 + plannedCr) >= 45, `Residency: ${Math.min(60, RES0 + plannedCr)} UGA credits in your last 60 (45 required; assumes every planned course is taken at UGA)`],
       [major >= 15, `Major residency: ${major} major credits planned at UGA (15 required)`],
       [true, `Teamwork: ${P0.app} (Application Design) is a team-based course`],
     ];
@@ -2328,6 +2403,7 @@ function renderPlanner() {
       <div class="plan-actions"><button class="btn" id="planPrint" title="Print, or choose Save as PDF in the print dialog">Print / Save PDF</button> <button class="btn" id="planCsv">Download CSV</button></div></div>${errs}`;
     main += `<div class="checks">${checks.map(([ok, t]) => `<div class="ck ${ok ? "ok" : "bad"}"><span>${ok ? "✓" : "✕"}</span>${esc(t)}</div>`).join("")}</div>`;
     main += warns.map(w => `<div class="alert warn">${esc(w)}</div>`).join("");
+    main += compareHTML(P0);
     // Every semester bar uses the same 0–scaleCr scale, so a 9-cr summer never looks as full as an 18-cr fall.
     const scaleCr = Math.max(1, ...terms.slice(0, T).map((tm, t) => Math.max(tm.max, loads[t])));
     if (P0.crit.size) {
@@ -2366,7 +2442,7 @@ function renderPlanner() {
 /* Questions for the advisor, generated from what the plan could not decide on its own. */
 function advisorQuestions(P0) {
   const { items, terms, assign } = P0, q = [], tl = i => terms[assign[i]].label;
-  const ip = [...ITEMS.values()].filter(i => i.type === "course" && i.status === "in_progress").map(i => i.id);
+  const ip = [...ITEMS.values()].filter(i => i.type === "course" && i.status === "in_progress" && !(PLAN_CFG.failed || []).includes(i.id)).map(i => i.id);
   if (ip.length) q.push(`This plan assumes ${ip.join(", ")} (in progress) finish with a passing grade. Are they on track to meet the C-or-better rules?`);
   items.forEach((it, i) => {
     const name = it.placeholder ? it.title : it.id;
@@ -2394,7 +2470,7 @@ function cardHTML(it, i, P0) {
   if (same.length) flags.push(`Taken alongside ${same.join(", ")} (pre- or corequisite)`);
   if (it.id === "REQ:EXP") flags.push("0 credits listed: satisfied by an approved experience; see the Bulletin");
   const prereqs = (it.preI || []).map(g => g.map(o => items[o].id).join(" or ")).filter(Boolean);
-  const role = it.autoElective ? "Auto-picked elective" : it.pinnedElective ? "Your elective" : it.role === "app" ? (PLAN_CFG.app === "auto" ? "Auto-picked: Application Design" : "Application Design") : it.role === "sys" ? (PLAN_CFG.sys === "auto" ? "Auto-picked: Systems Design" : "Systems Design") : it.placeholder ? "Placeholder: choose a course" : it.role === "gened" ? "Gen-ed" : "Required";
+  const role = it.autoElective ? "Auto-picked elective" : it.pinnedElective ? "Your elective" : it.role === "app" ? (PLAN_CFG.app === "auto" ? "Auto-picked: Application Design" : "Application Design") : it.role === "sys" ? (PLAN_CFG.sys === "auto" ? "Auto-picked: Systems Design" : "Systems Design") : it.placeholder ? "Placeholder: choose a course" : it.role === "gened" ? "Gen-ed" : it.role === "retake" ? "Retake (failed or withdrawn)" : "Required";
   const pinOpts = `<option value="">${PLAN_CFG.pins[it.id] ? "Unlock" : "Auto term"}</option>` + HORIZON.filter(h => PLAN_CFG.terms[h.key].on).map(h => `<option value="${h.key}"${PLAN_CFG.pins[it.id] === h.key ? " selected" : ""}>Lock to ${h.label}</option>`).join("");
   const title = it.placeholder ? it.sub : state.redact ? "" : it.title;
   const fam = FAMILY[it.blocks[0]] || "cs";
@@ -2437,6 +2513,7 @@ plannerEl.addEventListener("change", e => {
   else if (d.eauto != null) { if (el.value) cfg.electives.push(el.value); cfg.electives = [...new Set(cfg.electives)]; }
   else if (el.id === "eAdd") { if (el.value) cfg.electives = [...new Set([...cfg.electives, el.value])]; }
   else if (d.gened) cfg.geneds[d.gened] = el.checked;
+  else if (d.failed) cfg.failed = el.checked ? [...new Set([...cfg.failed, d.failed])] : cfg.failed.filter(x => x !== d.failed);
   else if (d.pin) { if (el.value) cfg.pins[d.pin] = el.value; else delete cfg.pins[d.pin]; }
   else return;
   for (const [id, k] of Object.entries(cfg.pins)) if (!cfg.terms[k].on) delete cfg.pins[id];
@@ -2453,6 +2530,14 @@ plannerEl.addEventListener("click", e => {
   else if (el.id === "planReset") PLAN_CFG = planDefaults();
   else if (el.id === "planCsv") return planCsv();
   else if (el.id === "planPrint") return window.print();
+  else if (el.id === "scenSave") {
+    if (SCENARIOS.length >= MAX_SCEN) return;
+    const typed = document.getElementById("scenName").value.trim();
+    SCENARIOS.push({ name: (typed || (cfg.failed.length ? "Fail " + cfg.failed.join(", ") : "Scenario " + (SCENARIOS.length + 1))).slice(0, 40), cfg: normalizeCfg(JSON.parse(JSON.stringify(cfg))) });
+    saveScen(); return renderPlanner();
+  }
+  else if (el.dataset.scenDel != null) { SCENARIOS.splice(Number(el.dataset.scenDel), 1); saveScen(); return renderPlanner(); }
+  else if (el.dataset.scenLoad != null) PLAN_CFG = normalizeCfg(JSON.parse(JSON.stringify(SCENARIOS[Number(el.dataset.scenLoad)].cfg)));
   else return;
   for (const [id, k] of Object.entries(PLAN_CFG.pins)) if (!PLAN_CFG.terms[k].on) delete PLAN_CFG.pins[id];
   planChanged();
