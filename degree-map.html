@@ -178,6 +178,13 @@ body.mode-plan #planner{display:flex}
 .pc-foot select{border:1px solid var(--border);background:var(--surface);border-radius:7px;padding:3px 6px;font-size:12.5px;max-width:170px}
 .pc-foot .lock{font-size:12px}
 a.ext.sm{font-size:12.5px;margin-left:auto}
+table.adm{width:100%;border-collapse:collapse;margin:6px 0 10px;font-size:14px}
+table.adm td{padding:5px 4px;border-top:1px solid var(--border);vertical-align:middle}
+table.adm td:last-child{text-align:right}
+table.adm .pill{white-space:nowrap}
+table.adm select{border:1px solid var(--border);background:var(--bg);border-radius:8px;padding:4px 6px;font-size:13.5px}
+.adm-res{border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:13.5px;background:var(--surface2)}
+.adm-res.good{border-color:var(--good)} .adm-res.bad{border-color:var(--bad)}
 .crit{border:1px solid var(--warn);background:var(--warn-bg);border-radius:12px;padding:10px 14px;margin:10px 0}
 .crit.ok{border-color:var(--border);background:var(--surface2)}
 .crit ul{margin:6px 0 0;padding:0;list-style:none;columns:2 280px;column-gap:24px}
@@ -1483,6 +1490,7 @@ function renderPanel() {
       const done = it.from.filter(c => ITEMS.get(c).status === "complete").length, ip = it.from.filter(c => ITEMS.get(c).status === "in_progress").length;
       h += `<h3>Entrance courses: ${done} of ${it.from.length} complete${ip ? `, ${ip} in progress` : ""}</h3><div class="chips">${it.from.map(chip).join("")}</div>`;
     }
+    if (id === "REQ:ADMIT") h += admissionHTML();
   } else if (it.type === "choice") {
     h += `<div style="display:flex;gap:6px;flex-wrap:wrap">${pill(it.status)}${eligPill(elig(id))}</div><h2>${esc(it.label)}</h2><p class="title">Pick 1 of ${it.options.length}</p>`;
     h += plannedHTML(id);
@@ -1521,6 +1529,10 @@ function overviewHTML() {
   h += `<h3>Pick-one groups (${groups.length})</h3><div class="chips">${groups.map(chip).join("")}</div>`;
   h += `<h3>Open requirements (${open.length})</h3><div class="chips">${open.map(chip).join("")}</div>`;
   h += `<h3>Counted in more than one section (${shared.length})</h3><div class="chips">${shared.map(chip).join("")}</div>`;
+  if (ITEMS.has("REQ:ADMIT") && ITEMS.get("REQ:ADMIT").status !== "complete") {
+    const a = admissionState();
+    h += `<h3>Major admission</h3><div class="chips">${chip("REQ:ADMIT")}</div><p class="note">${a.short ? esc(a.short.charAt(0).toUpperCase() + a.short.slice(1)) + ". " : ""}Enter your grades there to see what GPA you need.</p>`;
+  }
   h += `<h3>Degree checks from the audit</h3><ul>${DEGREE.checks.map(([a, b]) => `<li><b>${esc(a)}</b><span class="req">${esc(b)}</span></li>`).join("")}</ul>`;
   h += `<p class="hint">${esc(PROF.source)}. Arrows are drawn only between courses in this audit; other accepted alternatives appear as dashed chips in each course's details.<br><br>Hover to nudge · drag nodes to rearrange · scroll to zoom<br>Shortcuts: <kbd>/</kbd> search · <kbd>F</kbd> fit · <kbd>Esc</kbd> clear</p>`;
   return h;
@@ -1537,6 +1549,67 @@ function plannedHTML(id) {
   const critNote = crits.length ? `<div class="pc-crit" style="margin-top:8px">⚑ ${esc(critText(crits[0], list[0][1]))}</div>` : "";
   return `<div class="planned">Planned: ${list.map(([c, t]) => `${c ? esc(c) + " in " : ""}<b>${esc(t)}</b>`).join(", ")} · <button class="linkbtn" data-openplan>Open semester plan</button>${critNote}</div>`;
 }
+/* ---------- Major-admission tracker ----------
+   The audit says: C (2.0) or higher in CSCI 1301, 1302, 2610, 2720 and MATH 2250, and a 2.7 GPA across
+   the best attempts of CSCI 1302, 2610 and 2720. The audit export carries no grades, so the student types
+   their own. They stay in this browser's localStorage (per profile), never in the page or in git.
+   The GPA is credit-weighted (grade points x credit hours / credit hours). */
+const GRADE_PTS = [["A", 4], ["A-", 3.7], ["B+", 3.3], ["B", 3], ["B-", 2.7], ["C+", 2.3], ["C", 2], ["C-", 1.7], ["D", 1], ["F", 0]];
+const PTS = Object.fromEntries(GRADE_PTS);
+const ADM_GPA = ["CSCI 1302", "CSCI 2610", "CSCI 2720"], ADM_ALL = ["CSCI 1301", ...ADM_GPA, "MATH 2250"], ADM_TARGET = 2.7, ADM_FLOOR = 2;
+const GRADES_KEY = "grades:" + PROFILE_ID;
+let GRADES = (() => { try { const o = JSON.parse(store.get(GRADES_KEY) || "{}"); return Object.fromEntries(Object.entries(o).filter(([id, g]) => ADM_ALL.includes(id) && g in PTS)); } catch { return {}; } })();
+function setGrade(id, g) { if (g in PTS) GRADES[id] = g; else delete GRADES[id]; store.set(GRADES_KEY, JSON.stringify(GRADES)); }
+const letterFor = pts => (GRADE_PTS.slice().reverse().find(([, p]) => p >= pts - 1e-9) || [null])[0]; // lowest grade at or above pts
+
+function admissionState() {
+  const cr = id => ITEMS.get(id).credits, have = id => GRADES[id] != null;
+  const totalCr = ADM_GPA.reduce((s, id) => s + cr(id), 0);
+  const known = ADM_GPA.filter(have), rest = ADM_GPA.filter(id => !have(id));
+  const pts = known.reduce((s, id) => s + PTS[GRADES[id]] * cr(id), 0), kcr = known.reduce((s, id) => s + cr(id), 0);
+  const below = ADM_ALL.filter(id => have(id) && PTS[GRADES[id]] < ADM_FLOOR);
+  const st = { totalCr, known, rest, below, gpa: kcr ? pts / kcr : null, done: false, ok: false, need: null, msg: "", short: "" };
+  if (below.length) {
+    st.msg = `${below.join(", ")} ${below.length > 1 ? "are" : "is"} below a C. Admission requires C or better in every entrance course (a retake may be allowed within your first two attempts; check with your advisor).`;
+    st.short = `${below.join(", ")} below C`;
+  } else if (!rest.length) {
+    st.done = true; st.ok = st.gpa >= ADM_TARGET - 1e-9;
+    st.msg = st.ok ? `Credit-weighted GPA ${st.gpa.toFixed(2)} across ${ADM_GPA.join(", ")}: meets the ${ADM_TARGET} minimum.` : `Credit-weighted GPA ${st.gpa.toFixed(2)} across ${ADM_GPA.join(", ")}: below the ${ADM_TARGET} minimum.`;
+    st.short = `GPA ${st.gpa.toFixed(2)} (${st.ok ? "meets" : "below"} ${ADM_TARGET})`;
+  } else if (known.length) {
+    const restCr = rest.reduce((s, id) => s + cr(id), 0), req = (ADM_TARGET * totalCr - pts) / restCr, list = rest.join(" and ");
+    st.need = req;
+    if (req > 4 + 1e-9) { st.msg = `Even straight A's in ${list} would not reach ${ADM_TARGET} with the grades entered.`; st.short = `${ADM_TARGET} out of reach`; }
+    else if (req <= ADM_FLOOR) { st.msg = `On track: a C or better in ${list} keeps the GPA at or above ${ADM_TARGET}.`; st.short = `on track (C or better in ${list})`; }
+    else {
+      const l = letterFor(req);
+      st.msg = rest.length === 1 ? `You need at least a ${l} in ${list} (${req.toFixed(2)} grade points) to reach ${ADM_TARGET}.` : `You need an average of ${req.toFixed(2)} across ${list}, for example a ${l} in each.`;
+      st.short = `need ${rest.length === 1 ? "a " + l + " in " + list : "avg " + req.toFixed(2) + " in " + list}`;
+    }
+  } else { st.msg = `Enter the grades you have (your best attempt) to see what you need in the rest.`; st.short = ""; }
+  return st;
+}
+function admissionResultHTML() {
+  const s = admissionState(), tone = s.below.length || (s.done && !s.ok) ? "bad" : s.done && s.ok ? "good" : "muted";
+  const done = ADM_ALL.filter(id => GRADES[id] != null && PTS[GRADES[id]] >= ADM_FLOOR).length;
+  return `<div class="adm-res ${tone}"><b>${s.gpa != null ? `GPA so far: ${s.gpa.toFixed(2)}` : "No grades entered"}</b><span class="req"> · target ${ADM_TARGET} · C or better in ${done} of ${ADM_ALL.length}</span><div>${esc(s.msg)}</div></div>`;
+}
+function admissionHTML() {
+  const rows = ADM_ALL.map(id => {
+    const it = ITEMS.get(id), opts = `<option value="">${it.status === "complete" ? "Grade…" : "Expected…"}</option>` + GRADE_PTS.map(([g]) => `<option value="${g}"${GRADES[id] === g ? " selected" : ""}>${g}</option>`).join("");
+    return `<tr><td><button class="linkbtn" data-go="${esc(id)}">${esc(id)}</button>${ADM_GPA.includes(id) ? ` <span class="req">${it.credits} cr · in GPA</span>` : ""}</td><td>${pill(it.status)}</td><td><select data-grade="${esc(id)}" aria-label="Grade for ${esc(id)}">${opts}</select></td></tr>`;
+  }).join("");
+  return `<h3>Admission tracker</h3><p class="note">Enter your best attempt in each course. For courses not finished yet, enter the grade you expect to see what it does to your GPA.</p>
+    <table class="adm"><tbody>${rows}</tbody></table><div id="admRes">${admissionResultHTML()}</div>
+    <p class="note">Stored only in this browser, never in the page or git. Credit-weighted GPA over CSCI 1302, 2610 and 2720; acceptance is never guaranteed.</p>`;
+}
+panel.addEventListener("change", e => {
+  const s = e.target.closest("[data-grade]"); if (!s) return;
+  setGrade(s.dataset.grade, s.value);
+  document.getElementById("admRes").innerHTML = admissionResultHTML();
+  renderPlanner();
+});
+
 panel.addEventListener("click", e => {
   if (e.target.closest("[data-openplan]")) return setMode("plan");
   const b = e.target.closest("[data-go]"); if (!b) return;
@@ -2219,7 +2292,8 @@ function renderPlanner() {
       [major >= 15, `Major residency: ${major} major credits planned at UGA (15 required)`],
       [true, `Teamwork: ${P0.app} (Application Design) is a team-based course`],
     ];
-    if (i2720 >= 0) checks.push([true, `Major admission: entrance courses are done after ${terms[assign[i2720]].label} (CSCI 2720). Admission also needs C or better and a 2.7 GPA across CSCI 1302/2610/2720.`]);
+    const adm = admissionState();
+    if (i2720 >= 0) checks.push([!adm.below.length && !(adm.done && !adm.ok), `Major admission: entrance courses are done after ${terms[assign[i2720]].label} (CSCI 2720). Admission also needs C or better and a ${ADM_TARGET} GPA across CSCI 1302/2610/2720${adm.short ? ` (your grades: ${adm.short})` : ""}.`]);
     const warns = [];
     loads.forEach((x, t) => {
       if (t < T - 1 && x < terms[t].min) warns.push(`${terms[t].label} has ${x} cr, under your ${terms[t].min}-cr minimum. Full-time is 12+ in fall/spring (6+ in summer); add a free elective if you need full-time status.`);
