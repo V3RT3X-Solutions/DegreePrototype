@@ -178,6 +178,13 @@ body.mode-plan #planner{display:flex}
 .pc-foot select{border:1px solid var(--border);background:var(--surface);border-radius:7px;padding:3px 6px;font-size:12.5px;max-width:170px}
 .pc-foot .lock{font-size:12px}
 a.ext.sm{font-size:12.5px;margin-left:auto}
+.crit{border:1px solid var(--warn);background:var(--warn-bg);border-radius:12px;padding:10px 14px;margin:10px 0}
+.crit.ok{border-color:var(--border);background:var(--surface2)}
+.crit ul{margin:6px 0 0;padding:0;list-style:none;columns:2 280px;column-gap:24px}
+.crit li{padding:3px 0;font-size:13.5px;break-inside:avoid}
+.crit .req{color:var(--muted)}
+.pcard.is-crit{border-color:var(--warn)}
+.pc-crit{font-size:12px;margin-top:5px;padding:3px 7px;border-radius:6px;background:var(--warn-bg);color:var(--text);border:1px solid var(--warn)}
 .assume{margin-top:18px;font-size:13.5px;color:var(--muted)}
 .assume summary{cursor:pointer;font-weight:600;color:var(--text)}
 .planned{background:var(--surface2);border-radius:10px;padding:8px 10px;margin-top:12px;font-size:14px}
@@ -1526,7 +1533,9 @@ function plannedHTML(id) {
   else if (CHOICES[id]) list = CHOICES[id].options.filter(o => PLANNED_TERM.has(o) && PLAN.items.find(it => it.id === o).role !== "elective").map(o => [o, PLANNED_TERM.get(o)]);
   else if (PLANNED_TERM.has(id)) list = [[null, PLANNED_TERM.get(id)]];
   if (!list.length) return "";
-  return `<div class="planned">Planned: ${list.map(([c, t]) => `${c ? esc(c) + " in " : ""}<b>${esc(t)}</b>`).join(", ")} · <button class="linkbtn" data-openplan>Open semester plan</button></div>`;
+  const crits = list.map(([c]) => PLAN.crit && PLAN.crit.get(c || id)).filter(Boolean);
+  const critNote = crits.length ? `<div class="pc-crit" style="margin-top:8px">⚑ ${esc(critText(crits[0], list[0][1]))}</div>` : "";
+  return `<div class="planned">Planned: ${list.map(([c, t]) => `${c ? esc(c) + " in " : ""}<b>${esc(t)}</b>`).join(", ")} · <button class="linkbtn" data-openplan>Open semester plan</button>${critNote}</div>`;
 }
 panel.addEventListener("click", e => {
   if (e.target.closest("[data-openplan]")) return setMode("plan");
@@ -1860,6 +1869,9 @@ function planItem(id, role) {
    local search that, without adding a semester, (1) keeps loads at or above
    your minimums, (2) moves "gateway" courses (ones other planned courses
    depend on) as early as possible, (3) evens out credit loads. */
+// A course can go in a term if it is offered that season and the term is not banned for it
+// (`ban` is only set by the bottleneck analysis: "what if this course cannot happen in its planned term?").
+const termOk = (it, term) => it.seasons.has(term.season) && !(it.ban && it.ban.has(term.key));
 function solvePlan(items, terms, maxCS, maxT = Infinity) {
   const n = items.length, idx = new Map(items.map((it, i) => [it.id, i]));
   for (const it of items) {
@@ -1917,9 +1929,9 @@ function solvePlan(items, terms, maxCS, maxT = Infinity) {
     let lo = 0;
     for (const g of it.preI) lo = Math.max(lo, Math.min(...g.map(o => early[o])) + 1);
     for (const g of it.precoI) lo = Math.max(lo, Math.min(...g.map(o => early[o])));
-    while (lo < terms.length && !it.seasons.has(terms[lo].season)) lo++;
+    while (lo < terms.length && !termOk(it, terms[lo])) lo++;
     if (pinIdx[i] != null) {
-      if (pinIdx[i] < lo || !it.seasons.has(terms[pinIdx[i]].season)) return { error: "nofit" };
+      if (pinIdx[i] < lo || !termOk(it, terms[pinIdx[i]])) return { error: "nofit" };
       lo = pinIdx[i];
     }
     if (lo >= terms.length) return { error: "nofit" };
@@ -1944,7 +1956,7 @@ function solvePlan(items, terms, maxCS, maxT = Infinity) {
       const cand = pinIdx[i] != null ? [pinIdx[i]] : Array.from({ length: Math.max(0, hi - lo + 1) }, (_, x) => lo + x);
       for (const t of cand) {
         if (t < lo || t > hi) continue;
-        if (!it.seasons.has(terms[t].season)) continue;
+        if (!termOk(it, terms[t])) continue;
         if (used[t] + it.cr > terms[t].max) continue;
         if (maxCS && it.cs && cs[t] >= maxCS) continue;
         a[i] = t; used[t] += it.cr; capLeft -= it.cr; if (it.cs) cs[t]++;
@@ -1978,7 +1990,7 @@ function planValid(items, terms, T, a, pinIdx, maxCS, loTerm) {
     const it = items[i], t = a[i];
     if (t < 0 || t >= T) return false;
     if (pinIdx[i] != null && pinIdx[i] !== t) return false;
-    if (!it.seasons.has(terms[t].season)) return false;
+    if (!termOk(it, terms[t])) return false;
     if (loTerm(i, a) > t) return false;
     used[t] += it.cr; if (it.cs) cs[t]++;
   }
@@ -2091,8 +2103,26 @@ let PLAN = null;
 const PLANNED_TERM = new Map(); // id -> term label, for the graph panel
 const plannerEl = document.getElementById("planner");
 
+/* Bottlenecks: for each planned course, re-solve with that course kept out of its planned term.
+   If graduation moves, the course is a bottleneck (delay > 0); if nothing else fits, delay is Infinity.
+   Locked courses are skipped (the lock already decides their term). */
+function slipAnalysis(P0, cfg) {
+  const crit = new Map(), started = performance.now();
+  P0.items.forEach((it, i) => {
+    if (!it.cr || it.pin || performance.now() - started > 1500) return;
+    const items = P0.items.map(x => ({ ...x }));
+    items[i].ban = new Set([P0.terms[P0.assign[i]].key]);
+    const r = solvePlan(items, P0.terms, cfg.maxCS);
+    if (r.error) crit.set(it.id, { delay: Infinity, to: null });
+    else if (r.T > P0.T) crit.set(it.id, { delay: r.T - P0.T, to: P0.terms[r.T - 1].label });
+  });
+  return crit;
+}
+const critText = (c, term) => c.to ? `Bottleneck: if this can't happen in ${term}, graduation moves to ${c.to}` : `Bottleneck: no other enabled semester fits if it misses ${term}`;
+
 function runPlanner() {
   PLAN = buildPlan(PLAN_CFG);
+  PLAN.crit = PLAN.items ? slipAnalysis(PLAN, PLAN_CFG) : new Map();
   PLANNED_TERM.clear();
   if (PLAN.items) PLAN.items.forEach((it, i) => PLANNED_TERM.set(it.id, PLAN.terms[PLAN.assign[i]].label));
   renderPlanner();
@@ -2204,6 +2234,14 @@ function renderPlanner() {
     main += warns.map(w => `<div class="alert warn">${esc(w)}</div>`).join("");
     // Every semester bar uses the same 0–scaleCr scale, so a 9-cr summer never looks as full as an 18-cr fall.
     const scaleCr = Math.max(1, ...terms.slice(0, T).map((tm, t) => Math.max(tm.max, loads[t])));
+    if (P0.crit.size) {
+      const rows = [...P0.crit].sort((a, b) => b[1].delay - a[1].delay).map(([id, c]) => {
+        const k = idxOf(id), it = items[k], term = terms[assign[k]].label;
+        return `<li><b>${esc(it.placeholder ? it.title : it.id)}</b> in ${esc(term)} <span class="req">${c.to ? `→ graduation slips to ${esc(c.to)}` : "→ no other enabled semester fits"}</span></li>`;
+      }).join("");
+      main += `<div class="crit"><div class="eyebrow">Bottlenecks · ${P0.crit.size} course${P0.crit.size > 1 ? "s" : ""}</div>
+        <p class="note">Each course below would delay graduation if it could not happen in the semester shown (full section, failed prerequisite, not offered). Everything else has some slack.</p><ul>${rows}</ul></div>`;
+    } else main += `<div class="crit ok"><div class="eyebrow">Bottlenecks</div><p class="note">No single course missing its semester would delay graduation: this plan has slack everywhere.</p></div>`;
     main += `<p class="note">Bars share one scale, 0–${scaleCr} cr. Gray tick = your minimum, dark tick = your maximum.</p><div class="terms-grid">`;
     for (let t = 0; t < T; t++) {
       const list = items.map((it, i) => [it, i]).filter(([, i]) => assign[i] === t).sort((a, b) => (b[0].cs - a[0].cs) || a[0].id.localeCompare(b[0].id));
@@ -2242,8 +2280,10 @@ function cardHTML(it, i, P0) {
   const pinOpts = `<option value="">${PLAN_CFG.pins[it.id] ? "Unlock" : "Auto term"}</option>` + HORIZON.filter(h => PLAN_CFG.terms[h.key].on).map(h => `<option value="${h.key}"${PLAN_CFG.pins[it.id] === h.key ? " selected" : ""}>Lock to ${h.label}</option>`).join("");
   const title = it.placeholder ? it.sub : state.redact ? "" : it.title;
   const fam = FAMILY[it.blocks[0]] || "cs";
-  return `<div class="pcard" style="--c:var(--${fam})">
+  const crit = P0.crit && P0.crit.get(it.id);
+  return `<div class="pcard${crit ? " is-crit" : ""}" style="--c:var(--${fam})">
     <div class="pc-top"><b>${esc(it.placeholder ? it.title : it.id)}</b><span>${it.cr} cr</span></div>
+    ${crit ? `<div class="pc-crit" title="Found by re-solving the plan without this course in this semester">⚑ ${esc(critText(crit, terms[t].label))}</div>` : ""}
     ${title ? `<div class="pc-t">${esc(title)}</div>` : ""}
     <div class="pc-meta">${it.blocks.map(swatch).join("")} ${esc(state.redact ? it.blocks.map(b => ITEMS.get(b).short).join(", ") : it.req || "")} · <i>${esc(role)}</i></div>
     ${prereqs.length ? `<div class="pc-pre">After: ${esc(prereqs.join(", "))}</div>` : ""}
