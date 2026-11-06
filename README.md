@@ -100,10 +100,23 @@ Below it are the 12 sections and lists of courses that are eligible now, eligibl
 | **Search** | Type a code (e.g. `CSCI 2720`) or a requirement name and press Enter to jump to it. |
 | **Reset layout** | Re-runs the force layout from its starting positions. |
 | **Redact titles** | Hides course titles and audit requirement-line names everywhere (graph, panel, planner, CSV), for screenshots and demos. |
-| **Light / Dark theme** | Switches theme. |
+| **Theme** | Cycles **Light → Dark → Red & black**. Red & black is a plain dark scheme with a crimson accent used only for interface chrome (selected buttons, header rule, credit bar, slider); the graph keeps its blue/green/gray encoding so the graph's red availability ring keeps its meaning. It is a color scheme only, with no logos or marks, and the project is not affiliated with any university. All text pairings in all three themes meet WCAG AA contrast (4.5:1). |
 | **Export PNG** | Saves what's on screen as a 2× PNG, with a title, a one-line key and the data sources added so the image makes sense on its own. |
+| **Progress card** | Saves a 1080×1080 image meant for sharing: the credit ring, headline numbers, per-section progress bars, planned graduation and the course codes eligible now. It carries **no name and no course titles**, uses the current theme, and is labelled `PROJECTION` if the plan timeline is active. |
 
 **Keyboard:** `/` search · `F` fit to screen · `+` / `-` zoom · `Esc` clear selection.
+
+**Phones and tablets:** two-finger **pinch** zooms the graph about your fingers (and pans with them). Below 900 px wide the detail panel becomes a **bottom sheet**: a peek bar shows the selected item's name, tapping a node slides it up, and tapping the bar or clearing the selection tucks it away. Mouse and keyboard behavior is unchanged.
+
+### Plan timeline
+
+Once a plan exists, a **timeline slider** appears in the graph toolbar. Step 0 is today; step *k* projects the degree to the **end of plan semester *k***. Today's in-progress courses are finished, every course planned up to that semester is complete, and the graph fills in: node fills, section progress rings, the center credit total, eligibility rings and the header tiles (including upper-division credits) are all re-derived. **▶ Play** steps through the plan automatically. While projecting, the control is outlined and **Export PNG** is labelled `PROJECTION`, so a projected picture can't be mistaken for today's audit. Switching to the planner always returns to today's data.
+
+Admission to the major is never assumed: in a projection it shows as in progress (applying) once its entrance courses are done.
+
+### Admission tracker
+
+Click **Admission to CS Major** (or its link in the Overview) to open the tracker. The audit export carries no grades, so you type your own: your best attempt in CSCI 1301, 1302, 2610, 2720 and MATH 2250. It checks the *C or better* rule per course, computes the **credit-weighted GPA** across CSCI 1302, 2610 and 2720 (target 2.7), and for courses you haven't finished tells you the minimum grade you need (for example, "you need at least a C+ in CSCI 2720"). For unfinished courses you can enter an *expected* grade to see its effect. Grades are stored **only in this browser** (`localStorage`, per profile), never in the page or in git. The planner's major-admission check shows the same result.
 
 ![Light theme with the "Needed" filter](docs/screenshots/graph-light.png)
 
@@ -137,7 +150,9 @@ The planner assumes the Fall 2026 in-progress courses are passed and starts plan
 | **Design groups** | *Auto* lets the planner pick the best fit, or choose a specific course. |
 | **Major electives** | Auto-picked from **regularly offered** courses whose prerequisites fit your plan. Change any dropdown to lock in a specific course, or use **+ Add a specific elective**. Every CSCI 4000-level course in the Bulletin is listed; ones you can't take (e.g. a prerequisite outside the plan) are disabled with the reason. |
 | **Gen-ed requirements** | Include or leave out each one. |
-| **Locked semesters** | Every course card has a term menu to lock it to a semester. Impossible locks are explained, e.g. *"CSCI 4720 is locked to Spring 2027, but CSCI 1730 must be finished first, so Fall 2027 is the earliest it can go."* |
+| **Locked semesters** | Every course card has a term menu to lock it to a semester, or just **drag the card** to another semester column. While you drag, the solver is asked about each semester: **green** = graduation stays the same, **amber** = possible but graduation moves (it tells you to when), **red** = impossible (hover to see why, e.g. *"CSCI 4760 … is not offered in fall"*). Dropping on green or amber locks the course there. Impossible locks typed in via the menu are explained too, e.g. *"CSCI 4720 is locked to Spring 2027, but CSCI 1730 must be finished first, so Fall 2027 is the earliest it can go."* Drag and drop needs a mouse; the lock menu works on touch and keyboard. |
+| **What if…** | Tick **I fail or withdraw from CSCI 1302** (or any in-progress course that has a Bulletin catalog entry and isn't already a major elective). The course loses its credit, comes back as a *Retake*, and everything that needs it moves; the degree checks adjust for the lost credit. |
+| **Scenarios** | **Save** snapshots all of your settings (including what-if failures) under a name, up to 3 per profile, stored in the browser. A **Scenario comparison** table then lines the saved scenarios up against the current plan: graduation term (and how many semesters later or earlier), semesters, credits planned, summers used, heaviest semester, semesters under your minimum and retaken courses. |
 
 ### The plan (right side)
 
@@ -149,7 +164,9 @@ The planner assumes the Fall 2026 in-progress courses are passed and starts plan
   - the in-plan prerequisites it waits on ("After: …")
   - offering flags: *fall only*, *spring only*, *"Offered every year" (no term given): confirm in Athena*, *not offered on a regular basis*, *cross-listed*
   - a lock menu and a Bulletin link
-- **Download CSV** exports the plan (term, course, title, credits, what it counts toward, notes).
+- **Bottlenecks:** for every planned course the plan is re-solved with that course kept out of its semester. If graduation moves, the course is flagged (*"if this can't happen in Spring 2027, graduation moves to Fall 2028"*) in a summary box and on its card. A course that isn't flagged has slack. Locked courses are skipped.
+- **Questions for your advisor:** a generated checklist of what the plan can't decide on its own: in-progress assumptions, placeholders to choose, offerings to confirm, cross-listed electives, the admission timeline (with your grades if entered) and a backup for each bottleneck.
+- **Print / Save PDF** produces a clean one-page-style handout (always light, controls hidden, two-column semesters) using the browser's print dialog; choose *Save as PDF* there. **Download CSV** exports the plan (term, course, title, credits, what it counts toward, notes).
 
 ![Light theme with a 3-CSCI-per-semester cap: graduation moves to Fall 2028](docs/screenshots/planner-light.png)
 
@@ -228,7 +245,7 @@ The audit doesn't contain prerequisite chains, so those come from the public [UG
 
 | Layer | Technology |
 |---|---|
-| Page | One self-contained **HTML5** file (`degree-map.html`), about 165 KB |
+| Page | One self-contained **HTML5** file (`degree-map.html`), about 200 KB |
 | Styling | **CSS** with custom properties for light/dark themes, Grid and Flexbox, with a stacked layout for narrow screens |
 | Logic | **Vanilla JavaScript** (ES2020+), wrapped in one module-like IIFE. No frameworks, no dependencies, no build step |
 | Graph rendering | Hand-built **SVG** (`createElementNS`), custom force-directed layout and damped-spring hover physics |
@@ -293,7 +310,7 @@ Following the project brief:
 - **No automation against university systems.** DegreeWorks and Athena were never scraped or driven by a script; the audit was exported by hand. Only the public Bulletin was fetched.
 - **No credentials** are requested, stored or handled.
 - **Personal identifiers stripped.** Apart from the first-name profile label, the page contains no name, student ID, GPA, grades or terms.
-- **Local only.** No analytics, no CDN, no network calls carrying data.
+- **Local only.** No analytics, no CDN, no network calls carrying data. Grades you type into the admission tracker, and your saved plan settings and scenarios, live only in your browser's `localStorage`; they are never written into the page or the repository.
 - **No AI in the logic.** Statuses, eligibility and the schedule are computed by plain code.
 - The raw audit PDF is excluded by `.gitignore`. **Redact titles** mode is available for anything shared publicly.
 
@@ -308,18 +325,20 @@ Following the project brief:
 - [ ] One-click refresh of Bulletin data for a new catalog year.
 
 **Planner**
-- [ ] "What-if" mode: simulate failing or withdrawing from a course and see how graduation moves.
+- [x] "What-if" mode: simulate failing or withdrawing from a course and see how graduation moves (in-progress courses with a catalog entry; saved scenarios compare side by side).
+- [ ] Extend what-if to every in-progress course (needs Bulletin catalog entries for gen-ed and transfer courses).
 - [ ] Choose actual courses for Literature / Fine Arts / PE from the Bulletin's attribute lists.
 - [ ] Recognize double-counting rules (one course satisfying several gen-ed attributes).
 - [ ] Optional free-elective filler to keep every semester full-time.
 - [ ] Manually enter real section availability per term (no scraping of Athena; by hand only).
-- [ ] Export the plan to PDF / calendar.
+- [x] Export the plan to PDF (print stylesheet; *Save as PDF* in the print dialog).
+- [ ] Export the plan to a calendar file.
 
 **Graph and UI**
-- [ ] Animate the graph semester by semester following the plan ("watch the degree fill in").
+- [x] Animate the graph semester by semester following the plan ("watch the degree fill in"): the plan timeline.
 - [ ] Better label placement in dense clusters.
 - [ ] Full keyboard navigation and screen-reader descriptions for the graph.
-- [ ] Mobile and touch polish (pinch-zoom).
+- [x] Mobile and touch polish (pinch-zoom, bottom-sheet panel).
 
 **Engineering**
 - [ ] Split the single file into modules (`data/`, `graph/`, `planner/`) with a tiny build step, keeping a single-file release.

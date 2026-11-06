@@ -11,8 +11,10 @@
   --complete:#a3aebc; --progress:#526070; --needed:#0f172a; --eligible:#0f172a; --accent:#0f172a;
   --complete-bg:#eef2f6; --progress-bg:#eef2f6; --needed-bg:transparent;
   --up:#c98500; --down:#2f9e44; --cs:#2a78d6; --gen:#1a9e6e; --other:#7b8797;
-  --good:#15803d; --warn:#b45309; --warn-bg:#fff3d6; --bad:#e11d48;
+  --good:#15803d; --warn:#b45309; --warn-bg:#fff3d6; --bad:#c9153f;
   --shadow:0 1px 2px rgba(15,23,42,.06),0 6px 20px rgba(15,23,42,.08);
+  /* Chrome accent: selected controls and the credit bar. The themes below may recolor these; graph marks keep their own palette. */
+  --sel:var(--text); --sel-fg:var(--bg); --bar:var(--text);
   color-scheme:light;
 }
 :root[data-theme="dark"]{
@@ -24,6 +26,18 @@
   --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
   color-scheme:dark;
 }
+/* "Red & black": a plain color scheme, dark base with a crimson accent for interface chrome only. Not affiliated with any university. */
+:root[data-theme="uga"]{
+  --bg:#0c0c0d; --surface:#151516; --surface2:#1f1f21; --text:#f4f4f5; --muted:#a8a8ad; --border:#2e2e31;
+  --complete:#55555b; --progress:#a8a8ad; --needed:#f4f4f5; --eligible:#f4f4f5; --accent:#ff7a8c;
+  --complete-bg:#1f1f21; --progress-bg:#1f1f21; --needed-bg:transparent;
+  --up:#facc15; --down:#4ade80; --cs:#3987e5; --gen:#199e70; --other:#8391a3;
+  --good:#3ccf7a; --warn:#f5b938; --warn-bg:#33260a; --bad:#fb7185;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.45);
+  --sel:#ba0c2f; --sel-fg:#ffffff; --bar:#e0314f;
+  color-scheme:dark;
+}
+:root[data-theme="uga"] header.top{border-bottom:3px solid #ba0c2f}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
 body{background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;display:flex;flex-direction:column;overflow:hidden}
@@ -42,15 +56,15 @@ header.top{display:flex;gap:24px;align-items:center;justify-content:space-betwee
 .tile b{display:block;font-size:19px;line-height:1.15}
 .tile small{color:var(--muted);font-size:12px;white-space:nowrap}
 .profile{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
-.profile>span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.profile>span{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .toolbar{display:flex;gap:10px;align-items:center;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap}
 .seg{display:inline-flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg)}
 .seg button{border:0;background:transparent;padding:7px 12px;cursor:pointer;font-size:14px;white-space:nowrap}
 .seg button+button{border-left:1px solid var(--border)}
-.seg button[aria-pressed="true"]{background:var(--text);color:var(--bg);font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--sel);color:var(--sel-fg);font-weight:600}
 .btn{border:1px solid var(--border);background:var(--bg);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:14px;white-space:nowrap}
 .btn:hover,.seg button:hover:not([aria-pressed="true"]){background:var(--surface2)}
-.btn[aria-pressed="true"]{background:var(--text);color:var(--bg)}
+.btn[aria-pressed="true"]{background:var(--sel);color:var(--sel-fg)}
 .search{position:relative}
 .search input{border:1px solid var(--border);background:var(--bg);border-radius:10px;padding:7px 12px;width:230px}
 .search input:focus{outline:2px solid var(--accent);outline-offset:1px}
@@ -72,7 +86,7 @@ main{flex:1;display:flex;min-height:0}
 .legend:not([open]) summary::after{content:" ▸"}
 .legend .grid{display:grid;grid-template-columns:auto auto;gap:6px 18px}
 .legend .secs-grid{display:grid;grid-template-columns:repeat(3,auto);gap:4px 14px}
-.legend .lg-h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:8px 0 6px}
+.legend .lg-h{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:8px 0 6px}
 .legend .lg-note{font-size:12px;color:var(--muted);margin:-3px 0 5px}
 .legend .lg-sub{font-size:12px;color:var(--muted);margin:2px 0 4px}
 .legend .lg-sub~.lg-sub{margin-top:8px}
@@ -86,6 +100,7 @@ main{flex:1;display:flex;min-height:0}
 .zoom{position:absolute;right:14px;bottom:14px;display:flex;flex-direction:column;gap:6px}
 .zoom .btn{width:38px;height:38px;padding:0;font-size:18px;box-shadow:var(--shadow);background:var(--surface)}
 aside#panel{width:380px;flex:none;border-left:1px solid var(--border);background:var(--surface);overflow-y:auto;padding:18px 20px 40px}
+.sheet-handle{display:none}
 #panel h2{margin:4px 0 2px;font-size:24px;letter-spacing:-.01em}
 #panel h3{margin:20px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
 #panel .title{margin:0;color:var(--muted);font-size:15px}
@@ -103,7 +118,7 @@ aside#panel{width:380px;flex:none;border-left:1px solid var(--border);background
 .pill.muted{color:var(--muted);border-color:var(--border);background:transparent;font-weight:500}
 .facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 0}
 .facts div{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:7px 10px}
-.facts dt{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.facts dt{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
 .facts dd{margin:2px 0 0;font-weight:600;font-size:14px}
 .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:8px;padding:3px 8px;font-size:13px;background:var(--bg);cursor:pointer;font-weight:600}
 .chip:hover{border-color:var(--text)}
@@ -112,7 +127,7 @@ aside#panel{width:380px;flex:none;border-left:1px solid var(--border);background
 .dot.complete{background:var(--complete)} .dot.in_progress{background:linear-gradient(to top,var(--progress) 50%,transparent 50%);border:2px solid var(--progress)} .dot.needed{background:transparent;border:2px solid var(--needed)} .dot.ext{background:transparent;border:2px dashed var(--muted)}
 .group{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px}
 .group .ok{margin-left:auto;font-size:12px;font-weight:600}
-.and{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:4px 0 6px 4px}
+.and{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:4px 0 6px 4px}
 .or{font-size:12px;color:var(--muted)}
 .src{font-size:12.5px;color:var(--muted);border-left:3px solid var(--border);padding-left:10px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
@@ -132,7 +147,7 @@ body.mode-plan #planner{display:flex}
 .pl-side section{margin-top:18px}
 .pl-side h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
 .terms-tbl{width:100%;border-collapse:collapse;font-size:14px}
-.terms-tbl th{font-size:11px;color:var(--muted);text-align:left;font-weight:600;padding:2px 4px}
+.terms-tbl th{font-size:12px;color:var(--muted);text-align:left;font-weight:600;padding:2px 4px}
 .terms-tbl td{padding:3px 4px;border-top:1px solid var(--border)}
 .terms-tbl tr.off td:nth-child(n+2){opacity:.45}
 .terms-tbl input[type=number],.bulk input{width:56px;border:1px solid var(--border);background:var(--bg);border-radius:7px;padding:3px 6px}
@@ -166,18 +181,32 @@ body.mode-plan #planner{display:flex}
 .tbar span{display:block;height:100%;border-radius:4px;background:var(--text);opacity:.7}
 .tbar i{position:absolute;top:-3px;width:2px;height:12px;background:var(--muted)}
 .tbar i.mx{background:var(--text)}
-.tsub{font-size:12px;color:var(--muted);margin-bottom:8px}
+.tsub{font-size:12.5px;color:var(--muted);margin-bottom:8px}
 .pcard{border:1px solid var(--border);border-left:4px solid var(--c,var(--border));border-radius:10px;padding:8px 10px;margin-top:8px;background:var(--bg)}
 .pc-top{display:flex;justify-content:space-between;font-size:15px}
 .pc-top span{color:var(--muted);font-size:13px;font-weight:600}
 .pc-t{font-size:13px;color:var(--muted);margin-top:1px}
-.pc-meta{font-size:12px;color:var(--muted);margin-top:5px}
-.pc-pre{font-size:12px;margin-top:4px}
-.pc-flag{font-size:12px;margin-top:4px;padding:3px 7px;border-radius:6px;background:var(--surface2);color:var(--text)}
+.pc-meta{font-size:12.5px;color:var(--muted);margin-top:5px}
+.pc-pre{font-size:12.5px;margin-top:4px}
+.pc-flag{font-size:12.5px;margin-top:4px;padding:3px 7px;border-radius:6px;background:var(--surface2);color:var(--text)}
 .pc-foot{display:flex;gap:8px;align-items:center;margin-top:7px}
 .pc-foot select{border:1px solid var(--border);background:var(--surface);border-radius:7px;padding:3px 6px;font-size:12.5px;max-width:170px}
 .pc-foot .lock{font-size:12px}
 a.ext.sm{font-size:12.5px;margin-left:auto}
+table.adm{width:100%;border-collapse:collapse;margin:6px 0 10px;font-size:14px}
+table.adm td{padding:5px 4px;border-top:1px solid var(--border);vertical-align:middle}
+table.adm td:last-child{text-align:right}
+table.adm .pill{white-space:nowrap}
+table.adm select{border:1px solid var(--border);background:var(--bg);border-radius:8px;padding:4px 6px;font-size:13.5px}
+.adm-res{border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:13.5px;background:var(--surface2)}
+.adm-res.good{border-color:var(--good)} .adm-res.bad{border-color:var(--bad)}
+.crit{border:1px solid var(--warn);background:var(--warn-bg);border-radius:12px;padding:10px 14px;margin:10px 0}
+.crit.ok{border-color:var(--border);background:var(--surface2)}
+.crit ul{margin:6px 0 0;padding:0;list-style:none;columns:2 280px;column-gap:24px}
+.crit li{padding:3px 0;font-size:13.5px;break-inside:avoid}
+.crit .req{color:var(--muted)}
+.pcard.is-crit{border-color:var(--warn)}
+.pc-crit{font-size:12px;margin-top:5px;padding:3px 7px;border-radius:6px;background:var(--warn-bg);color:var(--text);border:1px solid var(--warn)}
 .assume{margin-top:18px;font-size:13.5px;color:var(--muted)}
 .assume summary{cursor:pointer;font-weight:600;color:var(--text)}
 .planned{background:var(--surface2);border-radius:10px;padding:8px 10px;margin-top:12px;font-size:14px}
@@ -187,11 +216,73 @@ a.ext.sm{font-size:12.5px;margin-left:auto}
   body{overflow:auto}
   main{flex-direction:column}
   #stage{min-height:70vh}
-  aside#panel{width:auto;border-left:0;border-top:1px solid var(--border)}
+  /* The detail panel becomes a bottom sheet: a 54px peek bar that slides up over the graph. */
+  aside#panel{position:fixed;left:0;right:0;bottom:0;width:auto;max-height:74vh;display:flex;flex-direction:column;padding:0;overflow:hidden;border:1px solid var(--border);border-bottom:0;border-radius:16px 16px 0 0;box-shadow:var(--shadow);z-index:30;transform:translateY(calc(100% - 54px));transition:transform .25s ease}
+  aside#panel.open{transform:none}
+  .sheet-handle{display:flex;align-items:center;gap:10px;width:100%;height:54px;flex:none;border:0;background:var(--surface);padding:0 18px;cursor:pointer;text-align:left;font-size:15px;position:relative}
+  .sheet-handle .grab{position:absolute;top:7px;left:50%;width:38px;height:4px;margin-left:-19px;border-radius:2px;background:var(--border)}
+  .sheet-handle b{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-top:6px}
+  .sheet-handle .chev{color:var(--muted);font-size:12px;padding-top:6px;transition:transform .25s}
+  aside#panel.open .chev{transform:rotate(180deg)}
+  #panelBody{overflow-y:auto;padding:0 18px 40px;flex:1;min-height:0}
+  #stage{margin-bottom:54px}
+  @media (prefers-reduced-motion:reduce){aside#panel,.sheet-handle .chev{transition:none}}
   header.top,.toolbar{padding-left:16px;padding-right:16px}
   .search input{width:100%}
   .search{flex:1;min-width:180px}
   .credit{min-width:0;width:100%}
+  .timeline{width:100%}
+  .timeline input[type=range]{flex:1;width:auto;min-width:70px}
+  .timeline .tl-txt{min-width:0;flex:1.4}
+  .toolbar .seg{max-width:100%;overflow-x:auto}
+}
+.print-only{display:none}
+.pcard[draggable=true]{cursor:grab}
+.pcard.dragging{opacity:.4}
+.term.drop-ok{outline:2px dashed var(--good);outline-offset:2px}
+.term.drop-warn{outline:2px dashed var(--warn);outline-offset:2px}
+.term.drop-bad{outline:2px dashed var(--bad);outline-offset:2px;opacity:.55}
+.term.drop-over{background:var(--surface2)}
+.term[data-hint]::before{content:attr(data-hint);display:block;font-size:12px;font-weight:700;margin:-2px 0 8px;padding:3px 8px;border-radius:6px;background:var(--surface2)}
+.term.drop-ok[data-hint]::before{color:var(--good)} .term.drop-warn[data-hint]::before{color:var(--warn)} .term.drop-bad[data-hint]::before{color:var(--bad)}
+#toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);max-width:min(560px,calc(100% - 32px));background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:13.5px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:20}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+.timeline{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:10px;padding:3px 12px 3px 4px;background:var(--bg)}
+.timeline[hidden]{display:none}
+.timeline input[type=range]{width:150px;accent-color:var(--sel)}
+.timeline .tl-txt{display:flex;flex-direction:column;line-height:1.15;min-width:150px}
+.timeline .tl-txt small{color:var(--muted);font-size:12px}
+.timeline.projecting{border-color:var(--text);box-shadow:inset 0 0 0 1px var(--text)}
+.scen-save{display:flex;gap:6px;margin:8px 0 4px}
+.scen-save input{flex:1;min-width:0;border:1px solid var(--border);background:var(--bg);border-radius:8px;padding:5px 8px;font-size:13.5px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.cmp{margin:12px 0}
+.cmp-wrap{overflow-x:auto}
+.cmp-t{border-collapse:collapse;font-size:13.5px;min-width:100%;margin-top:6px}
+.cmp-t th,.cmp-t td{padding:6px 10px;border-top:1px solid var(--border);text-align:left;vertical-align:top}
+.cmp-t thead th{border-top:0;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.cmp-t tbody th{font-weight:600;color:var(--muted);white-space:nowrap}
+.cmp-t td:nth-child(2){background:var(--surface2)}
+.cmp .req{color:var(--muted);font-size:12px}
+.advisor{margin-top:20px}
+.advisor h3{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.advisor ol{margin:0;padding-left:22px;font-size:13.5px}
+.advisor li{padding:3px 0}
+/* Print: plan only, always light, one clean handout for an advisor meeting. */
+@media print{
+  :root,:root[data-theme="dark"],:root[data-theme="uga"]{--sel:#000;--sel-fg:#fff;--bar:#000;--accent:#000;--bg:#fff;--surface:#fff;--surface2:#f1f3f6;--text:#000;--muted:#444;--border:#bbb;--up:#c98500;--down:#2f9e44;--cs:#2a78d6;--gen:#1a9e6e;--other:#7b8797;--good:#15803d;--warn:#b45309;--warn-bg:#fff3d6;--bad:#c9153f;--shadow:none;color-scheme:light}
+  html,body{height:auto;overflow:visible;display:block;background:#fff;font-size:12px}
+  header.top,.toolbar,.pl-side,.plan-actions,.pc-foot,#stage,#panel,.zoom,.legend,.assume{display:none!important}
+  main,#planner,body.mode-plan #planner{display:block!important}
+  .pl-main{overflow:visible;padding:0}
+  .print-only{display:block}
+  .print-meta{margin:0 0 10px;font-size:11px;color:var(--muted)}
+  .plan-head h2{font-size:24px}
+  .checks{grid-template-columns:1fr;gap:3px}
+  .terms-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .term,.pcard,.crit,.advisor li{break-inside:avoid;box-shadow:none}
+  .advisor{break-inside:avoid}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 </style>
 </head>
@@ -232,11 +323,17 @@ a.ext.sm{font-size:12.5px;margin-left:auto}
     <input id="search" type="search" list="courseList" placeholder="Jump to course, e.g. CSCI 2720" autocomplete="off" aria-label="Search courses">
     <datalist id="courseList"></datalist>
   </div>
+  <div class="timeline graph-only" id="tlBox" hidden>
+    <button class="btn sm" id="tlPlay" title="Play the plan semester by semester">▶ Play</button>
+    <input type="range" id="tlRange" min="0" max="1" step="1" value="0" aria-label="Plan timeline: project the graph forward by semester">
+    <div class="tl-txt"><b id="tlLabel">Today</b><small id="tlSub"></small></div>
+  </div>
   <div class="spacer"></div>
   <button class="btn graph-only" id="relayout" title="Re-run the layout">Reset layout</button>
   <button class="btn" id="redact" aria-pressed="false" title="Show course codes only">Redact titles</button>
   <button class="btn" id="theme">Dark theme</button>
   <button class="btn graph-only" id="export">Export PNG</button>
+  <button class="btn graph-only" id="shareCard" title="A shareable image: credit totals and section progress. No name and no course titles.">Progress card</button>
 </div>
 <main>
   <div id="stage">
@@ -252,7 +349,10 @@ a.ext.sm{font-size:12.5px;margin-left:auto}
       <button class="btn" id="zfit" title="Fit to screen (F)" aria-label="Fit to screen">⤢</button>
     </div>
   </div>
-  <aside id="panel" aria-live="polite"></aside>
+  <aside id="panel" aria-live="polite">
+    <button class="sheet-handle" id="sheetHandle" aria-expanded="false" aria-controls="panelBody"><span class="grab" aria-hidden="true"></span><b id="sheetTitle">Overview</b><span class="chev" aria-hidden="true">▲</span></button>
+    <div id="panelBody"></div>
+  </aside>
   <div id="planner"></div>
 </main>
 
@@ -662,14 +762,19 @@ function prereqGroupsState(code) {
   return now ? "now" : next ? "next" : "blocked";
 }
 const ELIG = new Map();
-for (const it of ITEMS.values()) {
-  if (it.type === "course" && it.status === "needed") ELIG.set(it.id, prereqGroupsState(it.id));
+function computeElig() { // also re-run by the plan timeline, which changes statuses
+  ELIG.clear();
+  const satisfied = id => Object.entries(CHOICES).some(([cid, c]) => c.options.includes(id) && ITEMS.get(cid).status === "complete"); // another option already filled the pick-one group
+  for (const it of ITEMS.values()) {
+    if (it.type === "course" && it.status === "needed" && !satisfied(it.id)) ELIG.set(it.id, prereqGroupsState(it.id));
+  }
+  for (const [cid, c] of Object.entries(CHOICES)) {
+    if (ITEMS.get(cid).status !== "needed") continue;
+    const es = c.options.map(o => ELIG.get(o));
+    ELIG.set(cid, es.includes("now") ? "now" : es.includes("next") ? "next" : "blocked");
+  }
 }
-for (const [cid, c] of Object.entries(CHOICES)) {
-  if (ITEMS.get(cid).status !== "needed") continue;
-  const es = c.options.map(o => ELIG.get(o));
-  ELIG.set(cid, es.includes("now") ? "now" : es.includes("next") ? "next" : "blocked");
-}
+computeElig();
 const elig = id => ELIG.get(id) || null;
 
 // Credits applied to the degree: distinct courses in counting blocks.
@@ -684,7 +789,9 @@ if (credComplete + credIP !== DEGREE.applied)
 // Course level from the first digit, so transfer codes like MATH 3TXX count as 3000-level.
 const level = code => { const m = /\d/.exec(code.split(" ")[1] || ""); return m ? +m[0] * 1000 : 0; };
 const takenCr = ids => ids.reduce((s, id) => { const c = ITEMS.get(id); return s + (c.type === "course" && c.status !== "needed" ? c.credits : 0); }, 0);
-const UPPER_SO_FAR = takenCr([...ITEMS.values()].filter(i => i.type === "course" && level(i.id) >= 3000).map(i => i.id)); // all blocks, as the audit counts it
+const UPPER_IDS = [...ITEMS.values()].filter(i => i.type === "course" && level(i.id) >= 3000).map(i => i.id);
+const UPPER_SO_FAR = takenCr(UPPER_IDS); // all blocks, as the audit counts it
+let UPPER_NOW = UPPER_SO_FAR; // the header tile; the plan timeline projects it forward
 const blockItemIds = b => BLOCKS.find(x => x.id === b).items.map(i => i[0]);
 const MAJOR_APPLIED = takenCr(blockItemIds("BLK:MAJOR")), A6_APPLIED = takenCr(blockItemIds("BLK:A6"));
 const MAJOR_REQ = ITEMS.get("BLK:MAJOR").req, A6_REQ = ITEMS.get("BLK:A6").req;
@@ -717,15 +824,19 @@ const PALETTES = {
     sec: { "BLK:MAJOR": "#86b6ef", "BLK:A6": "#3987e5", "BLK:ENTR": "#256abf", "BLK:A1": "#199e70", "BLK:A2": "#199e70", "BLK:A3": "#199e70", "BLK:A4": "#199e70",
            "BLK:A5": "#199e70", "BLK:UNIV": "#4cc596", "BLK:FRANK": "#4cc596", "BLK:GENEL": "#8391a3", "BLK:EXCESS": "#4b5666" } },
 };
+// Red & black reuses the dark palette's graph colors (they were checked for color-vision deficiency on a dark surface);
+// only the neutrals shift, so the graph's red availability ring never competes with the interface's crimson accent.
+PALETTES.uga = { ...PALETTES.dark, bg: "#0c0c0d", surface: "#151516", border: "#2e2e31", muted: "#a8a8ad", faint: "#4b4b51" };
 const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif';
 const store = {
   get(k) { try { return localStorage.getItem("degmap:" + k); } catch { return null; } },
   set(k, v) { try { localStorage.setItem("degmap:" + k, v); } catch {} },
 };
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const THEMES = ["light", "dark", "uga"], THEME_NAME = { light: "Light", dark: "Dark", uga: "Red & black" };
 const state = {
   filter: "all", sel: null, hover: null, redact: store.get("redact") === "1",
-  theme: store.get("theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"),
+  theme: THEMES.includes(store.get("theme")) ? store.get("theme") : (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"),
 };
 const P = () => PALETTES[state.theme];
 const secColor = b => P().sec[b];
@@ -1021,7 +1132,7 @@ function drawDegree(g, n) {
   el("circle", { r, fill: pal.surface, stroke: pal.text, "stroke-width": 2.5 }, g);
   progressRing(g, r + 8, 6, [[credComplete, pal.text], [credIP, pal.text, 0.4], [DEGREE.req - applied, "none"]], pal); // solid = complete, translucent = in progress
   txt(g, 0, 4, String(applied), 24, 800, pal.text, "middle");
-  txt(g, 0, 21, `of ${DEGREE.req} cr`, 11.5, 500, pal.muted, "middle");
+  txt(g, 0, 21, `of ${DEGREE.req} cr`, 12.5, 500, pal.muted, "middle");
   const l = txt(g, 0, r + 36, DEGREE.label, 18, 800, pal.text, "middle");
   n.fixed = [[l, r + 36, 18]];
   l.setAttribute("paint-order", "stroke"); l.setAttribute("stroke", pal.bg); l.setAttribute("stroke-width", 5); l.setAttribute("stroke-linejoin", "round");
@@ -1293,6 +1404,7 @@ function declutter(op, traced = []) {
 
 function select(id, center) {
   state.sel = id && ITEMS.has(id) ? id : null;
+  if (narrow.matches) setSheet(!!state.sel); // selecting slides the sheet up; clearing the selection tucks it away
   applyState();
   if (center && state.sel) centerOn(state.sel);
 }
@@ -1358,13 +1470,41 @@ svg.addEventListener("wheel", e => {
 const nodeAt = e => { const g = e.target.closest && e.target.closest(".node"); return g ? g.getAttribute("data-id") : null; };
 const toWorld = (cx, cy) => { const r = svg.getBoundingClientRect(); return [(cx - r.left - view.x) / view.k, (cy - r.top - view.y) / view.k]; };
 let drag = null;
+/* Pinch-zoom: with two touches down the view zooms about their midpoint (and pans with it). A one-finger drag
+   or node drag in progress is released first; lifting the fingers never counts as a tap-to-select. */
+const touches = new Map();
+let pinch = null, pinchEnd = 0;
+const pinchGeom = () => { const [a, b] = [...touches.values()], r = svg.getBoundingClientRect(); return { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, mx: (a.x + b.x) / 2 - r.left, my: (a.y + b.y) / 2 - r.top }; };
+function releaseDrag() {
+  if (drag && drag.node && drag.moved) { if (drag.node.id !== "DEGREE") drag.node.fx = drag.node.fy = null; SIM.alphaTarget = 0; heat(0.1); }
+  drag = null; svg.classList.remove("panning");
+}
+function endPinchIfDone(e) {
+  const had = touches.delete(e.pointerId);
+  if (pinch && touches.size < 2) { pinch = null; pinchEnd = performance.now(); applyVisual(); }
+  return had;
+}
 svg.addEventListener("pointerdown", e => {
   if (e.button !== 0) return;
   cancelAnimationFrame(anim);
+  if (e.pointerType === "touch") {
+    touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (touches.size === 2) { releaseDrag(); hideTip(); pinch = { ...pinchGeom(), k: view.k, vx: view.x, vy: view.y }; return; }
+    if (touches.size > 2) return;
+  }
   const id = nodeAt(e);
   drag = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: false, pid: e.pointerId, node: id ? SIM.byId.get(id) : null };
 });
 svg.addEventListener("pointermove", e => {
+  if (touches.has(e.pointerId)) touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pinch) {
+    if (touches.size === 2) {
+      const g = pinchGeom(), k = Math.min(3, Math.max(0.15, pinch.k * g.d / pinch.d));
+      const wx = (pinch.mx - pinch.vx) / pinch.k, wy = (pinch.my - pinch.vy) / pinch.k; // the world point that was under the fingers' midpoint stays under it
+      view.k = k; view.x = g.mx - wx * k; view.y = g.my - wy * k; applyView();
+    }
+    return;
+  }
   if (drag && drag.pid === e.pointerId) {
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
     if (!drag.moved && Math.hypot(dx, dy) > 4) {
@@ -1387,7 +1527,11 @@ svg.addEventListener("pointermove", e => {
   }
   id ? showTip(id, e) : hideTip();
 });
+svg.addEventListener("pointercancel", e => { endPinchIfDone(e); if (drag && drag.pid === e.pointerId) releaseDrag(); });
 svg.addEventListener("pointerup", e => {
+  const wasPinch = !!pinch || performance.now() - pinchEnd < 350;
+  endPinchIfDone(e);
+  if (wasPinch) { if (drag && drag.pid === e.pointerId) releaseDrag(); return; }
   if (!drag) return;
   const d = drag; drag = null; svg.classList.remove("panning");
   if (d.moved) {
@@ -1421,7 +1565,11 @@ function hideTip() { tip.style.opacity = 0; }
 /* =====================================================================
    SIDE PANEL
    ===================================================================== */
-const panel = document.getElementById("panel");
+const panel = document.getElementById("panel"), panelBody = document.getElementById("panelBody");
+// On phones the panel is a bottom sheet: a peek bar with the selected item's name that slides up to the full details.
+const narrow = matchMedia("(max-width:900px)");
+function setSheet(open) { panel.classList.toggle("open", open); document.getElementById("sheetHandle").setAttribute("aria-expanded", open); }
+document.getElementById("sheetHandle").addEventListener("click", () => setSheet(!panel.classList.contains("open")));
 const swatch = b => `<span class="sw" style="background:${secColor(b)}"></span>`;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 function chip(id) {
@@ -1448,7 +1596,9 @@ function groupsHTML(groups) {
 
 function renderPanel() {
   const id = state.sel;
-  if (!id) return panel.innerHTML = overviewHTML();
+  const cur = id && ITEMS.get(id);
+  document.getElementById("sheetTitle").textContent = !cur ? "Overview" : cur.type === "course" ? cur.id : cur.label || cur.short || "Details";
+  if (!id) return panelBody.innerHTML = overviewHTML();
   const it = ITEMS.get(id);
   let h = "";
   if (it.type === "course") {
@@ -1476,6 +1626,7 @@ function renderPanel() {
       const done = it.from.filter(c => ITEMS.get(c).status === "complete").length, ip = it.from.filter(c => ITEMS.get(c).status === "in_progress").length;
       h += `<h3>Entrance courses: ${done} of ${it.from.length} complete${ip ? `, ${ip} in progress` : ""}</h3><div class="chips">${it.from.map(chip).join("")}</div>`;
     }
+    if (id === "REQ:ADMIT") h += admissionHTML();
   } else if (it.type === "choice") {
     h += `<div style="display:flex;gap:6px;flex-wrap:wrap">${pill(it.status)}${eligPill(elig(id))}</div><h2>${esc(it.label)}</h2><p class="title">Pick 1 of ${it.options.length}</p>`;
     h += plannedHTML(id);
@@ -1492,7 +1643,7 @@ function renderPanel() {
   } else {
     h += overviewHTML();
   }
-  panel.innerHTML = h + `<p class="hint"><button class="linkbtn" data-go="">← Back to overview</button> &nbsp;or press <kbd>Esc</kbd></p>`;
+  panelBody.innerHTML = h + `<p class="hint"><button class="linkbtn" data-go="">← Back to overview</button> &nbsp;or press <kbd>Esc</kbd></p>`;
 }
 
 function overviewHTML() {
@@ -1514,6 +1665,10 @@ function overviewHTML() {
   h += `<h3>Pick-one groups (${groups.length})</h3><div class="chips">${groups.map(chip).join("")}</div>`;
   h += `<h3>Open requirements (${open.length})</h3><div class="chips">${open.map(chip).join("")}</div>`;
   h += `<h3>Counted in more than one section (${shared.length})</h3><div class="chips">${shared.map(chip).join("")}</div>`;
+  if (ITEMS.has("REQ:ADMIT") && ITEMS.get("REQ:ADMIT").status !== "complete") {
+    const a = admissionState();
+    h += `<h3>Major admission</h3><div class="chips">${chip("REQ:ADMIT")}</div><p class="note">${a.short ? esc(a.short.charAt(0).toUpperCase() + a.short.slice(1)) + ". " : ""}Enter your grades there to see what GPA you need.</p>`;
+  }
   h += `<h3>Degree checks from the audit</h3><ul>${DEGREE.checks.map(([a, b]) => `<li><b>${esc(a)}</b><span class="req">${esc(b)}</span></li>`).join("")}</ul>`;
   h += `<p class="hint">${esc(PROF.source)}. Arrows are drawn only between courses in this audit; other accepted alternatives appear as dashed chips in each course's details.<br><br>Hover to nudge · drag nodes to rearrange · scroll to zoom<br>Shortcuts: <kbd>/</kbd> search · <kbd>F</kbd> fit · <kbd>Esc</kbd> clear</p>`;
   return h;
@@ -1526,8 +1681,71 @@ function plannedHTML(id) {
   else if (CHOICES[id]) list = CHOICES[id].options.filter(o => PLANNED_TERM.has(o) && PLAN.items.find(it => it.id === o).role !== "elective").map(o => [o, PLANNED_TERM.get(o)]);
   else if (PLANNED_TERM.has(id)) list = [[null, PLANNED_TERM.get(id)]];
   if (!list.length) return "";
-  return `<div class="planned">Planned: ${list.map(([c, t]) => `${c ? esc(c) + " in " : ""}<b>${esc(t)}</b>`).join(", ")} · <button class="linkbtn" data-openplan>Open semester plan</button></div>`;
+  const crits = list.map(([c]) => PLAN.crit && PLAN.crit.get(c || id)).filter(Boolean);
+  const critNote = crits.length ? `<div class="pc-crit" style="margin-top:8px">⚑ ${esc(critText(crits[0], list[0][1]))}</div>` : "";
+  return `<div class="planned">Planned: ${list.map(([c, t]) => `${c ? esc(c) + " in " : ""}<b>${esc(t)}</b>`).join(", ")} · <button class="linkbtn" data-openplan>Open semester plan</button>${critNote}</div>`;
 }
+/* ---------- Major-admission tracker ----------
+   The audit says: C (2.0) or higher in CSCI 1301, 1302, 2610, 2720 and MATH 2250, and a 2.7 GPA across
+   the best attempts of CSCI 1302, 2610 and 2720. The audit export carries no grades, so the student types
+   their own. They stay in this browser's localStorage (per profile), never in the page or in git.
+   The GPA is credit-weighted (grade points x credit hours / credit hours). */
+const GRADE_PTS = [["A", 4], ["A-", 3.7], ["B+", 3.3], ["B", 3], ["B-", 2.7], ["C+", 2.3], ["C", 2], ["C-", 1.7], ["D", 1], ["F", 0]];
+const PTS = Object.fromEntries(GRADE_PTS);
+const ADM_GPA = ["CSCI 1302", "CSCI 2610", "CSCI 2720"], ADM_ALL = ["CSCI 1301", ...ADM_GPA, "MATH 2250"], ADM_TARGET = 2.7, ADM_FLOOR = 2;
+const GRADES_KEY = "grades:" + PROFILE_ID;
+let GRADES = (() => { try { const o = JSON.parse(store.get(GRADES_KEY) || "{}"); return Object.fromEntries(Object.entries(o).filter(([id, g]) => ADM_ALL.includes(id) && g in PTS)); } catch { return {}; } })();
+function setGrade(id, g) { if (g in PTS) GRADES[id] = g; else delete GRADES[id]; store.set(GRADES_KEY, JSON.stringify(GRADES)); }
+const letterFor = pts => (GRADE_PTS.slice().reverse().find(([, p]) => p >= pts - 1e-9) || [null])[0]; // lowest grade at or above pts
+
+function admissionState() {
+  const cr = id => ITEMS.get(id).credits, have = id => GRADES[id] != null;
+  const totalCr = ADM_GPA.reduce((s, id) => s + cr(id), 0);
+  const known = ADM_GPA.filter(have), rest = ADM_GPA.filter(id => !have(id));
+  const pts = known.reduce((s, id) => s + PTS[GRADES[id]] * cr(id), 0), kcr = known.reduce((s, id) => s + cr(id), 0);
+  const below = ADM_ALL.filter(id => have(id) && PTS[GRADES[id]] < ADM_FLOOR);
+  const st = { totalCr, known, rest, below, gpa: kcr ? pts / kcr : null, done: false, ok: false, need: null, msg: "", short: "" };
+  if (below.length) {
+    st.msg = `${below.join(", ")} ${below.length > 1 ? "are" : "is"} below a C. Admission requires C or better in every entrance course (a retake may be allowed within your first two attempts; check with your advisor).`;
+    st.short = `${below.join(", ")} below C`;
+  } else if (!rest.length) {
+    st.done = true; st.ok = st.gpa >= ADM_TARGET - 1e-9;
+    st.msg = st.ok ? `Credit-weighted GPA ${st.gpa.toFixed(2)} across ${ADM_GPA.join(", ")}: meets the ${ADM_TARGET} minimum.` : `Credit-weighted GPA ${st.gpa.toFixed(2)} across ${ADM_GPA.join(", ")}: below the ${ADM_TARGET} minimum.`;
+    st.short = `GPA ${st.gpa.toFixed(2)} (${st.ok ? "meets" : "below"} ${ADM_TARGET})`;
+  } else if (known.length) {
+    const restCr = rest.reduce((s, id) => s + cr(id), 0), req = (ADM_TARGET * totalCr - pts) / restCr, list = rest.join(" and ");
+    st.need = req;
+    if (req > 4 + 1e-9) { st.msg = `Even straight A's in ${list} would not reach ${ADM_TARGET} with the grades entered.`; st.short = `${ADM_TARGET} out of reach`; }
+    else if (req <= ADM_FLOOR) { st.msg = `On track: a C or better in ${list} keeps the GPA at or above ${ADM_TARGET}.`; st.short = `on track (C or better in ${list})`; }
+    else {
+      const l = letterFor(req);
+      st.msg = rest.length === 1 ? `You need at least a ${l} in ${list} (${req.toFixed(2)} grade points) to reach ${ADM_TARGET}.` : `You need an average of ${req.toFixed(2)} across ${list}, for example a ${l} in each.`;
+      st.short = `need ${rest.length === 1 ? "a " + l + " in " + list : "avg " + req.toFixed(2) + " in " + list}`;
+    }
+  } else { st.msg = `Enter the grades you have (your best attempt) to see what you need in the rest.`; st.short = ""; }
+  return st;
+}
+function admissionResultHTML() {
+  const s = admissionState(), tone = s.below.length || (s.done && !s.ok) ? "bad" : s.done && s.ok ? "good" : "muted";
+  const done = ADM_ALL.filter(id => GRADES[id] != null && PTS[GRADES[id]] >= ADM_FLOOR).length;
+  return `<div class="adm-res ${tone}"><b>${s.gpa != null ? `GPA so far: ${s.gpa.toFixed(2)}` : "No grades entered"}</b><span class="req"> · target ${ADM_TARGET} · C or better in ${done} of ${ADM_ALL.length}</span><div>${esc(s.msg)}</div></div>`;
+}
+function admissionHTML() {
+  const rows = ADM_ALL.map(id => {
+    const it = ITEMS.get(id), opts = `<option value="">${it.status === "complete" ? "Grade…" : "Expected…"}</option>` + GRADE_PTS.map(([g]) => `<option value="${g}"${GRADES[id] === g ? " selected" : ""}>${g}</option>`).join("");
+    return `<tr><td><button class="linkbtn" data-go="${esc(id)}">${esc(id)}</button>${ADM_GPA.includes(id) ? ` <span class="req">${it.credits} cr · in GPA</span>` : ""}</td><td>${pill(it.status)}</td><td><select data-grade="${esc(id)}" aria-label="Grade for ${esc(id)}">${opts}</select></td></tr>`;
+  }).join("");
+  return `<h3>Admission tracker</h3><p class="note">Enter your best attempt in each course. For courses not finished yet, enter the grade you expect to see what it does to your GPA.</p>
+    <table class="adm"><tbody>${rows}</tbody></table><div id="admRes">${admissionResultHTML()}</div>
+    <p class="note">Stored only in this browser, never in the page or git. Credit-weighted GPA over CSCI 1302, 2610 and 2720; acceptance is never guaranteed.</p>`;
+}
+panel.addEventListener("change", e => {
+  const s = e.target.closest("[data-grade]"); if (!s) return;
+  setGrade(s.dataset.grade, s.value);
+  document.getElementById("admRes").innerHTML = admissionResultHTML();
+  renderPlanner();
+});
+
 panel.addEventListener("click", e => {
   if (e.target.closest("[data-openplan]")) return setMode("plan");
   const b = e.target.closest("[data-go]"); if (!b) return;
@@ -1541,13 +1759,14 @@ panel.addEventListener("click", e => {
 function renderHeader() {
   document.getElementById("credApplied").textContent = credComplete + credIP;
   document.getElementById("credReq").textContent = DEGREE.req;
-  document.getElementById("credBar").innerHTML = `<span style="width:${credComplete / DEGREE.req * 100}%;background:var(--text)" title="${credComplete} complete"></span><span style="width:${credIP / DEGREE.req * 100}%;background:var(--text);opacity:.4" title="${credIP} in progress"></span>`;
+  const pct = v => Math.min(100, v / DEGREE.req * 100);
+  document.getElementById("credBar").innerHTML = `<span style="width:${pct(credComplete)}%;background:var(--bar)" title="${credComplete} complete"></span><span style="width:${pct(Math.min(credIP, Math.max(0, DEGREE.req - credComplete)))}%;background:var(--bar);opacity:.4" title="${credIP} in progress"></span>`;
   const nowN = [...ELIG].filter(([id, e]) => e === "now" && ITEMS.get(id).type === "course").length;
   const tiles = [
     [credComplete, "credits complete", "var(--text)"],
     [credIP, "credits in progress", "var(--text)"],
-    [DEGREE.req - credComplete - credIP, "credits remaining", "var(--text)"],
-    [`${UPPER_SO_FAR} / 39`, "upper-division cr", "var(--text)"],
+    [Math.max(0, DEGREE.req - credComplete - credIP), "credits remaining", "var(--text)"],
+    [`${UPPER_NOW} / 39`, "upper-division cr", "var(--text)"],
     [nowN, "eligible now", "var(--text)"],
   ];
   document.getElementById("tiles").innerHTML = tiles.map(([v, l, c]) => `<div class="tile"><b style="color:${c}">${v}</b><small>${l}</small></div>`).join("");
@@ -1613,8 +1832,8 @@ function syncRedact() { redactBtn.setAttribute("aria-pressed", state.redact); re
 redactBtn.addEventListener("click", () => { state.redact = !state.redact; store.set("redact", state.redact ? "1" : "0"); syncRedact(); fillDatalist(); renderPanel(); renderPlanner(); });
 
 const themeBtn = document.getElementById("theme");
-function syncTheme() { document.documentElement.dataset.theme = state.theme; themeBtn.textContent = state.theme === "dark" ? "Light theme" : "Dark theme"; }
-themeBtn.addEventListener("click", () => { state.theme = state.theme === "dark" ? "light" : "dark"; store.set("theme", state.theme); syncTheme(); renderLegend(); render(); renderPlanner(); });
+function syncTheme() { document.documentElement.dataset.theme = state.theme; themeBtn.textContent = `Theme: ${THEME_NAME[state.theme]}`; themeBtn.title = `Switch theme (light, dark, red & black)`; }
+themeBtn.addEventListener("click", () => { state.theme = THEMES[(THEMES.indexOf(state.theme) + 1) % THEMES.length]; store.set("theme", state.theme); syncTheme(); renderLegend(); render(); renderPlanner(); });
 
 document.getElementById("relayout").addEventListener("click", () => { seedPositions(); draw(); fit(); });
 document.getElementById("zin").addEventListener("click", () => zoomBy(1.25));
@@ -1678,7 +1897,7 @@ document.getElementById("export").addEventListener("click", () => {
     ctx.fillStyle = pal.text; ctx.font = `700 20px ${FONT}`;
     ctx.fillText(`${DEGREE.label}: Degree Map`, 20, 30);
     ctx.fillStyle = pal.muted; ctx.font = `13px ${FONT}`;
-    ctx.fillText(`${credComplete + credIP} of ${DEGREE.req} credits applied · Blue = major (CS), green = gen ed, gray = electives & excess · Full = complete, half = in progress, empty = needed · Outer ring = eligible (solid now, dashed next term) · Circle area = credit hours`
+    ctx.fillText(`${state.tl ? `PROJECTION after ${PLAN.terms[state.tl - 1].label}: ` : ""}${credComplete + credIP} of ${DEGREE.req} credits applied · Blue = major (CS), green = gen ed, gray = electives & excess · Full = complete, half = in progress, empty = needed · Outer ring = eligible (solid now, dashed next term) · Circle area = credit hours`
       + (state.sel ? ` · Tracing ${state.sel}: yellow = requires, green = unlocks` : ""), 20, 52);
     ctx.fillText(`Profile: ${PROF.name} · ${PROF.source}. Planning aid, not an official audit.`, 20, H - 16);
     c.toBlob(b => {
@@ -1691,6 +1910,65 @@ document.getElementById("export").addEventListener("click", () => {
   };
   img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(data);
 });
+
+/* Progress card: a 1080x1080 image drawn straight onto a canvas (not a page screenshot) in the current theme.
+   It shows credit totals and per-section progress only: no name and no course titles, so it is safe to post.
+   Course codes appear only as "eligible now" chips. A projection is labelled as one. */
+function progressCard() {
+  const pal = P(), W = 1080, S = 2, c = document.createElement("canvas");
+  c.width = W * S; c.height = W * S;
+  const x = c.getContext("2d"); x.scale(S, S);
+  const T = (s, px, py, size, weight, color, align = "left", ls = 0) => { x.font = `${weight} ${size}px ${FONT}`; x.fillStyle = color; x.textAlign = align; x.letterSpacing = ls ? ls + "px" : "0px"; x.fillText(s, px, py); };
+  const rrect = (px, py, w, h, r, fill) => { x.beginPath(); x.roundRect(px, py, w, h, r); x.fillStyle = fill; x.fill(); };
+  const applied = credComplete + credIP, pad = 64;
+  x.fillStyle = pal.bg; x.fillRect(0, 0, W, W);
+  T("DEGREE PROGRESS", pad, 104, 22, 700, pal.muted, "left", 3);
+  T(DEGREE.label, pad, 166, 54, 800, pal.text);
+  if (state.tl) { const lbl = `PROJECTION · after ${PLAN.terms[state.tl - 1].label}`; x.font = `700 20px ${FONT}`; const w = x.measureText(lbl).width + 32; rrect(W - pad - w, 80, w, 40, 20, pal.surface); x.strokeStyle = pal.up; x.lineWidth = 2; x.beginPath(); x.roundRect(W - pad - w, 80, w, 40, 20); x.stroke(); T(lbl, W - pad - w / 2, 107, 20, 700, pal.text, "center"); }
+  // Ring: solid = complete, translucent = in progress.
+  const cx = pad + 140, cy = 360, R = 112, lw = 28, tot = DEGREE.req, a0 = -Math.PI / 2, ang = v => Math.min(1, v / tot) * 2 * Math.PI;
+  x.lineWidth = lw; x.lineCap = "butt"; x.strokeStyle = pal.border; x.beginPath(); x.arc(cx, cy, R, 0, 2 * Math.PI); x.stroke();
+  x.strokeStyle = pal.text; x.globalAlpha = 0.4; x.beginPath(); x.arc(cx, cy, R, a0 + ang(credComplete), a0 + ang(Math.min(applied, tot))); x.stroke(); x.globalAlpha = 1;
+  x.beginPath(); x.arc(cx, cy, R, a0, a0 + ang(credComplete)); x.stroke();
+  T(String(applied), cx, cy + 14, 66, 800, pal.text, "center"); T(`of ${tot} credits`, cx, cy + 46, 20, 500, pal.muted, "center");
+  // Three headline numbers.
+  [[credComplete, "complete"], [credIP, "in progress"], [Math.max(0, tot - applied), "to go"]].forEach(([v, l], i) => { const px = 380 + i * 220; T(String(v), px, 352, 62, 800, pal.text); T(l, px, 388, 22, 500, pal.muted); });
+  T(`${UPPER_NOW} of 39 upper-division credits`, 380, 440, 22, 600, pal.text);
+  x.fillStyle = pal.border; x.fillRect(pad, 512, W - 2 * pad, 2);
+  // Sections: items complete / in progress / total, in the section's color.
+  T("SECTIONS", pad, 562, 20, 700, pal.muted, "left", 3);
+  const colW = (W - 2 * pad - 48) / 2;
+  BLOCKS.forEach((b, i) => {
+    const col = i % 2, row = Math.floor(i / 2), px = pad + col * (colW + 48), py = 604 + row * 60;
+    const kids = b.items.map(([id]) => ITEMS.get(id).status), done = kids.filter(s => s === "complete").length, ip = kids.filter(s => s === "in_progress").length, n = kids.length;
+    let name = b.short; x.font = `600 19px ${FONT}`; while (x.measureText(name).width > colW - 70 && name.length > 4) name = name.slice(0, -2);
+    if (name !== b.short) name += "…";
+    T(name, px, py, 19, 600, pal.text); T(`${done}/${n}`, px + colW, py, 19, 700, pal.muted, "right");
+    rrect(px, py + 12, colW, 14, 7, pal.border);
+    if (done) rrect(px, py + 12, Math.max(14, colW * done / n), 14, 7, secColor(b.id));
+    if (ip) { x.globalAlpha = 0.4; rrect(px + colW * done / n, py + 12, Math.max(14, colW * ip / n), 14, 7, secColor(b.id)); x.globalAlpha = 1; }
+  });
+  // Footer band: planned graduation and what is eligible now (course codes only).
+  const nowCodes = [...ELIG].filter(([id, e]) => e === "now" && ITEMS.get(id).type === "course").map(([id]) => id);
+  if (PLAN && PLAN.items) T(`Planned graduation: ${PLAN.terms[PLAN.T - 1].label}`, pad, 976, 24, 700, pal.text);
+  if (nowCodes.length) { // own row; chips are added only while they fit the card's width
+    T("Eligible now", pad, 1022, 19, 500, pal.muted);
+    x.font = `500 19px ${FONT}`; let px = pad + x.measureText("Eligible now").width + 18, shown = 0;
+    for (const [i, code] of nowCodes.entries()) {
+      x.font = `600 19px ${FONT}`; const w = x.measureText(code).width + 26;
+      if (px + w > W - pad - (i === nowCodes.length - 1 ? 0 : 70)) break; // keep room for "+N" unless this is the last chip
+      rrect(px, 994, w, 38, 19, pal.surface); T(code, px + w / 2, 1020, 19, 600, pal.text, "center"); px += w + 10; shown++;
+    }
+    if (shown < nowCodes.length) T(`+${nowCodes.length - shown}`, px + 4, 1022, 19, 600, pal.muted);
+  }
+  T("Planning aid, not an official audit · Made with Degree Map", pad, 1060, 16, 500, pal.muted);
+  c.toBlob(b => {
+    const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "degree-progress-card.png";
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }, "image/png");
+  return c;
+}
+document.getElementById("shareCard").addEventListener("click", () => progressCard());
 
 let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => fit(false), 150); });
 document.querySelector(".legend").addEventListener("toggle", () => fit());
@@ -1706,6 +1984,8 @@ document.querySelector(".legend").addEventListener("toggle", () => fit());
    ===================================================================== */
 const PLAN_CATALOG = {
   "CBIO 4835": {"display": "CBIO(CSCI) 4835/6835", "title": "Introduction to Computational Biology", "id": 31322, "offText": null, "off": "N", "cr": 3, "perm": false},
+  "CSCI 1302": {"display": "CSCI 1302", "title": "Software Development", "id": 4726, "offText": "Offered fall, spring and summer", "off": "FSU", "cr": 4, "preText": "CSCI 1301-1301L or CSCI 1301E", "pre": [["CSCI 1301", "CSCI 1301E"]], "perm": false},
+  "CSCI 2670": {"display": "CSCI 2670", "title": "Introduction to Theory of Computing", "id": 4924, "offText": "Offered fall and spring", "off": "FS", "cr": 4, "preText": "CSCI 2610 or CSCI 2611", "pre": [["CSCI 2610", "CSCI 2611"]], "perm": false},
   "CSCI 1730": {"display": "CSCI 1730", "title": "Systems Programming", "id": 12406, "offText": "Offered fall, spring and summer", "off": "FSU", "cr": 4, "preText": "CSCI 1302", "pre": [["CSCI 1302"]], "perm": false},
   "CSCI 2720": {"display": "CSCI 2720", "title": "Data Structures", "id": 4304, "offText": "Offered fall, spring and summer", "off": "FSU", "cr": 4, "preText": "(CSCI 1302 or CSCI 1302H) and (CSCI 2610 or CSCI 2610E or CSCI 2611)", "pre": [["CSCI 1302", "CSCI 1302H"], ["CSCI 2610", "CSCI 2610E", "CSCI 2611"]], "perm": false},
   "CSCI 3030": {"display": "CSCI 3030", "title": "Computing, Ethics, and Society", "id": 20694, "offText": "Offered spring", "off": "S", "cr": 3, "preText": "ENGL 1050H or ENGL 1102 or ENGL 1102E", "pre": [["ENGL 1050H", "ENGL 1102", "ENGL 1102E"]], "perm": false},
@@ -1794,6 +2074,10 @@ const courseNum = id => parseInt(id.split(" ")[1], 10);
 const ELECTIVE_IDS = Object.keys(PLAN_CATALOG).filter(id => courseNum(id) >= 4000 && !BASE_IDS.includes(id) && !DONE.has(id));
 const CROSS_LISTED = id => !id.startsWith("CSCI");
 const PLANNABLE = new Set([...BASE_IDS, ...ELECTIVE_IDS, FL_COURSE]);
+// In-progress courses a what-if can fail or withdraw from: they need a Bulletin catalog entry (so the retake can be
+// scheduled) and must not already sit in the Major Electives bucket (failing one would also change the elective total).
+const FAILABLE = [...ITEMS.values()].filter(i => i.type === "course" && i.status === "in_progress" && PLAN_CATALOG[i.id]
+  && !(MEMBER.get(i.id) || []).some(m => m.req === "Major Electives")).map(i => i.id);
 // A course whose prerequisites can never be met inside this plan (needs a course
 // outside the catalog, e.g. CSCI 4140 needs CSCI 2150) cannot be chosen.
 function blockedReason(id) {
@@ -1811,16 +2095,18 @@ const AUTO_POOL = ELECTIVE_IDS.filter(id => isRegular(id) && !CROSS_LISTED(id) &
 function planDefaults() {
   return {
     terms: Object.fromEntries(HORIZON.map(t => [t.key, { on: t.season !== "U", min: t.season === "U" ? 0 : 12, max: t.season === "U" ? 9 : 18 }])),
-    app: "auto", sys: "auto", electives: [], maxCS: 0, pins: {},
+    app: "auto", sys: "auto", electives: [], maxCS: 0, pins: {}, failed: [],
     geneds: Object.fromEntries(GENED_IDS.map(id => [id, true])),
   };
 }
 const PLAN_KEY = PROFILE_ID === "vivek" ? "plan" : "plan:" + PROFILE_ID;
-function loadPlanCfg() {
+const loadPlanCfg = () => { let s = null; try { s = JSON.parse(store.get(PLAN_KEY) || "null"); } catch {} return normalizeCfg(s); };
+// Validates a saved settings object (current plan or a saved scenario) against this profile's data.
+function normalizeCfg(s) {
   const d = planDefaults();
   try {
-    const s = JSON.parse(store.get(PLAN_KEY) || "null");
     if (!s) return d;
+    if (Array.isArray(s.failed)) d.failed = s.failed.filter(id => FAILABLE.includes(id)).filter((v, i, a) => a.indexOf(v) === i);
     for (const k of Object.keys(d.terms)) if (s.terms && s.terms[k]) {
       const t = s.terms[k];
       d.terms[k] = { on: !!t.on, min: clampInt(t.min, 0, 24, d.terms[k].min), max: clampInt(t.max, 0, 24, d.terms[k].max) };
@@ -1860,6 +2146,9 @@ function planItem(id, role) {
    local search that, without adding a semester, (1) keeps loads at or above
    your minimums, (2) moves "gateway" courses (ones other planned courses
    depend on) as early as possible, (3) evens out credit loads. */
+// A course can go in a term if it is offered that season and the term is not banned for it
+// (`ban` is only set by the bottleneck analysis: "what if this course cannot happen in its planned term?").
+const termOk = (it, term) => it.seasons.has(term.season) && !(it.ban && it.ban.has(term.key));
 function solvePlan(items, terms, maxCS, maxT = Infinity) {
   const n = items.length, idx = new Map(items.map((it, i) => [it.id, i]));
   for (const it of items) {
@@ -1917,9 +2206,9 @@ function solvePlan(items, terms, maxCS, maxT = Infinity) {
     let lo = 0;
     for (const g of it.preI) lo = Math.max(lo, Math.min(...g.map(o => early[o])) + 1);
     for (const g of it.precoI) lo = Math.max(lo, Math.min(...g.map(o => early[o])));
-    while (lo < terms.length && !it.seasons.has(terms[lo].season)) lo++;
+    while (lo < terms.length && !termOk(it, terms[lo])) lo++;
     if (pinIdx[i] != null) {
-      if (pinIdx[i] < lo || !it.seasons.has(terms[pinIdx[i]].season)) return { error: "nofit" };
+      if (pinIdx[i] < lo || !termOk(it, terms[pinIdx[i]])) return { error: "nofit" };
       lo = pinIdx[i];
     }
     if (lo >= terms.length) return { error: "nofit" };
@@ -1944,7 +2233,7 @@ function solvePlan(items, terms, maxCS, maxT = Infinity) {
       const cand = pinIdx[i] != null ? [pinIdx[i]] : Array.from({ length: Math.max(0, hi - lo + 1) }, (_, x) => lo + x);
       for (const t of cand) {
         if (t < lo || t > hi) continue;
-        if (!it.seasons.has(terms[t].season)) continue;
+        if (!termOk(it, terms[t])) continue;
         if (used[t] + it.cr > terms[t].max) continue;
         if (maxCS && it.cs && cs[t] >= maxCS) continue;
         a[i] = t; used[t] += it.cr; capLeft -= it.cr; if (it.cs) cs[t]++;
@@ -1978,7 +2267,7 @@ function planValid(items, terms, T, a, pinIdx, maxCS, loTerm) {
     const it = items[i], t = a[i];
     if (t < 0 || t >= T) return false;
     if (pinIdx[i] != null && pinIdx[i] !== t) return false;
-    if (!it.seasons.has(terms[t].season)) return false;
+    if (!termOk(it, terms[t])) return false;
     if (loTerm(i, a) > t) return false;
     used[t] += it.cr; if (it.cs) cs[t]++;
   }
@@ -2018,7 +2307,13 @@ function kSubsets(arr, k) {
 /* Builds every candidate (design-group choices × auto electives), solves each,
    and keeps the best: fewest semesters → fewest credits under minimum →
    most even loads → fewest single-season electives. */
-function buildPlan(cfg) {
+// A failed or withdrawn course is no longer done: courses that need it wait for its retake.
+function withFailed(cfg, fn) {
+  const failed = (cfg.failed || []).filter(id => FAILABLE.includes(id)), removed = failed.filter(id => DONE.delete(id));
+  try { return fn(failed); } finally { removed.forEach(id => DONE.add(id)); }
+}
+const buildPlan = cfg => withFailed(cfg, failed => buildPlanCore(cfg, failed));
+function buildPlanCore(cfg, failed) {
   const terms = HORIZON.filter(t => cfg.terms[t.key].on).map(t => ({ ...t, min: Math.min(cfg.terms[t.key].min, cfg.terms[t.key].max), max: cfg.terms[t.key].max }));
   const errors = [], notes = [];
   if (!terms.length) return { errors: ["No semesters are enabled. Turn on at least one term."] };
@@ -2046,6 +2341,7 @@ function buildPlan(cfg) {
         ...pinnedE.map(id => Object.assign(planItem(id, "elective"), { pinnedElective: true })),
         ...autos.map(id => Object.assign(planItem(id, "elective"), { autoElective: true })),
         ...GENED_IDS.filter(id => cfg.geneds[id]).map(id => planItem(id, "gened")),
+        ...failed.map(id => planItem(id, "retake")),
       ];
       items.forEach(it => { if (cfg.pins[it.id]) it.pin = cfg.pins[it.id]; });
       if (performance.now() - started > 2500) { timedOut = true; break; }
@@ -2086,16 +2382,73 @@ function pinConflicts(items, terms) {
 }
 const cmpKey = (a, b) => { for (let i = 0; i < a.length; i++) { if (a[i] < b[i]) return -1; if (a[i] > b[i]) return 1; } return 0; };
 
+/* ---------- scenarios: named snapshots of the plan settings (including what-if failures), compared side by side ---------- */
+const SCEN_KEY = "scenarios:" + PROFILE_ID, MAX_SCEN = 3;
+let SCENARIOS = (() => { try { return JSON.parse(store.get(SCEN_KEY) || "[]").slice(0, MAX_SCEN).map(s => ({ name: String(s.name || "Scenario").slice(0, 40), cfg: normalizeCfg(s.cfg) })); } catch { return []; } })();
+const saveScen = () => store.set(SCEN_KEY, JSON.stringify(SCENARIOS));
+const SCEN_CACHE = new Map(); // settings JSON -> stats (solving is deterministic)
+function planStats(P, cfg) {
+  if (!P.items) return null;
+  const used = P.terms.slice(0, P.T), loads = P.loads;
+  return { grad: used[P.T - 1].label, at: HORIZON.findIndex(h => h.key === used[P.T - 1].key), T: P.T, credits: loads.reduce((s, x) => s + x, 0),
+    summers: used.filter(t => t.season === "U").length, peak: Math.max(...loads),
+    under: loads.filter((x, t) => t < P.T - 1 && x < used[t].min).length, retakes: (cfg.failed || []).join(", ") || "None" };
+}
+function scenarioStats(cfg) {
+  const key = JSON.stringify(cfg);
+  if (!SCEN_CACHE.has(key)) SCEN_CACHE.set(key, planStats(buildPlan(cfg), cfg));
+  return SCEN_CACHE.get(key);
+}
+function compareHTML(P0) {
+  if (!SCENARIOS.length) return "";
+  const cur = planStats(P0, PLAN_CFG), cols = [["Current plan", cur], ...SCENARIOS.map(s => [s.name, scenarioStats(s.cfg)])];
+  const cell = (st, f) => st ? f(st) : `<span class="req">No plan fits</span>`;
+  const gradCell = (st, i) => {
+    if (!st) return `<span class="req">No plan fits</span>`;
+    // Distance in fall/spring semesters (a summer counts as half), so a skipped summer slot is not counted as a term.
+    const sem = at => HORIZON.slice(0, at + 1).filter(h => h.season !== "U").length + (HORIZON[at].season === "U" ? 0.5 : 0);
+    const d = cur && i ? sem(st.at) - sem(cur.at) : 0, n = Math.abs(d), unit = n === 1 ? "semester" : "semesters";
+    return `<b>${esc(st.grad)}</b>${i && cur ? `<div class="req">${d === 0 ? "same as current" : `${n === 0.5 ? "a summer" : n + " " + unit} ${d > 0 ? "later" : "earlier"}`}</div>` : ""}`;
+  };
+  const rows = [
+    ["Graduation", (st, i) => gradCell(st, i)],
+    ["Semesters", st => cell(st, s => s.T)], ["Credits planned", st => cell(st, s => s.credits)],
+    ["Summers used", st => cell(st, s => s.summers)], ["Heaviest semester", st => cell(st, s => s.peak + " cr")],
+    ["Semesters under minimum", st => cell(st, s => s.under)], ["Retaken courses", st => cell(st, s => esc(s.retakes))],
+  ];
+  return `<section class="cmp"><div class="eyebrow">Scenario comparison</div><div class="cmp-wrap"><table class="cmp-t"><thead><tr><th></th>${cols.map(([n], i) => `<th>${esc(n)}</th>`).join("")}</tr></thead>
+    <tbody>${rows.map(([l, f]) => `<tr><th scope="row">${l}</th>${cols.map(([, st], i) => `<td>${f(st, i)}</td>`).join("")}</tr>`).join("")}</tbody></table></div></section>`;
+}
+
 /* ---------- planner UI ---------- */
 let PLAN = null;
 const PLANNED_TERM = new Map(); // id -> term label, for the graph panel
 const plannerEl = document.getElementById("planner");
 
+/* Bottlenecks: for each planned course, re-solve with that course kept out of its planned term.
+   If graduation moves, the course is a bottleneck (delay > 0); if nothing else fits, delay is Infinity.
+   Locked courses are skipped (the lock already decides their term). */
+function slipAnalysis(P0, cfg) {
+  const crit = new Map(), started = performance.now();
+  withFailed(cfg, () => P0.items.forEach((it, i) => {
+    if (!it.cr || it.pin || performance.now() - started > 1500) return;
+    const items = P0.items.map(x => ({ ...x }));
+    items[i].ban = new Set([P0.terms[P0.assign[i]].key]);
+    const r = solvePlan(items, P0.terms, cfg.maxCS);
+    if (r.error) crit.set(it.id, { delay: Infinity, to: null });
+    else if (r.T > P0.T) crit.set(it.id, { delay: r.T - P0.T, to: P0.terms[r.T - 1].label });
+  }));
+  return crit;
+}
+const critText = (c, term) => c.to ? `Bottleneck: if this can't happen in ${term}, graduation moves to ${c.to}` : `Bottleneck: no other enabled semester fits if it misses ${term}`;
+
 function runPlanner() {
   PLAN = buildPlan(PLAN_CFG);
+  PLAN.crit = PLAN.items ? slipAnalysis(PLAN, PLAN_CFG) : new Map();
   PLANNED_TERM.clear();
   if (PLAN.items) PLAN.items.forEach((it, i) => PLANNED_TERM.set(it.id, PLAN.terms[PLAN.assign[i]].label));
   renderPlanner();
+  syncTimeline();
   if (state.mode !== "plan") renderPanel();
 }
 
@@ -2133,7 +2486,7 @@ function renderPlanner() {
   const sysOpts = [["auto", P0 && P0.sys && cfg.sys === "auto" ? `Auto → ${P0.sys}` : "Auto (best fit)"], ...SYS_OPTS.map(id => [id, catLabel(id)])];
 
   let side = `<h2 class="pl-h">Plan settings</h2>
-  <p class="note">Plans start <b>Spring 2027</b> and assume your Fall 2026 in-progress courses (${[...ITEMS.values()].filter(i => i.type === "course" && i.status === "in_progress").map(i => i.id).join(", ")}) are passed.</p>
+  <p class="note">Plans start <b>Spring 2027</b> and assume your Fall 2026 in-progress courses (${[...ITEMS.values()].filter(i => i.type === "course" && i.status === "in_progress" && !cfg.failed.includes(i.id)).map(i => i.id).join(", ")}) are passed${cfg.failed.length ? `, except ${cfg.failed.join(", ")} (retaken below)` : ""}.</p>
   <section><h3>Semesters &amp; credit hours</h3>
     <table class="terms-tbl"><thead><tr><th></th><th>Term</th><th>Min</th><th>Max</th></tr></thead><tbody>${termRows}</tbody></table>
     <div class="bulk">All fall/spring: min <input type="number" id="bulkMin" min="0" max="24" value="12"> max <input type="number" id="bulkMax" min="0" max="24" value="18"> <button class="btn sm" id="bulkApply">Apply</button></div>
@@ -2142,6 +2495,13 @@ function renderPlanner() {
   </section>
   <section><h3>Workload</h3>
     <label class="fld">Max CSCI courses per semester ${sel("maxCS", String(cfg.maxCS), [["0", "No limit"], ["2", "2"], ["3", "3"], ["4", "4"]])}</label>
+  </section>
+  <section><h3>What if…</h3>
+    ${FAILABLE.length ? FAILABLE.map(id => `<label class="chk"><input type="checkbox" data-failed="${esc(id)}" ${cfg.failed.includes(id) ? "checked" : ""}> I fail or withdraw from ${esc(id)}${state.redact ? "" : " " + esc(ITEMS.get(id).title)}</label>`).join("")
+      + `<p class="note">The course loses its credit, comes back in the plan as a retake, and everything that needs it moves. Other in-progress courses are not modeled.</p>` : `<p class="note">None of your in-progress courses can be modeled as a retake.</p>`}
+    <div class="scen-save"><input type="text" id="scenName" maxlength="40" placeholder="Name this scenario" aria-label="Scenario name"> <button class="btn sm" id="scenSave"${SCENARIOS.length >= MAX_SCEN ? " disabled" : ""}>Save</button></div>
+    <p class="note">${SCENARIOS.length >= MAX_SCEN ? `You have ${MAX_SCEN} saved scenarios; delete one to save another.` : "Saves all your settings so you can compare plans side by side."}</p>
+    ${SCENARIOS.length ? `<ul class="pins">${SCENARIOS.map((s, i) => `<li><b>${esc(s.name)}</b> <button class="linkbtn" data-scen-load="${i}">load</button> · <button class="linkbtn" data-scen-del="${i}">delete</button></li>`).join("")}</ul>` : ""}
   </section>
   <section><h3>Design groups (pick 1 each)</h3>
     <label class="fld">Application Design ${sel("app", cfg.app, appOpts)}</label>
@@ -2174,22 +2534,27 @@ function renderPlanner() {
   } else {
     const { items, terms, T, assign, loads } = P0;
     const plannedCr = loads.reduce((s, x) => s + x, 0);
-    const applied = credComplete + credIP;
+    // A failed course's credit is lost until its retake (which is counted as planned credit), so take it out of "so far".
+    const lost = pred => (cfg.failed || []).filter(id => FAILABLE.includes(id) && pred(id)).reduce((s, id) => s + ITEMS.get(id).credits, 0);
+    const inBlock = b => id => blockItemIds(b).includes(id);
+    const applied = credComplete + credIP - lost(id => counted.has(id));
+    const UP0 = UPPER_SO_FAR - lost(id => level(id) >= 3000), MAJ0 = MAJOR_APPLIED - lost(inBlock("BLK:MAJOR")), A60 = A6_APPLIED - lost(inBlock("BLK:A6")), RES0 = PROF.residencySoFar - lost(() => true);
     const upper = items.filter(it => !it.placeholder && courseNum(it.id) >= 3000).reduce((s, it) => s + it.cr, 0);
-    const major = items.filter(it => ["app", "sys", "elective"].includes(it.role) || (it.role === "required" && MEMBER.get(it.id).some(m => m.block === "BLK:MAJOR"))).reduce((s, it) => s + it.cr, 0);
+    const major = items.filter(it => ["app", "sys", "elective"].includes(it.role) || (["required", "retake"].includes(it.role) && MEMBER.get(it.id).some(m => m.block === "BLK:MAJOR"))).reduce((s, it) => s + it.cr, 0);
     const areaVI = items.filter(it => MEMBER.get(it.id) && MEMBER.get(it.id).some(m => m.block === "BLK:A6")).reduce((s, it) => s + it.cr, 0);
     const idxOf = id => items.findIndex(it => it.id === id);
     const i2720 = idxOf("CSCI 2720");
     const checks = [
       [applied + plannedCr >= DEGREE.req, `Total credits: ${applied} applied + ${plannedCr} planned = ${applied + plannedCr} of ${DEGREE.req}`],
-      [UPPER_SO_FAR + upper >= 39, `Upper-division: ${UPPER_SO_FAR} so far + ${upper} planned = ${UPPER_SO_FAR + upper} of 39 (placeholders not counted)`],
-      [MAJOR_APPLIED + major >= MAJOR_REQ, `Major credits: ${MAJOR_APPLIED} applied + ${major} planned = ${MAJOR_APPLIED + major} of ${MAJOR_REQ}`],
-      [A6_APPLIED + areaVI >= A6_REQ, `Area VI: ${A6_APPLIED} applied + ${areaVI} planned = ${A6_APPLIED + areaVI} of ${A6_REQ}`],
-      [Math.min(60, PROF.residencySoFar + plannedCr) >= 45, `Residency: ${Math.min(60, PROF.residencySoFar + plannedCr)} UGA credits in your last 60 (45 required; assumes every planned course is taken at UGA)`],
+      [UP0 + upper >= 39, `Upper-division: ${UP0} so far + ${upper} planned = ${UP0 + upper} of 39 (placeholders not counted)`],
+      [MAJ0 + major >= MAJOR_REQ, `Major credits: ${MAJ0} applied + ${major} planned = ${MAJ0 + major} of ${MAJOR_REQ}`],
+      [A60 + areaVI >= A6_REQ, `Area VI: ${A60} applied + ${areaVI} planned = ${A60 + areaVI} of ${A6_REQ}`],
+      [Math.min(60, RES0 + plannedCr) >= 45, `Residency: ${Math.min(60, RES0 + plannedCr)} UGA credits in your last 60 (45 required; assumes every planned course is taken at UGA)`],
       [major >= 15, `Major residency: ${major} major credits planned at UGA (15 required)`],
       [true, `Teamwork: ${P0.app} (Application Design) is a team-based course`],
     ];
-    if (i2720 >= 0) checks.push([true, `Major admission: entrance courses are done after ${terms[assign[i2720]].label} (CSCI 2720). Admission also needs C or better and a 2.7 GPA across CSCI 1302/2610/2720.`]);
+    const adm = admissionState();
+    if (i2720 >= 0) checks.push([!adm.below.length && !(adm.done && !adm.ok), `Major admission: entrance courses are done after ${terms[assign[i2720]].label} (CSCI 2720). Admission also needs C or better and a ${ADM_TARGET} GPA across CSCI 1302/2610/2720${adm.short ? ` (your grades: ${adm.short})` : ""}.`]);
     const warns = [];
     loads.forEach((x, t) => {
       if (t < T - 1 && x < terms[t].min) warns.push(`${terms[t].label} has ${x} cr, under your ${terms[t].min}-cr minimum. Full-time is 12+ in fall/spring (6+ in summer); add a free elective if you need full-time status.`);
@@ -2197,25 +2562,36 @@ function renderPlanner() {
     });
     if (P0.incomplete) warns.push("The search hit its time limit for a shorter plan, so this one may not be the absolute shortest.");
     const grad = terms[T - 1].label;
+    main += `<p class="print-only print-meta">${esc(PROF.name)} · ${esc(DEGREE.label)} · printed ${esc(new Date().toLocaleDateString())} · Planning aid, not an official audit. Confirm with your advisor before registering.</p>`;
     main += `<div class="plan-head"><div><div class="eyebrow">Earliest graduation with these settings</div><h2>${grad}</h2>
       <p class="note">${T} semester${T > 1 ? "s" : ""} · ${plannedCr} credits planned · ${items.filter(i => i.cr > 0 || i.placeholder).length} items</p></div>
-      <div class="plan-actions"><button class="btn" id="planCsv">Download CSV</button></div></div>${errs}`;
+      <div class="plan-actions"><button class="btn" id="planPrint" title="Print, or choose Save as PDF in the print dialog">Print / Save PDF</button> <button class="btn" id="planCsv">Download CSV</button></div></div>${errs}`;
     main += `<div class="checks">${checks.map(([ok, t]) => `<div class="ck ${ok ? "ok" : "bad"}"><span>${ok ? "✓" : "✕"}</span>${esc(t)}</div>`).join("")}</div>`;
     main += warns.map(w => `<div class="alert warn">${esc(w)}</div>`).join("");
+    main += compareHTML(P0);
     // Every semester bar uses the same 0–scaleCr scale, so a 9-cr summer never looks as full as an 18-cr fall.
     const scaleCr = Math.max(1, ...terms.slice(0, T).map((tm, t) => Math.max(tm.max, loads[t])));
+    if (P0.crit.size) {
+      const rows = [...P0.crit].sort((a, b) => b[1].delay - a[1].delay).map(([id, c]) => {
+        const k = idxOf(id), it = items[k], term = terms[assign[k]].label;
+        return `<li><b>${esc(it.placeholder ? it.title : it.id)}</b> in ${esc(term)} <span class="req">${c.to ? `→ graduation slips to ${esc(c.to)}` : "→ no other enabled semester fits"}</span></li>`;
+      }).join("");
+      main += `<div class="crit"><div class="eyebrow">Bottlenecks · ${P0.crit.size} course${P0.crit.size > 1 ? "s" : ""}</div>
+        <p class="note">Each course below would delay graduation if it could not happen in the semester shown (full section, failed prerequisite, not offered). Everything else has some slack.</p><ul>${rows}</ul></div>`;
+    } else main += `<div class="crit ok"><div class="eyebrow">Bottlenecks</div><p class="note">No single course missing its semester would delay graduation: this plan has slack everywhere.</p></div>`;
     main += `<p class="note">Bars share one scale, 0–${scaleCr} cr. Gray tick = your minimum, dark tick = your maximum.</p><div class="terms-grid">`;
     for (let t = 0; t < T; t++) {
       const list = items.map((it, i) => [it, i]).filter(([, i]) => assign[i] === t).sort((a, b) => (b[0].cs - a[0].cs) || a[0].id.localeCompare(b[0].id));
       const tm = terms[t], x = loads[t], pct = Math.min(100, x / scaleCr * 100);
       const cls = x > 18 ? "bad" : t < T - 1 && x < tm.min ? "warn" : "ok";
-      main += `<div class="term"><div class="term-h"><b>${tm.label}</b><span class="load ${cls}">${x} cr</span></div>
+      main += `<div class="term" data-term="${tm.key}"><div class="term-h"><b>${tm.label}</b><span class="load ${cls}">${x} cr</span></div>
         <div class="tbar"><span style="width:${pct}%"></span><i style="left:${tm.min / scaleCr * 100}%" title="Minimum ${tm.min}"></i><i class="mx" style="left:calc(${tm.max / scaleCr * 100}% - 2px)" title="Maximum ${tm.max}"></i></div>
         <div class="tsub">${tm.min}–${tm.max} cr allowed${list.some(([it]) => it.cs) ? ` · ${list.filter(([it]) => it.cs).length} CSCI` : ""}</div>`;
       for (const [it, i] of list) main += cardHTML(it, i, P0);
       main += `</div>`;
     }
     main += `</div>`;
+    main += `<section class="advisor"><h3>Questions for your advisor</h3><ol>${advisorQuestions(P0).map(s => `<li>${esc(s)}</li>`).join("")}</ol></section>`;
     main += `<details class="assume"><summary>How this plan is built</summary><ul>
       <li>Prerequisites must be finished in an earlier semester; pre- or corequisites may be taken in the same semester. Data: UGA Bulletin, retrieved 10/13/2026.</li>
       <li>Courses only go in seasons the Bulletin lists. “Offered every year” and irregular courses are placed in fall or spring and flagged; confirm actual sections in Athena.</li>
@@ -2228,6 +2604,27 @@ function renderPlanner() {
   plannerEl.innerHTML = `<div class="pl-side">${side}</div><div class="pl-main">${main}</div>`;
 }
 
+/* Questions for the advisor, generated from what the plan could not decide on its own. */
+function advisorQuestions(P0) {
+  const { items, terms, assign } = P0, q = [], tl = i => terms[assign[i]].label;
+  const ip = [...ITEMS.values()].filter(i => i.type === "course" && i.status === "in_progress" && !(PLAN_CFG.failed || []).includes(i.id)).map(i => i.id);
+  if (ip.length) q.push(`This plan assumes ${ip.join(", ")} (in progress) finish with a passing grade. Are they on track to meet the C-or-better rules?`);
+  items.forEach((it, i) => {
+    const name = it.placeholder ? it.title : it.id;
+    if (it.id === "REQ:EXP") q.push(`Which approved experience will satisfy Experiential Learning (planned by ${tl(i)})?`);
+    else if (it.placeholder) q.push(`Which course should satisfy ${it.title} (${it.cr} cr, planned for ${tl(i)})?`);
+    else if (it.off === "Y") q.push(`Will ${name} run in ${tl(i)}? The Bulletin says "offered every year" with no term.`);
+    else if (it.off === "I") q.push(`Will ${name} actually be offered in ${tl(i)}? The Bulletin says "not offered on a regular basis".`);
+    else if (it.off === "N") q.push(`Is ${name} offered in ${tl(i)}? The Bulletin gives no offering information.`);
+    if (it.id.startsWith("MATH") || it.id.startsWith("CBIO")) q.push(`Does cross-listed ${name} count as a CSCI major elective?`);
+  });
+  const i2720 = items.findIndex(it => it.id === "CSCI 2720"), adm = admissionState();
+  if (i2720 >= 0) q.push(`Major admission opens after ${tl(i2720)} (CSCI 2720). ${adm.short ? `My grades so far: ${adm.short}. ` : ""}What is the timeline, and what are the retake options?`);
+  [...P0.crit].filter(([, c]) => c.to).forEach(([id]) => { const k = items.findIndex(it => it.id === id); q.push(`If ${items[k].placeholder ? items[k].title : id} is full or not offered in ${tl(k)}, graduation moves to ${P0.crit.get(id).to}. What is the backup?`); });
+  q.push("Is my residency count (45 of the last 60 credits at UGA) correct?");
+  return q;
+}
+
 function cardHTML(it, i, P0) {
   const { items, terms, assign } = P0, t = assign[i];
   const flags = [];
@@ -2238,12 +2635,14 @@ function cardHTML(it, i, P0) {
   if (same.length) flags.push(`Taken alongside ${same.join(", ")} (pre- or corequisite)`);
   if (it.id === "REQ:EXP") flags.push("0 credits listed: satisfied by an approved experience; see the Bulletin");
   const prereqs = (it.preI || []).map(g => g.map(o => items[o].id).join(" or ")).filter(Boolean);
-  const role = it.autoElective ? "Auto-picked elective" : it.pinnedElective ? "Your elective" : it.role === "app" ? (PLAN_CFG.app === "auto" ? "Auto-picked: Application Design" : "Application Design") : it.role === "sys" ? (PLAN_CFG.sys === "auto" ? "Auto-picked: Systems Design" : "Systems Design") : it.placeholder ? "Placeholder: choose a course" : it.role === "gened" ? "Gen-ed" : "Required";
+  const role = it.autoElective ? "Auto-picked elective" : it.pinnedElective ? "Your elective" : it.role === "app" ? (PLAN_CFG.app === "auto" ? "Auto-picked: Application Design" : "Application Design") : it.role === "sys" ? (PLAN_CFG.sys === "auto" ? "Auto-picked: Systems Design" : "Systems Design") : it.placeholder ? "Placeholder: choose a course" : it.role === "gened" ? "Gen-ed" : it.role === "retake" ? "Retake (failed or withdrawn)" : "Required";
   const pinOpts = `<option value="">${PLAN_CFG.pins[it.id] ? "Unlock" : "Auto term"}</option>` + HORIZON.filter(h => PLAN_CFG.terms[h.key].on).map(h => `<option value="${h.key}"${PLAN_CFG.pins[it.id] === h.key ? " selected" : ""}>Lock to ${h.label}</option>`).join("");
   const title = it.placeholder ? it.sub : state.redact ? "" : it.title;
   const fam = FAMILY[it.blocks[0]] || "cs";
-  return `<div class="pcard" style="--c:var(--${fam})">
+  const crit = P0.crit && P0.crit.get(it.id);
+  return `<div class="pcard${crit ? " is-crit" : ""}" draggable="true" data-drag="${esc(it.id)}" style="--c:var(--${fam})">
     <div class="pc-top"><b>${esc(it.placeholder ? it.title : it.id)}</b><span>${it.cr} cr</span></div>
+    ${crit ? `<div class="pc-crit" title="Found by re-solving the plan without this course in this semester">⚑ ${esc(critText(crit, terms[t].label))}</div>` : ""}
     ${title ? `<div class="pc-t">${esc(title)}</div>` : ""}
     <div class="pc-meta">${it.blocks.map(swatch).join("")} ${esc(state.redact ? it.blocks.map(b => ITEMS.get(b).short).join(", ") : it.req || "")} · <i>${esc(role)}</i></div>
     ${prereqs.length ? `<div class="pc-pre">After: ${esc(prereqs.join(", "))}</div>` : ""}
@@ -2279,6 +2678,7 @@ plannerEl.addEventListener("change", e => {
   else if (d.eauto != null) { if (el.value) cfg.electives.push(el.value); cfg.electives = [...new Set(cfg.electives)]; }
   else if (el.id === "eAdd") { if (el.value) cfg.electives = [...new Set([...cfg.electives, el.value])]; }
   else if (d.gened) cfg.geneds[d.gened] = el.checked;
+  else if (d.failed) cfg.failed = el.checked ? [...new Set([...cfg.failed, d.failed])] : cfg.failed.filter(x => x !== d.failed);
   else if (d.pin) { if (el.value) cfg.pins[d.pin] = el.value; else delete cfg.pins[d.pin]; }
   else return;
   for (const [id, k] of Object.entries(cfg.pins)) if (!cfg.terms[k].on) delete cfg.pins[id];
@@ -2294,15 +2694,152 @@ plannerEl.addEventListener("click", e => {
   else if (el.id === "clearPins") cfg.pins = {};
   else if (el.id === "planReset") PLAN_CFG = planDefaults();
   else if (el.id === "planCsv") return planCsv();
+  else if (el.id === "planPrint") return window.print();
+  else if (el.id === "scenSave") {
+    if (SCENARIOS.length >= MAX_SCEN) return;
+    const typed = document.getElementById("scenName").value.trim();
+    SCENARIOS.push({ name: (typed || (cfg.failed.length ? "Fail " + cfg.failed.join(", ") : "Scenario " + (SCENARIOS.length + 1))).slice(0, 40), cfg: normalizeCfg(JSON.parse(JSON.stringify(cfg))) });
+    saveScen(); return renderPlanner();
+  }
+  else if (el.dataset.scenDel != null) { SCENARIOS.splice(Number(el.dataset.scenDel), 1); saveScen(); return renderPlanner(); }
+  else if (el.dataset.scenLoad != null) PLAN_CFG = normalizeCfg(JSON.parse(JSON.stringify(SCENARIOS[Number(el.dataset.scenLoad)].cfg)));
   else return;
   for (const [id, k] of Object.entries(PLAN_CFG.pins)) if (!PLAN_CFG.terms[k].on) delete PLAN_CFG.pins[id];
   planChanged();
+});
+
+/* ---------- Drag a course card to another semester ----------
+   On dragstart the real solver is asked, per semester, "can this course go here?" (locking it there):
+   green = graduation stays, amber = possible but graduation moves, red = impossible (with the reason).
+   Dropping on green/amber locks the course to that semester, exactly like the lock menu on the card.
+   HTML5 drag and drop has no touch support, so the lock menu stays as the fallback. */
+let DRAG = null;
+function moveVerdicts(P0, cfg, id) {
+  const i = P0.items.findIndex(x => x.id === id), res = new Map();
+  withFailed(cfg, () => P0.terms.slice(0, P0.T).forEach((tm, t) => {
+    if (t === P0.assign[i]) return res.set(tm.key, { here: true });
+    const items = P0.items.map(x => ({ ...x })); items[i].pin = tm.key;
+    const r = solvePlan(items, P0.terms, cfg.maxCS);
+    if (r.error) res.set(tm.key, { ok: false, reason: pinConflicts(items, P0.terms)[0] || `Nothing fits if ${id} is in ${tm.label}: credit limits or the CSCI-per-semester cap would be broken.` });
+    else res.set(tm.key, { ok: true, later: r.T > P0.T ? P0.terms[r.T - 1].label : null });
+  }));
+  return res;
+}
+let toastTimer = null;
+function toast(msg) {
+  let t = document.getElementById("toast");
+  if (!t) { t = document.createElement("div"); t.id = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 4500);
+}
+function clearDrag() {
+  DRAG = null;
+  plannerEl.querySelectorAll(".dragging,.drop-ok,.drop-warn,.drop-bad,.drop-over").forEach(n => n.classList.remove("dragging", "drop-ok", "drop-warn", "drop-bad", "drop-over"));
+  plannerEl.querySelectorAll("[data-hint]").forEach(n => n.removeAttribute("data-hint"));
+}
+plannerEl.addEventListener("dragstart", e => {
+  const card = e.target.closest && e.target.closest(".pcard[data-drag]");
+  if (!card || !PLAN || !PLAN.items) return;
+  const id = card.dataset.drag;
+  e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", id);
+  DRAG = { id, verdict: moveVerdicts(PLAN, PLAN_CFG, id) };
+  card.classList.add("dragging");
+  plannerEl.querySelectorAll(".term[data-term]").forEach(t => {
+    const v = DRAG.verdict.get(t.dataset.term);
+    if (!v || v.here) return;
+    t.classList.add(!v.ok ? "drop-bad" : v.later ? "drop-warn" : "drop-ok");
+    t.dataset.hint = !v.ok ? "Can't go here" : v.later ? `Possible: graduation moves to ${v.later}` : "Drop here: graduation stays";
+  });
+});
+plannerEl.addEventListener("dragover", e => {
+  const t = DRAG && e.target.closest && e.target.closest(".term[data-term]"); if (!t) return;
+  const v = DRAG.verdict.get(t.dataset.term);
+  if (v && v.ok) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }
+  // A refused target never fires "drop", so its reason is shown while hovering over it.
+  plannerEl.querySelectorAll(".term.drop-bad").forEach(n => { n.dataset.hint = n === t ? `Can't go here: ${v.reason}` : "Can't go here"; });
+  plannerEl.querySelectorAll(".drop-over").forEach(n => n !== t && n.classList.remove("drop-over")); t.classList.add("drop-over");
+});
+plannerEl.addEventListener("drop", e => {
+  const t = DRAG && e.target.closest && e.target.closest(".term[data-term]"); if (!t) return;
+  e.preventDefault();
+  const { id, verdict } = DRAG, key = t.dataset.term, v = verdict.get(key);
+  clearDrag();
+  if (!v || v.here || !v.ok) return;
+  PLAN_CFG.pins[id] = key; planChanged();
+  toast(`${id} is locked to ${TERM_LABEL[key]}${v.later ? `. Graduation moves to ${v.later}.` : "."} Use the lock menu on its card to unlock it.`);
+});
+plannerEl.addEventListener("dragend", clearDrag);
+
+/* ---------- Plan timeline ----------
+   Step 0 is today. Step k projects the graph to the END of plan semester k: today's in-progress courses are
+   done (unless failed in a what-if), and every planned course in terms 1..k is complete. Statuses, block
+   statuses, eligibility and credits are re-derived from the statuses, then the graph is redrawn.
+   Only the graph changes; the planner itself always shows today's data. */
+const BASE_STATUS = new Map([...ITEMS.values()].filter(i => i.type === "course" || i.type === "req").map(i => [i.id, i.status]));
+function applyTimeline(s) {
+  state.tl = s;
+  BASE_STATUS.forEach((st, id) => { ITEMS.get(id).status = st; });
+  for (const [cid, c] of Object.entries(CHOICES)) ITEMS.get(cid).status = deriveStatus(c.options.map(o => ITEMS.get(o).status));
+  let extra = 0, extraUp = 0;
+  const done = [];
+  if (s > 0 && PLAN && PLAN.items) {
+    const failed = PLAN_CFG.failed || [];
+    for (const it of ITEMS.values()) if (it.type === "course" && BASE_STATUS.get(it.id) === "in_progress") it.status = failed.includes(it.id) ? "needed" : "complete";
+    PLAN.items.forEach((pi, i) => {
+      const t = PLAN.assign[i] + 1;
+      if (t > s) return;
+      if (t === s) done.push(pi.placeholder ? pi.title : pi.id);
+      const node = ITEMS.get(pi.id === FL_COURSE ? "REQ:FL" : pi.id);
+      if (node && (node.type === "course" || node.type === "req")) node.status = "complete";
+      if (!(node && node.type === "course" && counted.has(node.id))) extra += pi.cr; // electives and placeholders are not nodes
+      if (!(node && node.type === "course") && !pi.placeholder && courseNum(pi.id) >= 3000) extraUp += pi.cr;
+    });
+    const els = PLAN.items.map((pi, i) => [pi, PLAN.assign[i] + 1]).filter(([pi]) => pi.role === "elective");
+    if (els.length && ITEMS.has("REQ:MAJEL")) { const n = els.filter(([, t]) => t <= s).length; ITEMS.get("REQ:MAJEL").status = n === els.length ? "complete" : n ? "in_progress" : ITEMS.get("REQ:MAJEL").status; }
+    for (const [cid, pick] of [["CHOICE:APP", PLAN.app], ["CHOICE:SYS", PLAN.sys]]) if (ITEMS.get(pick).status === "complete") ITEMS.get(cid).status = "complete";
+    const adm = ITEMS.get("REQ:ADMIT");
+    if (adm && adm.status === "needed" && adm.from.every(c => ITEMS.get(c).status === "complete")) adm.status = "in_progress"; // applying; admission itself is never assumed
+  }
+  for (const b of BLOCKS) ITEMS.get(b.id).status = deriveStatus(b.items.map(([id]) => ITEMS.get(id).status));
+  ITEMS.get("DEGREE").status = deriveStatus(BLOCKS.filter(b => b.counts !== false).map(b => ITEMS.get(b.id).status));
+  credComplete = credIP = 0;
+  counted.forEach(id => { const c = ITEMS.get(id); if (c.status === "complete") credComplete += c.credits; else if (c.status === "in_progress") credIP += c.credits; });
+  credComplete += extra;
+  UPPER_NOW = takenCr(UPPER_IDS) + extraUp;
+  computeElig();
+  renderHeader(); render();
+  updateTimelineUI(done);
+}
+const tlBox = document.getElementById("tlBox"), tlRange = document.getElementById("tlRange"), tlLabel = document.getElementById("tlLabel"), tlSub = document.getElementById("tlSub"), tlPlay = document.getElementById("tlPlay");
+let tlTimer = null;
+function stopTimeline() { clearInterval(tlTimer); tlTimer = null; tlPlay.textContent = "▶ Play"; }
+function updateTimelineUI(done = []) {
+  const s = state.tl || 0;
+  tlRange.value = s;
+  tlLabel.textContent = s === 0 ? "Today" : `After ${PLAN.terms[s - 1].label}`;
+  tlSub.textContent = s === 0 ? "Drag to project your plan" : `${credComplete + credIP}/${DEGREE.req} cr${s === PLAN.T ? " · plan complete" : ""}${done.length ? " · done: " + done.slice(0, 3).join(", ") + (done.length > 3 ? ` +${done.length - 3}` : "") : ""}`;
+  tlBox.classList.toggle("projecting", s > 0);
+}
+function syncTimeline() { // after the plan changes: range follows its length
+  const ok = !!(PLAN && PLAN.items);
+  tlBox.hidden = !ok;
+  if (!ok) return;
+  tlRange.max = PLAN.T;
+  if ((state.tl || 0) > PLAN.T) applyTimeline(0); else updateTimelineUI();
+}
+tlRange.addEventListener("input", () => { stopTimeline(); applyTimeline(Number(tlRange.value)); });
+tlPlay.addEventListener("click", () => {
+  if (tlTimer) return stopTimeline();
+  if ((state.tl || 0) >= PLAN.T) applyTimeline(0);
+  tlPlay.textContent = "⏸ Pause";
+  tlTimer = setInterval(() => { if ((state.tl || 0) >= PLAN.T) return stopTimeline(); applyTimeline((state.tl || 0) + 1); }, reduced ? 1800 : 1100);
 });
 
 /* ---------- mode switch ---------- */
 state.mode = store.get("mode") === "plan" ? "plan" : "graph";
 function setMode(m) {
   state.mode = m; store.set("mode", m);
+  if (m === "plan" && state.tl) { stopTimeline(); applyTimeline(0); renderPlanner(); } // the planner always works from today's data
   document.body.classList.toggle("mode-plan", m === "plan");
   document.querySelectorAll("[data-mode]").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === m));
   if (m === "graph") { renderPanel(); requestAnimationFrame(() => fit(false)); }
