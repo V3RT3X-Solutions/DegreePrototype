@@ -11,8 +11,10 @@
   --complete:#a3aebc; --progress:#526070; --needed:#0f172a; --eligible:#0f172a; --accent:#0f172a;
   --complete-bg:#eef2f6; --progress-bg:#eef2f6; --needed-bg:transparent;
   --up:#c98500; --down:#2f9e44; --cs:#2a78d6; --gen:#1a9e6e; --other:#7b8797;
-  --good:#15803d; --warn:#b45309; --warn-bg:#fff3d6; --bad:#e11d48;
+  --good:#15803d; --warn:#b45309; --warn-bg:#fff3d6; --bad:#c9153f;
   --shadow:0 1px 2px rgba(15,23,42,.06),0 6px 20px rgba(15,23,42,.08);
+  /* Chrome accent: selected controls and the credit bar. The themes below may recolor these; graph marks keep their own palette. */
+  --sel:var(--text); --sel-fg:var(--bg); --bar:var(--text);
   color-scheme:light;
 }
 :root[data-theme="dark"]{
@@ -24,6 +26,18 @@
   --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
   color-scheme:dark;
 }
+/* "Red & black": a plain color scheme, dark base with a crimson accent for interface chrome only. Not affiliated with any university. */
+:root[data-theme="uga"]{
+  --bg:#0c0c0d; --surface:#151516; --surface2:#1f1f21; --text:#f4f4f5; --muted:#a8a8ad; --border:#2e2e31;
+  --complete:#55555b; --progress:#a8a8ad; --needed:#f4f4f5; --eligible:#f4f4f5; --accent:#ff7a8c;
+  --complete-bg:#1f1f21; --progress-bg:#1f1f21; --needed-bg:transparent;
+  --up:#facc15; --down:#4ade80; --cs:#3987e5; --gen:#199e70; --other:#8391a3;
+  --good:#3ccf7a; --warn:#f5b938; --warn-bg:#33260a; --bad:#fb7185;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.45);
+  --sel:#ba0c2f; --sel-fg:#ffffff; --bar:#e0314f;
+  color-scheme:dark;
+}
+:root[data-theme="uga"] header.top{border-bottom:3px solid #ba0c2f}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
 body{background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;display:flex;flex-direction:column;overflow:hidden}
@@ -42,15 +56,15 @@ header.top{display:flex;gap:24px;align-items:center;justify-content:space-betwee
 .tile b{display:block;font-size:19px;line-height:1.15}
 .tile small{color:var(--muted);font-size:12px;white-space:nowrap}
 .profile{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
-.profile>span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.profile>span{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .toolbar{display:flex;gap:10px;align-items:center;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap}
 .seg{display:inline-flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg)}
 .seg button{border:0;background:transparent;padding:7px 12px;cursor:pointer;font-size:14px;white-space:nowrap}
 .seg button+button{border-left:1px solid var(--border)}
-.seg button[aria-pressed="true"]{background:var(--text);color:var(--bg);font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--sel);color:var(--sel-fg);font-weight:600}
 .btn{border:1px solid var(--border);background:var(--bg);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:14px;white-space:nowrap}
 .btn:hover,.seg button:hover:not([aria-pressed="true"]){background:var(--surface2)}
-.btn[aria-pressed="true"]{background:var(--text);color:var(--bg)}
+.btn[aria-pressed="true"]{background:var(--sel);color:var(--sel-fg)}
 .search{position:relative}
 .search input{border:1px solid var(--border);background:var(--bg);border-radius:10px;padding:7px 12px;width:230px}
 .search input:focus{outline:2px solid var(--accent);outline-offset:1px}
@@ -72,7 +86,7 @@ main{flex:1;display:flex;min-height:0}
 .legend:not([open]) summary::after{content:" ▸"}
 .legend .grid{display:grid;grid-template-columns:auto auto;gap:6px 18px}
 .legend .secs-grid{display:grid;grid-template-columns:repeat(3,auto);gap:4px 14px}
-.legend .lg-h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:8px 0 6px}
+.legend .lg-h{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:8px 0 6px}
 .legend .lg-note{font-size:12px;color:var(--muted);margin:-3px 0 5px}
 .legend .lg-sub{font-size:12px;color:var(--muted);margin:2px 0 4px}
 .legend .lg-sub~.lg-sub{margin-top:8px}
@@ -103,7 +117,7 @@ aside#panel{width:380px;flex:none;border-left:1px solid var(--border);background
 .pill.muted{color:var(--muted);border-color:var(--border);background:transparent;font-weight:500}
 .facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 0}
 .facts div{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:7px 10px}
-.facts dt{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.facts dt{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
 .facts dd{margin:2px 0 0;font-weight:600;font-size:14px}
 .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:8px;padding:3px 8px;font-size:13px;background:var(--bg);cursor:pointer;font-weight:600}
 .chip:hover{border-color:var(--text)}
@@ -112,7 +126,7 @@ aside#panel{width:380px;flex:none;border-left:1px solid var(--border);background
 .dot.complete{background:var(--complete)} .dot.in_progress{background:linear-gradient(to top,var(--progress) 50%,transparent 50%);border:2px solid var(--progress)} .dot.needed{background:transparent;border:2px solid var(--needed)} .dot.ext{background:transparent;border:2px dashed var(--muted)}
 .group{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px}
 .group .ok{margin-left:auto;font-size:12px;font-weight:600}
-.and{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:4px 0 6px 4px}
+.and{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:4px 0 6px 4px}
 .or{font-size:12px;color:var(--muted)}
 .src{font-size:12.5px;color:var(--muted);border-left:3px solid var(--border);padding-left:10px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
@@ -132,7 +146,7 @@ body.mode-plan #planner{display:flex}
 .pl-side section{margin-top:18px}
 .pl-side h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
 .terms-tbl{width:100%;border-collapse:collapse;font-size:14px}
-.terms-tbl th{font-size:11px;color:var(--muted);text-align:left;font-weight:600;padding:2px 4px}
+.terms-tbl th{font-size:12px;color:var(--muted);text-align:left;font-weight:600;padding:2px 4px}
 .terms-tbl td{padding:3px 4px;border-top:1px solid var(--border)}
 .terms-tbl tr.off td:nth-child(n+2){opacity:.45}
 .terms-tbl input[type=number],.bulk input{width:56px;border:1px solid var(--border);background:var(--bg);border-radius:7px;padding:3px 6px}
@@ -166,14 +180,14 @@ body.mode-plan #planner{display:flex}
 .tbar span{display:block;height:100%;border-radius:4px;background:var(--text);opacity:.7}
 .tbar i{position:absolute;top:-3px;width:2px;height:12px;background:var(--muted)}
 .tbar i.mx{background:var(--text)}
-.tsub{font-size:12px;color:var(--muted);margin-bottom:8px}
+.tsub{font-size:12.5px;color:var(--muted);margin-bottom:8px}
 .pcard{border:1px solid var(--border);border-left:4px solid var(--c,var(--border));border-radius:10px;padding:8px 10px;margin-top:8px;background:var(--bg)}
 .pc-top{display:flex;justify-content:space-between;font-size:15px}
 .pc-top span{color:var(--muted);font-size:13px;font-weight:600}
 .pc-t{font-size:13px;color:var(--muted);margin-top:1px}
-.pc-meta{font-size:12px;color:var(--muted);margin-top:5px}
-.pc-pre{font-size:12px;margin-top:4px}
-.pc-flag{font-size:12px;margin-top:4px;padding:3px 7px;border-radius:6px;background:var(--surface2);color:var(--text)}
+.pc-meta{font-size:12.5px;color:var(--muted);margin-top:5px}
+.pc-pre{font-size:12.5px;margin-top:4px}
+.pc-flag{font-size:12.5px;margin-top:4px;padding:3px 7px;border-radius:6px;background:var(--surface2);color:var(--text)}
 .pc-foot{display:flex;gap:8px;align-items:center;margin-top:7px}
 .pc-foot select{border:1px solid var(--border);background:var(--surface);border-radius:7px;padding:3px 6px;font-size:12.5px;max-width:170px}
 .pc-foot .lock{font-size:12px}
@@ -224,9 +238,9 @@ table.adm select{border:1px solid var(--border);background:var(--bg);border-radi
 #toast.show{opacity:1;transform:translate(-50%,0)}
 .timeline{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:10px;padding:3px 12px 3px 4px;background:var(--bg)}
 .timeline[hidden]{display:none}
-.timeline input[type=range]{width:150px;accent-color:var(--text)}
+.timeline input[type=range]{width:150px;accent-color:var(--sel)}
 .timeline .tl-txt{display:flex;flex-direction:column;line-height:1.15;min-width:150px}
-.timeline .tl-txt small{color:var(--muted);font-size:11.5px}
+.timeline .tl-txt small{color:var(--muted);font-size:12px}
 .timeline.projecting{border-color:var(--text);box-shadow:inset 0 0 0 1px var(--text)}
 .scen-save{display:flex;gap:6px;margin:8px 0 4px}
 .scen-save input{flex:1;min-width:0;border:1px solid var(--border);background:var(--bg);border-radius:8px;padding:5px 8px;font-size:13.5px}
@@ -245,7 +259,7 @@ table.adm select{border:1px solid var(--border);background:var(--bg);border-radi
 .advisor li{padding:3px 0}
 /* Print: plan only, always light, one clean handout for an advisor meeting. */
 @media print{
-  :root,:root[data-theme="dark"]{--bg:#fff;--surface:#fff;--surface2:#f1f3f6;--text:#000;--muted:#444;--border:#bbb;--up:#c98500;--down:#2f9e44;--cs:#2a78d6;--gen:#1a9e6e;--other:#7b8797;--good:#15803d;--warn:#b45309;--warn-bg:#fff3d6;--bad:#e11d48;--shadow:none;color-scheme:light}
+  :root,:root[data-theme="dark"],:root[data-theme="uga"]{--sel:#000;--sel-fg:#fff;--bar:#000;--accent:#000;--bg:#fff;--surface:#fff;--surface2:#f1f3f6;--text:#000;--muted:#444;--border:#bbb;--up:#c98500;--down:#2f9e44;--cs:#2a78d6;--gen:#1a9e6e;--other:#7b8797;--good:#15803d;--warn:#b45309;--warn-bg:#fff3d6;--bad:#c9153f;--shadow:none;color-scheme:light}
   html,body{height:auto;overflow:visible;display:block;background:#fff;font-size:12px}
   header.top,.toolbar,.pl-side,.plan-actions,.pc-foot,#stage,#panel,.zoom,.legend,.assume{display:none!important}
   main,#planner,body.mode-plan #planner{display:block!important}
@@ -795,15 +809,19 @@ const PALETTES = {
     sec: { "BLK:MAJOR": "#86b6ef", "BLK:A6": "#3987e5", "BLK:ENTR": "#256abf", "BLK:A1": "#199e70", "BLK:A2": "#199e70", "BLK:A3": "#199e70", "BLK:A4": "#199e70",
            "BLK:A5": "#199e70", "BLK:UNIV": "#4cc596", "BLK:FRANK": "#4cc596", "BLK:GENEL": "#8391a3", "BLK:EXCESS": "#4b5666" } },
 };
+// Red & black reuses the dark palette's graph colors (they were checked for color-vision deficiency on a dark surface);
+// only the neutrals shift, so the graph's red availability ring never competes with the interface's crimson accent.
+PALETTES.uga = { ...PALETTES.dark, bg: "#0c0c0d", surface: "#151516", border: "#2e2e31", muted: "#a8a8ad", faint: "#4b4b51" };
 const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif';
 const store = {
   get(k) { try { return localStorage.getItem("degmap:" + k); } catch { return null; } },
   set(k, v) { try { localStorage.setItem("degmap:" + k, v); } catch {} },
 };
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const THEMES = ["light", "dark", "uga"], THEME_NAME = { light: "Light", dark: "Dark", uga: "Red & black" };
 const state = {
   filter: "all", sel: null, hover: null, redact: store.get("redact") === "1",
-  theme: store.get("theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"),
+  theme: THEMES.includes(store.get("theme")) ? store.get("theme") : (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"),
 };
 const P = () => PALETTES[state.theme];
 const secColor = b => P().sec[b];
@@ -1099,7 +1117,7 @@ function drawDegree(g, n) {
   el("circle", { r, fill: pal.surface, stroke: pal.text, "stroke-width": 2.5 }, g);
   progressRing(g, r + 8, 6, [[credComplete, pal.text], [credIP, pal.text, 0.4], [DEGREE.req - applied, "none"]], pal); // solid = complete, translucent = in progress
   txt(g, 0, 4, String(applied), 24, 800, pal.text, "middle");
-  txt(g, 0, 21, `of ${DEGREE.req} cr`, 11.5, 500, pal.muted, "middle");
+  txt(g, 0, 21, `of ${DEGREE.req} cr`, 12.5, 500, pal.muted, "middle");
   const l = txt(g, 0, r + 36, DEGREE.label, 18, 800, pal.text, "middle");
   n.fixed = [[l, r + 36, 18]];
   l.setAttribute("paint-order", "stroke"); l.setAttribute("stroke", pal.bg); l.setAttribute("stroke-width", 5); l.setAttribute("stroke-linejoin", "round");
@@ -1688,7 +1706,7 @@ function renderHeader() {
   document.getElementById("credApplied").textContent = credComplete + credIP;
   document.getElementById("credReq").textContent = DEGREE.req;
   const pct = v => Math.min(100, v / DEGREE.req * 100);
-  document.getElementById("credBar").innerHTML = `<span style="width:${pct(credComplete)}%;background:var(--text)" title="${credComplete} complete"></span><span style="width:${pct(Math.min(credIP, Math.max(0, DEGREE.req - credComplete)))}%;background:var(--text);opacity:.4" title="${credIP} in progress"></span>`;
+  document.getElementById("credBar").innerHTML = `<span style="width:${pct(credComplete)}%;background:var(--bar)" title="${credComplete} complete"></span><span style="width:${pct(Math.min(credIP, Math.max(0, DEGREE.req - credComplete)))}%;background:var(--bar);opacity:.4" title="${credIP} in progress"></span>`;
   const nowN = [...ELIG].filter(([id, e]) => e === "now" && ITEMS.get(id).type === "course").length;
   const tiles = [
     [credComplete, "credits complete", "var(--text)"],
@@ -1760,8 +1778,8 @@ function syncRedact() { redactBtn.setAttribute("aria-pressed", state.redact); re
 redactBtn.addEventListener("click", () => { state.redact = !state.redact; store.set("redact", state.redact ? "1" : "0"); syncRedact(); fillDatalist(); renderPanel(); renderPlanner(); });
 
 const themeBtn = document.getElementById("theme");
-function syncTheme() { document.documentElement.dataset.theme = state.theme; themeBtn.textContent = state.theme === "dark" ? "Light theme" : "Dark theme"; }
-themeBtn.addEventListener("click", () => { state.theme = state.theme === "dark" ? "light" : "dark"; store.set("theme", state.theme); syncTheme(); renderLegend(); render(); renderPlanner(); });
+function syncTheme() { document.documentElement.dataset.theme = state.theme; themeBtn.textContent = `Theme: ${THEME_NAME[state.theme]}`; themeBtn.title = `Switch theme (light, dark, red & black)`; }
+themeBtn.addEventListener("click", () => { state.theme = THEMES[(THEMES.indexOf(state.theme) + 1) % THEMES.length]; store.set("theme", state.theme); syncTheme(); renderLegend(); render(); renderPlanner(); });
 
 document.getElementById("relayout").addEventListener("click", () => { seedPositions(); draw(); fit(); });
 document.getElementById("zin").addEventListener("click", () => zoomBy(1.25));
