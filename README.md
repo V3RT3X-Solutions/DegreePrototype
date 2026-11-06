@@ -100,10 +100,13 @@ Below it are the 12 sections and lists of courses that are eligible now, eligibl
 | **Search** | Type a code (e.g. `CSCI 2720`) or a requirement name and press Enter to jump to it. |
 | **Reset layout** | Re-runs the force layout from its starting positions. |
 | **Redact titles** | Hides course titles and audit requirement-line names everywhere (graph, panel, planner, CSV), for screenshots and demos. |
-| **Light / Dark theme** | Switches theme. |
+| **Theme** | Cycles **Light → Dark → Red & black**. Red & black is a plain dark scheme with a crimson accent used only for interface chrome (selected buttons, header rule, credit bar, slider); the graph keeps its blue/green/gray encoding so the graph's red availability ring keeps its meaning. It is a color scheme only, with no logos or marks, and the project is not affiliated with any university. All text pairings in all three themes meet WCAG AA contrast (4.5:1). |
 | **Export PNG** | Saves what's on screen as a 2× PNG, with a title, a one-line key and the data sources added so the image makes sense on its own. |
+| **Progress card** | Saves a 1080×1080 image meant for sharing: the credit ring, headline numbers, per-section progress bars, planned graduation and the course codes eligible now. It carries **no name and no course titles**, uses the current theme, and is labelled `PROJECTION` if the plan timeline is active. |
 
 **Keyboard:** `/` search · `F` fit to screen · `+` / `-` zoom · `Esc` clear selection.
+
+**Phones and tablets:** two-finger **pinch** zooms the graph about your fingers (and pans with them). Below 900 px wide the detail panel becomes a **bottom sheet**: a peek bar shows the selected item's name, tapping a node slides it up, and tapping the bar or clearing the selection tucks it away. Mouse and keyboard behavior is unchanged.
 
 ### Plan timeline
 
@@ -335,7 +338,7 @@ Following the project brief:
 - [x] Animate the graph semester by semester following the plan ("watch the degree fill in"): the plan timeline.
 - [ ] Better label placement in dense clusters.
 - [ ] Full keyboard navigation and screen-reader descriptions for the graph.
-- [ ] Mobile and touch polish (pinch-zoom).
+- [x] Mobile and touch polish (pinch-zoom, bottom-sheet panel).
 
 **Engineering**
 - [ ] Split the single file into modules (`data/`, `graph/`, `planner/`) with a tiny build step, keeping a single-file release.
