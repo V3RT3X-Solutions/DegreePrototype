@@ -208,6 +208,16 @@ table.adm select{border:1px solid var(--border);background:var(--bg);border-radi
   .credit{min-width:0;width:100%}
 }
 .print-only{display:none}
+.pcard[draggable=true]{cursor:grab}
+.pcard.dragging{opacity:.4}
+.term.drop-ok{outline:2px dashed var(--good);outline-offset:2px}
+.term.drop-warn{outline:2px dashed var(--warn);outline-offset:2px}
+.term.drop-bad{outline:2px dashed var(--bad);outline-offset:2px;opacity:.55}
+.term.drop-over{background:var(--surface2)}
+.term[data-hint]::before{content:attr(data-hint);display:block;font-size:12px;font-weight:700;margin:-2px 0 8px;padding:3px 8px;border-radius:6px;background:var(--surface2)}
+.term.drop-ok[data-hint]::before{color:var(--good)} .term.drop-warn[data-hint]::before{color:var(--warn)} .term.drop-bad[data-hint]::before{color:var(--bad)}
+#toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);max-width:min(560px,calc(100% - 32px));background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:13.5px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:20}
+#toast.show{opacity:1;transform:translate(-50%,0)}
 .timeline{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:10px;padding:3px 12px 3px 4px;background:var(--bg)}
 .timeline[hidden]{display:none}
 .timeline input[type=range]{width:150px;accent-color:var(--text)}
@@ -2439,7 +2449,7 @@ function renderPlanner() {
       const list = items.map((it, i) => [it, i]).filter(([, i]) => assign[i] === t).sort((a, b) => (b[0].cs - a[0].cs) || a[0].id.localeCompare(b[0].id));
       const tm = terms[t], x = loads[t], pct = Math.min(100, x / scaleCr * 100);
       const cls = x > 18 ? "bad" : t < T - 1 && x < tm.min ? "warn" : "ok";
-      main += `<div class="term"><div class="term-h"><b>${tm.label}</b><span class="load ${cls}">${x} cr</span></div>
+      main += `<div class="term" data-term="${tm.key}"><div class="term-h"><b>${tm.label}</b><span class="load ${cls}">${x} cr</span></div>
         <div class="tbar"><span style="width:${pct}%"></span><i style="left:${tm.min / scaleCr * 100}%" title="Minimum ${tm.min}"></i><i class="mx" style="left:calc(${tm.max / scaleCr * 100}% - 2px)" title="Maximum ${tm.max}"></i></div>
         <div class="tsub">${tm.min}–${tm.max} cr allowed${list.some(([it]) => it.cs) ? ` · ${list.filter(([it]) => it.cs).length} CSCI` : ""}</div>`;
       for (const [it, i] of list) main += cardHTML(it, i, P0);
@@ -2495,7 +2505,7 @@ function cardHTML(it, i, P0) {
   const title = it.placeholder ? it.sub : state.redact ? "" : it.title;
   const fam = FAMILY[it.blocks[0]] || "cs";
   const crit = P0.crit && P0.crit.get(it.id);
-  return `<div class="pcard${crit ? " is-crit" : ""}" style="--c:var(--${fam})">
+  return `<div class="pcard${crit ? " is-crit" : ""}" draggable="true" data-drag="${esc(it.id)}" style="--c:var(--${fam})">
     <div class="pc-top"><b>${esc(it.placeholder ? it.title : it.id)}</b><span>${it.cr} cr</span></div>
     ${crit ? `<div class="pc-crit" title="Found by re-solving the plan without this course in this semester">⚑ ${esc(critText(crit, terms[t].label))}</div>` : ""}
     ${title ? `<div class="pc-t">${esc(title)}</div>` : ""}
@@ -2562,6 +2572,68 @@ plannerEl.addEventListener("click", e => {
   for (const [id, k] of Object.entries(PLAN_CFG.pins)) if (!PLAN_CFG.terms[k].on) delete PLAN_CFG.pins[id];
   planChanged();
 });
+
+/* ---------- Drag a course card to another semester ----------
+   On dragstart the real solver is asked, per semester, "can this course go here?" (locking it there):
+   green = graduation stays, amber = possible but graduation moves, red = impossible (with the reason).
+   Dropping on green/amber locks the course to that semester, exactly like the lock menu on the card.
+   HTML5 drag and drop has no touch support, so the lock menu stays as the fallback. */
+let DRAG = null;
+function moveVerdicts(P0, cfg, id) {
+  const i = P0.items.findIndex(x => x.id === id), res = new Map();
+  withFailed(cfg, () => P0.terms.slice(0, P0.T).forEach((tm, t) => {
+    if (t === P0.assign[i]) return res.set(tm.key, { here: true });
+    const items = P0.items.map(x => ({ ...x })); items[i].pin = tm.key;
+    const r = solvePlan(items, P0.terms, cfg.maxCS);
+    if (r.error) res.set(tm.key, { ok: false, reason: pinConflicts(items, P0.terms)[0] || `Nothing fits if ${id} is in ${tm.label}: credit limits or the CSCI-per-semester cap would be broken.` });
+    else res.set(tm.key, { ok: true, later: r.T > P0.T ? P0.terms[r.T - 1].label : null });
+  }));
+  return res;
+}
+let toastTimer = null;
+function toast(msg) {
+  let t = document.getElementById("toast");
+  if (!t) { t = document.createElement("div"); t.id = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 4500);
+}
+function clearDrag() {
+  DRAG = null;
+  plannerEl.querySelectorAll(".dragging,.drop-ok,.drop-warn,.drop-bad,.drop-over").forEach(n => n.classList.remove("dragging", "drop-ok", "drop-warn", "drop-bad", "drop-over"));
+  plannerEl.querySelectorAll("[data-hint]").forEach(n => n.removeAttribute("data-hint"));
+}
+plannerEl.addEventListener("dragstart", e => {
+  const card = e.target.closest && e.target.closest(".pcard[data-drag]");
+  if (!card || !PLAN || !PLAN.items) return;
+  const id = card.dataset.drag;
+  e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", id);
+  DRAG = { id, verdict: moveVerdicts(PLAN, PLAN_CFG, id) };
+  card.classList.add("dragging");
+  plannerEl.querySelectorAll(".term[data-term]").forEach(t => {
+    const v = DRAG.verdict.get(t.dataset.term);
+    if (!v || v.here) return;
+    t.classList.add(!v.ok ? "drop-bad" : v.later ? "drop-warn" : "drop-ok");
+    t.dataset.hint = !v.ok ? "Can't go here" : v.later ? `Possible: graduation moves to ${v.later}` : "Drop here: graduation stays";
+  });
+});
+plannerEl.addEventListener("dragover", e => {
+  const t = DRAG && e.target.closest && e.target.closest(".term[data-term]"); if (!t) return;
+  const v = DRAG.verdict.get(t.dataset.term);
+  if (v && v.ok) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }
+  // A refused target never fires "drop", so its reason is shown while hovering over it.
+  plannerEl.querySelectorAll(".term.drop-bad").forEach(n => { n.dataset.hint = n === t ? `Can't go here: ${v.reason}` : "Can't go here"; });
+  plannerEl.querySelectorAll(".drop-over").forEach(n => n !== t && n.classList.remove("drop-over")); t.classList.add("drop-over");
+});
+plannerEl.addEventListener("drop", e => {
+  const t = DRAG && e.target.closest && e.target.closest(".term[data-term]"); if (!t) return;
+  e.preventDefault();
+  const { id, verdict } = DRAG, key = t.dataset.term, v = verdict.get(key);
+  clearDrag();
+  if (!v || v.here || !v.ok) return;
+  PLAN_CFG.pins[id] = key; planChanged();
+  toast(`${id} is locked to ${TERM_LABEL[key]}${v.later ? `. Graduation moves to ${v.later}.` : "."} Use the lock menu on its card to unlock it.`);
+});
+plannerEl.addEventListener("dragend", clearDrag);
 
 /* ---------- Plan timeline ----------
    Step 0 is today. Step k projects the graph to the END of plan semester k: today's in-progress courses are
