@@ -333,6 +333,7 @@ table.adm select{border:1px solid var(--border);background:var(--bg);border-radi
   <button class="btn" id="redact" aria-pressed="false" title="Show course codes only">Redact titles</button>
   <button class="btn" id="theme">Dark theme</button>
   <button class="btn graph-only" id="export">Export PNG</button>
+  <button class="btn graph-only" id="shareCard" title="A shareable image: credit totals and section progress. No name and no course titles.">Progress card</button>
 </div>
 <main>
   <div id="stage">
@@ -1909,6 +1910,65 @@ document.getElementById("export").addEventListener("click", () => {
   };
   img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(data);
 });
+
+/* Progress card: a 1080x1080 image drawn straight onto a canvas (not a page screenshot) in the current theme.
+   It shows credit totals and per-section progress only: no name and no course titles, so it is safe to post.
+   Course codes appear only as "eligible now" chips. A projection is labelled as one. */
+function progressCard() {
+  const pal = P(), W = 1080, S = 2, c = document.createElement("canvas");
+  c.width = W * S; c.height = W * S;
+  const x = c.getContext("2d"); x.scale(S, S);
+  const T = (s, px, py, size, weight, color, align = "left", ls = 0) => { x.font = `${weight} ${size}px ${FONT}`; x.fillStyle = color; x.textAlign = align; x.letterSpacing = ls ? ls + "px" : "0px"; x.fillText(s, px, py); };
+  const rrect = (px, py, w, h, r, fill) => { x.beginPath(); x.roundRect(px, py, w, h, r); x.fillStyle = fill; x.fill(); };
+  const applied = credComplete + credIP, pad = 64;
+  x.fillStyle = pal.bg; x.fillRect(0, 0, W, W);
+  T("DEGREE PROGRESS", pad, 104, 22, 700, pal.muted, "left", 3);
+  T(DEGREE.label, pad, 166, 54, 800, pal.text);
+  if (state.tl) { const lbl = `PROJECTION · after ${PLAN.terms[state.tl - 1].label}`; x.font = `700 20px ${FONT}`; const w = x.measureText(lbl).width + 32; rrect(W - pad - w, 80, w, 40, 20, pal.surface); x.strokeStyle = pal.up; x.lineWidth = 2; x.beginPath(); x.roundRect(W - pad - w, 80, w, 40, 20); x.stroke(); T(lbl, W - pad - w / 2, 107, 20, 700, pal.text, "center"); }
+  // Ring: solid = complete, translucent = in progress.
+  const cx = pad + 140, cy = 360, R = 112, lw = 28, tot = DEGREE.req, a0 = -Math.PI / 2, ang = v => Math.min(1, v / tot) * 2 * Math.PI;
+  x.lineWidth = lw; x.lineCap = "butt"; x.strokeStyle = pal.border; x.beginPath(); x.arc(cx, cy, R, 0, 2 * Math.PI); x.stroke();
+  x.strokeStyle = pal.text; x.globalAlpha = 0.4; x.beginPath(); x.arc(cx, cy, R, a0 + ang(credComplete), a0 + ang(Math.min(applied, tot))); x.stroke(); x.globalAlpha = 1;
+  x.beginPath(); x.arc(cx, cy, R, a0, a0 + ang(credComplete)); x.stroke();
+  T(String(applied), cx, cy + 14, 66, 800, pal.text, "center"); T(`of ${tot} credits`, cx, cy + 46, 20, 500, pal.muted, "center");
+  // Three headline numbers.
+  [[credComplete, "complete"], [credIP, "in progress"], [Math.max(0, tot - applied), "to go"]].forEach(([v, l], i) => { const px = 380 + i * 220; T(String(v), px, 352, 62, 800, pal.text); T(l, px, 388, 22, 500, pal.muted); });
+  T(`${UPPER_NOW} of 39 upper-division credits`, 380, 440, 22, 600, pal.text);
+  x.fillStyle = pal.border; x.fillRect(pad, 512, W - 2 * pad, 2);
+  // Sections: items complete / in progress / total, in the section's color.
+  T("SECTIONS", pad, 562, 20, 700, pal.muted, "left", 3);
+  const colW = (W - 2 * pad - 48) / 2;
+  BLOCKS.forEach((b, i) => {
+    const col = i % 2, row = Math.floor(i / 2), px = pad + col * (colW + 48), py = 604 + row * 60;
+    const kids = b.items.map(([id]) => ITEMS.get(id).status), done = kids.filter(s => s === "complete").length, ip = kids.filter(s => s === "in_progress").length, n = kids.length;
+    let name = b.short; x.font = `600 19px ${FONT}`; while (x.measureText(name).width > colW - 70 && name.length > 4) name = name.slice(0, -2);
+    if (name !== b.short) name += "…";
+    T(name, px, py, 19, 600, pal.text); T(`${done}/${n}`, px + colW, py, 19, 700, pal.muted, "right");
+    rrect(px, py + 12, colW, 14, 7, pal.border);
+    if (done) rrect(px, py + 12, Math.max(14, colW * done / n), 14, 7, secColor(b.id));
+    if (ip) { x.globalAlpha = 0.4; rrect(px + colW * done / n, py + 12, Math.max(14, colW * ip / n), 14, 7, secColor(b.id)); x.globalAlpha = 1; }
+  });
+  // Footer band: planned graduation and what is eligible now (course codes only).
+  const nowCodes = [...ELIG].filter(([id, e]) => e === "now" && ITEMS.get(id).type === "course").map(([id]) => id);
+  if (PLAN && PLAN.items) T(`Planned graduation: ${PLAN.terms[PLAN.T - 1].label}`, pad, 976, 24, 700, pal.text);
+  if (nowCodes.length) { // own row; chips are added only while they fit the card's width
+    T("Eligible now", pad, 1022, 19, 500, pal.muted);
+    x.font = `500 19px ${FONT}`; let px = pad + x.measureText("Eligible now").width + 18, shown = 0;
+    for (const [i, code] of nowCodes.entries()) {
+      x.font = `600 19px ${FONT}`; const w = x.measureText(code).width + 26;
+      if (px + w > W - pad - (i === nowCodes.length - 1 ? 0 : 70)) break; // keep room for "+N" unless this is the last chip
+      rrect(px, 994, w, 38, 19, pal.surface); T(code, px + w / 2, 1020, 19, 600, pal.text, "center"); px += w + 10; shown++;
+    }
+    if (shown < nowCodes.length) T(`+${nowCodes.length - shown}`, px + 4, 1022, 19, 600, pal.muted);
+  }
+  T("Planning aid, not an official audit · Made with Degree Map", pad, 1060, 16, 500, pal.muted);
+  c.toBlob(b => {
+    const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "degree-progress-card.png";
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }, "image/png");
+  return c;
+}
+document.getElementById("shareCard").addEventListener("click", () => progressCard());
 
 let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => fit(false), 150); });
 document.querySelector(".legend").addEventListener("toggle", () => fit());
